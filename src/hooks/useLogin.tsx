@@ -1,6 +1,6 @@
 import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { firestore, auth } from "../Firebase/firebase";
-import { getDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthStoreContext";
 import { toast } from "sonner";
 

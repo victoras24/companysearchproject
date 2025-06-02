@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { href, Link, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
 import { useAuth } from "../../context/AuthStoreContext";
 import { FavoritesModel } from "./Favorites_model";
@@ -63,6 +63,8 @@ interface IGroup {
 interface ICompany {
 	id: string;
 	organisationName: string;
+	registrationNo: string;
+	entryId: string;
 	[key: string]: any;
 }
 
@@ -99,6 +101,8 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 
 	const groups = groupModel?.groups || [];
 
+	// `/search/${company.registrationNo}/${company.entryId}`
+
 	return (
 		<TableRow ref={setNodeRef} style={style} className="hover:bg-accent">
 			<TableCell className="w-10">
@@ -106,7 +110,11 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 					<GripVertical className="h-4 w-4 text-muted-foreground" />
 				</div>
 			</TableCell>
-			<TableCell className="font-medium">{company.organisationName}</TableCell>
+			<TableCell className="font-medium">
+				<Link to={`/search/${company.registrationNo}/${company.entryId}`}>
+					{company.organisationName}
+				</Link>
+			</TableCell>
 			<TableCell>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>

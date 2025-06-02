@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label";
 
 // Icons
 import { Mail, Lock, ArrowRight } from "lucide-react";
-import MicrosoftAuth from "./MicrosoftAuth";
 
 interface LoginProps {
 	isRegister: (value: boolean) => void;

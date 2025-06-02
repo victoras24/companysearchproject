@@ -47,7 +47,7 @@ export default function useSignUpWithEmailAndPassword() {
 				inputs.password
 			);
 			if (!newUser && error) {
-				return;
+				toast.error("User does not exist");
 			}
 			if (newUser) {
 				const userDoc = {
