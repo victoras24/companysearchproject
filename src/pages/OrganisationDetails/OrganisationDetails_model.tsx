@@ -11,21 +11,24 @@ class OrganisationDetailsModel {
 	@observable accessor isLoading: boolean = true;
 	detailedData?: gEntities.IOrganisationDetails;
 	@observable accessor detailedOfficialsData: any;
+	@observable accessor addressData: any;
+	@observable accessor officialsData: any;
 	CompaniesApi: ICompaniesApi;
 	OfficialsApi: IOfficialsApi;
-	registrationNo: number;
+	registrationNo: string;
+	entryId: number;
 
-	constructor(registrationNo: number) {
+	constructor(registrationNo: string, entryId: number) {
 		makeObservable(this);
 		this.CompaniesApi = CompaniesApi;
 		this.OfficialsApi = OfficialsApi;
 		this.registrationNo = registrationNo;
+		this.entryId = entryId;
 	}
 
 	@action
 	onMount = async () => {
 		await this.getDetailedOrganisation();
-		await this.getDetailedOrganisationOfficial();
 		this.setIsLoading(false);
 	};
 
@@ -33,10 +36,23 @@ class OrganisationDetailsModel {
 	getDetailedOrganisation = async () => {
 		try {
 			const res = await CompaniesApi.getDetailedOrganisation(
-				this.registrationNo
+				this.registrationNo,
+				this.entryId
 			);
 			if (res) {
 				this.setDetailData(res);
+			}
+			const addressRes = await CompaniesApi.getOrganisationAddress(
+				res.addressSeqNo
+			);
+			if (addressRes) {
+				this.setAddressData(addressRes);
+			}
+			const officialRes = await CompaniesApi.getOrganisationOfficials(
+				this.registrationNo
+			);
+			if (officialRes) {
+				this.setOfficialsData(officialRes);
 			}
 		} catch (error) {
 			console.error("Error fetching detail data:", error);
@@ -59,8 +75,18 @@ class OrganisationDetailsModel {
 	};
 
 	@action
-	setDetailOfficialsData = (detailedData: any) => {
+	setDetailOfficialsData = (detailedData: gEntities.ICompany) => {
 		this.detailedOfficialsData = detailedData;
+	};
+
+	@action
+	setAddressData = (addressData: gEntities.ICompanyAddress) => {
+		this.addressData = addressData;
+	};
+
+	@action
+	setOfficialsData = (officialsData: gEntities.ICompanyAddress) => {
+		this.officialsData = officialsData;
 	};
 
 	@action

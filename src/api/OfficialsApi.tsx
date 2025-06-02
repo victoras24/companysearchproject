@@ -13,7 +13,7 @@ export class OfficialsApi {
 		return req.data;
 	};
 
-	getDetailedOfficial = async (registrationNo: number) => {
+	getDetailedOfficial = async (registrationNo: string) => {
 		const req = await axios.get(
 			`${this.controller}/${registrationNo}/detailed`
 		);

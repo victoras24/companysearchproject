@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthStoreContext";
 import { observer } from "mobx-react";
 import OrganisationDetailsModel from "./OrganisationDetails_model";
 import moment from "moment";
-import { toast } from "sonner";
+
 import {
 	Card,
 	CardContent,
@@ -40,17 +40,18 @@ import {
 	Info,
 	Lock,
 	FileText,
-	ShoppingCart,
 } from "lucide-react";
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
 
 const OrganisationDetails: React.FC = observer(() => {
-	const { companyId } = useParams();
-	const registrationNo = parseInt(companyId || "", 10);
+	const { companyId, entryId } = useParams();
+	const id = parseInt(entryId || "", 10);
 	const { user } = useAuth();
 	const { handleSaveCompany } = useSaveCompany();
-	const [model] = useState(() => new OrganisationDetailsModel(registrationNo));
+	const [model] = useState(
+		() => new OrganisationDetailsModel(`${companyId}`, id)
+	);
 	const cartStore = useCartStore();
 
 	const handleOrderReport = (company: gEntities.IOrganisationDetails) => {
@@ -63,7 +64,6 @@ const OrganisationDetails: React.FC = observer(() => {
 		};
 
 		cartStore.addItem(cartItem);
-		console.log(cartStore.cartItems);
 	};
 
 	useEffect(() => {
@@ -108,13 +108,13 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 
 	const fullAddress =
-		model.detailedData?.street ||
-		model.detailedData?.territory ||
-		model.detailedData?.building
+		model.addressData?.street ||
+		model.addressData?.territory ||
+		model.addressData?.building
 			? [
-					model.detailedData?.street,
-					model.detailedData?.building,
-					model.detailedData?.territory,
+					model.addressData?.street,
+					model.addressData?.building,
+					model.addressData?.territory,
 			  ]
 					.filter(Boolean)
 					.join(", ")
@@ -126,7 +126,7 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 	};
 
-	const officials = model.detailedOfficialsData;
+	const officials = model.officialsData;
 	const registrationDate = model.detailedData?.registrationDate
 		? moment(model.detailedData.registrationDate).format("MMMM D, YYYY")
 		: "Not available";

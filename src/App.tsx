@@ -40,7 +40,10 @@ function AppRoutes() {
 				<Route path="/" element={<Layout />}>
 					<Route index element={<Home />} />
 					<Route path="search" element={<Search />} />
-					<Route path="search/:companyId" element={<OrganisationDetails />} />
+					<Route
+						path="search/:companyId/:entryId"
+						element={<OrganisationDetails />}
+					/>
 					<Route
 						path="favorites"
 						element={user ? <Favorites /> : <Account />}

@@ -125,7 +125,7 @@ export const Search = observer(() => {
 										Refine your search results.
 									</SheetDescription>
 								</SheetHeader>
-								<div className="flex flex-col gap-4 py-4">
+								<div className="flex flex-col gap-4 p-4">
 									<div className="space-y-2">
 										<h3 className="text-sm font-medium">Search Type</h3>
 										<Tabs
@@ -241,7 +241,7 @@ export const Search = observer(() => {
 									className="search-result-card hover:shadow-md transition-shadow"
 								>
 									<NavLink
-										to={`/search/${data.registrationNo}`}
+										to={`/search/${data.registrationNo}/${data.entryId}`}
 										state={{ registrationNo: data.registrationNo }}
 										className="no-underline text-foreground"
 									>
@@ -251,7 +251,7 @@ export const Search = observer(() => {
 													<h4 className="font-medium">
 														{model.selectedOption === "Organisation"
 															? data.organisationName
-															: data.personOrOrganisationName}
+															: data.person_or_organisation_name}
 													</h4>
 													{model.selectedOption === "Organisation" && (
 														<p className="text-sm text-muted-foreground">
@@ -286,7 +286,7 @@ export const Search = observer(() => {
 														}}
 														disabled={isLoading}
 													>
-														{isCompanySaved(data.id) ? (
+														{isCompanySaved(data.entryId) ? (
 															<Bookmark className="h-4 w-4 text-primary" />
 														) : (
 															<BookmarkPlus className="h-4 w-4" />

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export class CompaniesApi {
-	controller: string = `${import.meta.env.VITE_API_URL}/api/company`;
+	controller: string = `${import.meta.env.VITE_API_URL}/api/organisation`;
 
 	/**
 	 *
@@ -19,9 +19,21 @@ export class CompaniesApi {
 		return req.data;
 	};
 
-	getDetailedOrganisation = async (registrationNo: number) => {
+	getOrganisationAddress = async (addressSeqNo: string) => {
+		const req = await axios.get(`${this.controller}/${addressSeqNo}/address`);
+		return req.data;
+	};
+
+	getDetailedOrganisation = async (registrationNo: string, entryId: number) => {
 		const req = await axios.get(
-			`${this.controller}/${registrationNo}/detailed`
+			`${this.controller}/${registrationNo}/${entryId}/detailed`
+		);
+		return req.data;
+	};
+
+	getOrganisationOfficials = async (registrationNo: string) => {
+		const req = await axios.get(
+			`${this.controller}/${registrationNo}/officials`
 		);
 		return req.data;
 	};
