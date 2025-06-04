@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { href, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
 import { useAuth } from "../../context/AuthStoreContext";
 import { FavoritesModel } from "./Favorites_model";
@@ -86,7 +86,6 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 	company,
 	groupModel,
 	model,
-	user,
 	id,
 }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } =

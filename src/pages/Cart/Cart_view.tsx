@@ -20,7 +20,7 @@ const Cart = observer(() => {
 	const cartStore = useCartStore();
 	const [discountCode, setDiscountCode] = useState("");
 	const [discountApplied, setDiscountApplied] = useState(false);
-	console.log(cartStore.cartItems);
+
 	const applyDiscount = () => {
 		if (discountCode.trim().toLowerCase() === "welcome20") {
 			setDiscountApplied(true);

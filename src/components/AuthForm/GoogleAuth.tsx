@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 
 const GoogleAuth = ({ prefix }: { prefix: any }) => {
-	const [signInWithGoogle, loading, isLoading] = useSignInWithGoogle(auth);
+	const [signInWithGoogle, isLoading] = useSignInWithGoogle(auth);
 	const { userLogin } = useAuth();
 	const navigate = useNavigate();
 
@@ -53,7 +53,6 @@ const GoogleAuth = ({ prefix }: { prefix: any }) => {
 			variant="outline"
 			className="w-full flex items-center justify-center gap-2 py-5 border border-gray-300 hover:bg-gray-50 transition-colors"
 			onClick={handleGoogleAuth}
-			disabled={isLoading}
 		>
 			{isLoading ? (
 				<span className="animate-spin mr-2">⏳</span>

@@ -57,7 +57,7 @@ export function AppSidebar() {
 		<Sidebar>
 			<SidebarContent>
 				<SidebarGroup>
-					<SidebarGroupLabel>KYCy</SidebarGroupLabel>
+					<SidebarGroupLabel>Company Search Cyprus</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{items.map((item) => (

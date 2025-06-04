@@ -8,8 +8,6 @@ interface CartStoreProps {
 }
 
 export const CartStoreProvider: React.FC<CartStoreProps> = ({ children }) => {
-	// Using useRef ensures we create only one instance of CartModel
-	// This prevents the cart from being reset when components re-render
 	const storeRef = useRef<CartModel | null>(null);
 
 	if (!storeRef.current) {

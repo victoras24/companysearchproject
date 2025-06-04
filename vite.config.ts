@@ -7,7 +7,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	server: {
 		proxy: {
-			"/api": "http://localhost:5066",
+			"/api":
+				"https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net/index.html",
 		},
 	},
 	plugins: [

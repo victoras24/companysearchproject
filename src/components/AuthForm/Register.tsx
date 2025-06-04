@@ -17,7 +17,6 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 
 import { Mail, Lock, User, ArrowRight, UserCircle } from "lucide-react";
-import MicrosoftAuth from "./MicrosoftAuth";
 
 interface RegisterProps {
 	isRegister: (value: boolean) => void;

@@ -56,6 +56,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import type { gEntities } from "@/gEntities";
+import { Link } from "react-router-dom";
 
 interface SortableGroupTableRowProps {
 	group: any;
@@ -64,11 +65,19 @@ interface SortableGroupTableRowProps {
 	children: any;
 }
 
+interface ICompany {
+	id: string;
+	organisationName: string;
+	registrationNo: string;
+	entryId: string;
+	[key: string]: any;
+}
+
 interface SortableCompanyProps {
-	company: any;
-	groupId: any;
+	company: ICompany;
+	groupId: number;
 	model: any;
-	user: any;
+	user: gEntities.IUser;
 }
 
 // Sortable Group Component
@@ -153,7 +162,11 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 					<GripVertical className="h-4 w-4 text-muted-foreground" />
 				</div>
 			</TableCell>
-			<TableCell className="font-medium py-2">{company.name}</TableCell>
+			<TableCell className="font-medium py-2">
+				<Link to={`/search/${company.registrationNo}/${company.id}`}>
+					{company.name}
+				</Link>
+			</TableCell>
 			<TableCell className="w-12 text-right">
 				<Button
 					variant="ghost"
@@ -194,6 +207,8 @@ const Organiser: React.FC = observer(() => {
 	useEffect(() => {
 		model.onMount();
 	}, []);
+
+	console.log(activeCompanyId);
 
 	const handleGroupDragEnd = (event: any) => {
 		const { active, over } = event;

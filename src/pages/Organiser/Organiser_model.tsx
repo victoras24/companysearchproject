@@ -3,10 +3,8 @@ import { v4 as uuidv4 } from "uuid";
 import {
 	arrayRemove,
 	arrayUnion,
-	collection,
 	doc,
 	getDoc,
-	getDocs,
 	updateDoc,
 } from "firebase/firestore";
 import { firestore } from "../../Firebase/firebase";
