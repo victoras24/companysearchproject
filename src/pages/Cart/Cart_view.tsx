@@ -64,7 +64,7 @@ const Cart = observer(() => {
 							<CardContent>
 								<div className="space-y-6">
 									{cartStore.cartItems.map((item) => (
-										<div key={item.id}>
+										<div key={item.entryId}>
 											<div className="flex items-center gap-4">
 												<div className="h-24 w-24 overflow-hidden rounded-md">
 													<FileText className="h-full w-full object-cover" />
@@ -83,7 +83,7 @@ const Cart = observer(() => {
 															variant="ghost"
 															size="sm"
 															className="text-red-500 hover:text-red-700 hover:bg-red-50"
-															onClick={() => cartStore.removeItem(item.id)}
+															onClick={() => cartStore.removeItem(item.entryId)}
 														>
 															<Trash2 className="h-4 w-4 mr-1" /> Remove
 														</Button>

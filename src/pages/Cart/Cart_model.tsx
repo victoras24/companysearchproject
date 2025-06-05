@@ -48,7 +48,7 @@ export class CartModel {
 	@action
 	addItem = (item: gEntities.ICartItem) => {
 		const existingItem = this.cartItems.find(
-			(cartItem) => cartItem.id === item.id
+			(cartItem) => cartItem.entryId === item.entryId
 		);
 
 		if (existingItem) {
@@ -62,8 +62,8 @@ export class CartModel {
 
 	@action
 	removeItem = (id: number | string) => {
-		const itemToRemove = this.cartItems.find((item) => item.id === id);
-		this.cartItems = this.cartItems.filter((item) => item.id !== id);
+		const itemToRemove = this.cartItems.find((item) => item.entryId === id);
+		this.cartItems = this.cartItems.filter((item) => item.entryId !== id);
 		this.saveCartToStorage(); // Save to localStorage after removing
 
 		if (itemToRemove) {

@@ -94,7 +94,7 @@ export class OrganiserModel {
 			if (group.id !== groupId) return group;
 			return {
 				...group,
-				companies: group.companies.filter((c) => c.id !== companyId),
+				companies: group.companies.filter((c) => c.entryId !== companyId),
 			};
 		});
 		await updateDoc(userRef, { groups: updatedGroup });

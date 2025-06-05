@@ -69,7 +69,9 @@ export const Search = observer(() => {
 	const isCompanySaved = (companyId: number) => {
 		if (!user || !user.savedCompanies) return false;
 
-		return user.savedCompanies.some((saved: any) => saved.id === companyId);
+		return user.savedCompanies.some(
+			(saved: any) => saved.entryId === companyId
+		);
 	};
 
 	return (

@@ -163,7 +163,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium py-2">
-				<Link to={`/search/${company.registrationNo}/${company.id}`}>
+				<Link to={`/search/${company.registrationNo}/${company.entryId}`}>
 					{company.name}
 				</Link>
 			</TableCell>
@@ -173,7 +173,11 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 					size="icon"
 					className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
 					onClick={() =>
-						model.deleteCompanyAssignedInGroup(user.uid, company.id, groupId)
+						model.deleteCompanyAssignedInGroup(
+							user.uid,
+							company.entryId,
+							groupId
+						)
 					}
 				>
 					<X className="h-4 w-4" />
@@ -190,7 +194,7 @@ const Organiser: React.FC = observer(() => {
 
 	const docRef = doc(firestore, "users", user.uid);
 	const [activeGroupId, setActiveGroupId] = useState(null);
-	const [activeCompanyId, setActiveCompanyId] = useState(null);
+	const [, setActiveCompanyId] = useState(null);
 
 	// Configure DnD sensors
 	const sensors = useSensors(
@@ -207,8 +211,6 @@ const Organiser: React.FC = observer(() => {
 	useEffect(() => {
 		model.onMount();
 	}, []);
-
-	console.log(activeCompanyId);
 
 	const handleGroupDragEnd = (event: any) => {
 		const { active, over } = event;
