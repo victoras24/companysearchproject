@@ -39,12 +39,36 @@ export class FavoritesModel {
 	};
 
 	@action
-	deleteCompanyFromFavorites = async (company: gEntities.ICompany) => {
+	deleteCompanyFromFavorites = async (
+		company: gEntities.ISavedCompany,
+		user: gEntities.IUser,
+		updateUser: any
+	) => {
 		const userRef = doc(firestore, "users", this.user.uid);
+		try {
+			await updateDoc(userRef, {
+				savedCompanies: arrayRemove(company),
+			});
+			const updatedSavedCompanies = user.savedCompanies.filter(
+				(savedCompany: gEntities.ISavedCompany) =>
+					savedCompany.entryId !== company.entryId
+			);
 
-		await updateDoc(userRef, {
-			savedCompanies: arrayRemove(company),
-		});
+			updateUser({
+				...user,
+				savedCompanies: updatedSavedCompanies,
+			});
+
+			localStorage.setItem(
+				"user-info",
+				JSON.stringify({
+					...user,
+					savedCompanies: updatedSavedCompanies,
+				})
+			);
+		} catch (error) {
+			console.log(error);
+		}
 
 		await this.getFavorites();
 	};

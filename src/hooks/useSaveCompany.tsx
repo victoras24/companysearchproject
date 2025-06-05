@@ -3,12 +3,13 @@ import { useAuth } from "../context/AuthStoreContext";
 import { firestore } from "@/Firebase/firebase";
 import { doc, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
 import { toast } from "sonner";
+import type { gEntities } from "@/gEntities";
 
 const useSaveCompany = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const { user, updateUser } = useAuth();
 
-	const handleSaveCompany = async (company: any) => {
+	const handleSaveCompany = async (company: gEntities.ISavedCompany) => {
 		if (!user) {
 			toast.warning(
 				"Please register or login if you already have an account, to save and organise companies"
@@ -20,7 +21,8 @@ const useSaveCompany = () => {
 			setIsLoading(true);
 
 			const isAlreadySaved = user.savedCompanies.some(
-				(savedCompany: any) => savedCompany.id === company.id
+				(savedCompany: gEntities.ISavedCompany) =>
+					savedCompany.entryId === company.entryId
 			);
 
 			const currentUserRef = doc(firestore, "users", user.uid);
@@ -33,7 +35,8 @@ const useSaveCompany = () => {
 
 			if (isAlreadySaved) {
 				const updatedSavedCompanies = user.savedCompanies.filter(
-					(savedCompany: any) => savedCompany.id !== company.id
+					(savedCompany: gEntities.ISavedCompany) =>
+						savedCompany.entryId !== company.entryId
 				);
 
 				updateUser({

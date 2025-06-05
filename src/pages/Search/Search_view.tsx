@@ -45,7 +45,7 @@ export const Search = observer(() => {
 	const { user } = useAuth();
 	const [model] = useState(() => new SearchModel());
 	const { handleSaveCompany, isLoading } = useSaveCompany();
-
+	console.log(user);
 	useEffect(() => {
 		const debounceSearch = setTimeout(() => {
 			model.handleSearch();

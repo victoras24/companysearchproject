@@ -79,6 +79,7 @@ interface SortableTableRowProps {
 		[key: string]: any;
 	};
 	id: string;
+	updateUser: any;
 }
 
 const SortableTableRow: React.FC<SortableTableRowProps> = ({
@@ -86,6 +87,8 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 	groupModel,
 	model,
 	id,
+	user,
+	updateUser,
 }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -146,7 +149,9 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 				<Button
 					variant="ghost"
 					size="icon"
-					onClick={() => model.deleteCompanyFromFavorites(company)}
+					onClick={() =>
+						model.deleteCompanyFromFavorites(company, user, updateUser)
+					}
 					className="text-red-500 hover:text-red-700 hover:bg-red-50"
 				>
 					<Trash2 className="h-4 w-4" />
@@ -157,7 +162,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 };
 
 const Favorites = observer(() => {
-	const { user } = useAuth();
+	const { user, updateUser } = useAuth();
 	const [model] = useState(() => new FavoritesModel(user));
 	const [groupModel] = useState(() => new OrganiserModel(user));
 	const navigate = useNavigate();
@@ -269,6 +274,7 @@ const Favorites = observer(() => {
 											groupModel={groupModel}
 											model={model}
 											user={user}
+											updateUser={updateUser}
 										/>
 									))}
 								</SortableContext>
