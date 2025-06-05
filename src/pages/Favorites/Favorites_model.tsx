@@ -2,6 +2,7 @@ import { arrayRemove, doc, getDoc, updateDoc } from "firebase/firestore";
 import { action, makeObservable, observable } from "mobx";
 import { firestore } from "../../Firebase/firebase";
 import type { gEntities } from "@/gEntities";
+import { toast } from "sonner";
 
 export class FavoritesModel {
 	@observable accessor isLoading: boolean;
@@ -49,29 +50,56 @@ export class FavoritesModel {
 	};
 
 	@action
-	addCompanyInGroup = async (company: gEntities.ICompany, groupId: string) => {
-		const userRef = doc(firestore, "users", this.user.uid);
-		const querySnapshot = await getDoc(userRef);
-		const data = querySnapshot.data();
-		const groups = data?.groups || [];
+	addCompanyInGroup = async (
+		company: gEntities.ICompany,
+		targetGroup: gEntities.IGroup
+	) => {
+		try {
+			const userRef = doc(firestore, "users", this.user.uid);
+			const querySnapshot = await getDoc(userRef);
+			const data = querySnapshot.data();
+			const groups = data?.groups || [];
 
-		const updatedGroups = groups.map((group: gEntities.IGroup) => {
-			if (group.id != groupId) return group;
-			const companyExistsInGroup = group.companies.some(
-				(c) => c.entryId === company.entryId
+			const groupIndex = groups.findIndex(
+				(g: gEntities.IGroup) => g.id === targetGroup.id
 			);
-			if (companyExistsInGroup) return group;
 
-			return {
+			if (groupIndex === -1) {
+				toast.error("Group not found");
+				return;
+			}
+
+			const group = groups[groupIndex];
+
+			const companyExistsInGroup = group.companies.some(
+				(c: gEntities.ICompanyInGroup) => c.id === company.entryId
+			);
+
+			if (companyExistsInGroup) {
+				toast.error(
+					`${company.organisationName} is already in group "${group.name}"`
+				);
+				return;
+			}
+
+			const updatedGroups = [...groups];
+			updatedGroups[groupIndex] = {
 				...group,
 				companies: [
 					...group.companies,
 					{ name: company.organisationName, id: company.entryId },
 				],
 			};
-		});
 
-		await updateDoc(userRef, { groups: updatedGroups });
+			await updateDoc(userRef, { groups: updatedGroups });
+
+			toast.success(
+				`${company.organisationName} added to group "${group.name}"`
+			);
+		} catch (error) {
+			console.error("Error adding company to group:", error);
+			toast.error("Failed to add company to group");
+		}
 	};
 
 	@action

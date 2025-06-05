@@ -126,7 +126,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 							groups.map((group) => (
 								<DropdownMenuItem
 									key={group.id}
-									onClick={() => model.addCompanyInGroup(company, group.id)}
+									onClick={() => model.addCompanyInGroup(company, group)}
 								>
 									{group.name}
 								</DropdownMenuItem>

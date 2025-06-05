@@ -46,7 +46,12 @@ export namespace gEntities {
 		id: string;
 		name: string;
 		isExtended: boolean;
-		companies: ICompany[];
+		companies: ICompanyInGroup[];
+	}
+
+	export interface ICompanyInGroup {
+		id: number;
+		name: string;
 	}
 
 	export interface ISavedCompany {
