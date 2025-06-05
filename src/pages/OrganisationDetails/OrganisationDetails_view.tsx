@@ -58,7 +58,7 @@ const OrganisationDetails: React.FC = observer(() => {
 		if (!company) return;
 
 		const cartItem: gEntities.ICartItem = {
-			id: company?.id,
+			entryId: company?.entryId,
 			name: company?.organisationName,
 			price: 39.99,
 		};
@@ -122,7 +122,7 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const isSaved = (company: gEntities.ICompany) => {
 		return user?.savedCompanies.some(
-			(saved: gEntities.ISavedCompany) => saved.id === company.id
+			(saved: gEntities.ISavedCompany) => saved.entryId === company.entryId
 		);
 	};
 
@@ -132,8 +132,6 @@ const OrganisationDetails: React.FC = observer(() => {
 				"MMMM D, YYYY"
 		  )
 		: "Not available";
-
-	console.log(registrationDate);
 
 	const isActive = model.detailedData?.organisationStatus === "Εγγεγραμμένη";
 

@@ -242,10 +242,10 @@ const Organiser: React.FC = observer(() => {
 			if (!group) return;
 
 			const oldIndex = group.companies.findIndex(
-				(company: gEntities.ICompany) => company.id === active.id
+				(company: ICompany) => company.id === active.id
 			);
 			const newIndex = group.companies.findIndex(
-				(company: gEntities.ICompany) => company.id === over.id
+				(company: ICompany) => company.id === over.id
 			);
 
 			const updatedCompanies = arrayMove(group.companies, oldIndex, newIndex);

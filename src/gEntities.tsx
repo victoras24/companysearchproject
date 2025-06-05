@@ -1,7 +1,7 @@
 export namespace gEntities {
 	export interface IOrganisationDetails {
 		building: string;
-		id: number;
+		entryId: number;
 		nameStatus: string;
 		officials: string;
 		organisationName: string;
@@ -16,7 +16,7 @@ export namespace gEntities {
 	}
 
 	export interface ICompany {
-		id: number;
+		entryId: number;
 		organisationName: string;
 		organisationStatus: string;
 		organisationType: string;
@@ -50,7 +50,7 @@ export namespace gEntities {
 	}
 
 	export interface ISavedCompany {
-		id: number;
+		entryId: number;
 		addressSeqNo: number;
 		nameStatus: string;
 		organisationName: string;
@@ -63,7 +63,7 @@ export namespace gEntities {
 	}
 
 	export interface ICartItem {
-		id: number | string;
+		entryId: number | string;
 		name: string;
 		price: number;
 	}

@@ -61,7 +61,6 @@ interface IGroup {
 }
 
 interface ICompany {
-	id: string;
 	organisationName: string;
 	registrationNo: string;
 	entryId: string;
@@ -99,8 +98,6 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 	const navigate = useNavigate();
 
 	const groups = groupModel?.groups || [];
-
-	// `/search/${company.registrationNo}/${company.entryId}`
 
 	return (
 		<TableRow ref={setNodeRef} style={style} className="hover:bg-accent">
@@ -201,11 +198,10 @@ const Favorites = observer(() => {
 
 	const handleDragEnd = (event: any) => {
 		const { active, over } = event;
-
 		if (active.id !== over.id) {
 			setItems((items) => {
-				const oldIndex = items.findIndex((item) => item.id === active.id);
-				const newIndex = items.findIndex((item) => item.id === over.id);
+				const oldIndex = items.findIndex((item) => item.entryId === active.id);
+				const newIndex = items.findIndex((item) => item.entryId === over.id);
 
 				// Here you would also update the order in your database
 				const newItems = arrayMove(items, oldIndex, newIndex);
@@ -262,13 +258,13 @@ const Favorites = observer(() => {
 							</TableHeader>
 							<TableBody>
 								<SortableContext
-									items={items.map((item) => item.id)}
+									items={items.map((item) => item.entryId)}
 									strategy={verticalListSortingStrategy}
 								>
 									{items.map((company) => (
 										<SortableTableRow
-											key={company.id}
-											id={company.id}
+											key={company.entryId}
+											id={company.entryId}
 											company={company}
 											groupModel={groupModel}
 											model={model}

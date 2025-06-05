@@ -21,7 +21,7 @@ function App() {
 		<AuthProvider>
 			<SavedCompanyProvider>
 				<CartStoreProvider>
-					<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+					<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
 						<SonnerToastProvider />
 						<AppRoutes />
 					</ThemeProvider>

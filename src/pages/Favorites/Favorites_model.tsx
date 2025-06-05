@@ -58,7 +58,7 @@ export class FavoritesModel {
 		const updatedGroups = groups.map((group: gEntities.IGroup) => {
 			if (group.id != groupId) return group;
 			const companyExistsInGroup = group.companies.some(
-				(c) => c.id === company.id
+				(c) => c.entryId === company.entryId
 			);
 			if (companyExistsInGroup) return group;
 
@@ -66,7 +66,7 @@ export class FavoritesModel {
 				...group,
 				companies: [
 					...group.companies,
-					{ name: company.organisationName, id: company.id },
+					{ name: company.organisationName, id: company.entryId },
 				],
 			};
 		});
