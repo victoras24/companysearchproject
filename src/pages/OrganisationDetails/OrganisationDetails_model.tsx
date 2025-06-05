@@ -10,6 +10,7 @@ import type { gEntities } from "@/gEntities";
 class OrganisationDetailsModel {
 	@observable accessor isLoading: boolean = true;
 	detailedData?: gEntities.IOrganisationDetails;
+
 	@observable accessor detailedOfficialsData: any;
 	@observable accessor addressData: any;
 	@observable accessor officialsData: any;

@@ -173,11 +173,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 					size="icon"
 					className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
 					onClick={() =>
-						model.deleteCompanyAssignedInGroup(
-							user.uid,
-							company.entryId,
-							groupId
-						)
+						model.deleteCompanyAssignedInGroup(user.uid, company, groupId)
 					}
 				>
 					<X className="h-4 w-4" />

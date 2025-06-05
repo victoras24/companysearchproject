@@ -82,7 +82,7 @@ export class OrganiserModel {
 	@action
 	deleteCompanyAssignedInGroup = async (
 		userId: string,
-		companyId: number,
+		company: any,
 		groupId: string
 	) => {
 		const userRef = doc(firestore, "users", userId);
@@ -92,9 +92,10 @@ export class OrganiserModel {
 
 		const updatedGroup = groups.map((group: gEntities.IGroup) => {
 			if (group.id !== groupId) return group;
+
 			return {
 				...group,
-				companies: group.companies.filter((c) => c.entryId !== companyId),
+				companies: group.companies.filter((c: any) => c.id !== company.id),
 			};
 		});
 		await updateDoc(userRef, { groups: updatedGroup });

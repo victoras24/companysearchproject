@@ -9,7 +9,7 @@ const useSaveCompany = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const { user, updateUser } = useAuth();
 
-	const handleSaveCompany = async (company: gEntities.ISavedCompany) => {
+	const handleSaveCompany = async (company: any) => {
 		if (!user) {
 			toast.warning(
 				"Please register or login if you already have an account, to save and organise companies"
