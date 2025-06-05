@@ -128,8 +128,12 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const officials = model.officialsData;
 	const registrationDate = model.detailedData?.registrationDate
-		? moment(model.detailedData.registrationDate).format("MMMM D, YYYY")
+		? moment(model.detailedData.registrationDate, "DD/MM/YYYY").format(
+				"MMMM D, YYYY"
+		  )
 		: "Not available";
+
+	console.log(registrationDate);
 
 	const isActive = model.detailedData?.organisationStatus === "Εγγεγραμμένη";
 
