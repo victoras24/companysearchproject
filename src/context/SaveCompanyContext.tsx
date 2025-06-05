@@ -32,7 +32,7 @@ export function SavedCompanyProvider({ children }: { children: ReactNode }) {
 							: [company, ...prevState]
 				  )
 				: toast.warning(
-						"Please register or login if you already an account, to save and organise companies"
+						"Please register or login if you already have an account, to save and organise companies"
 				  );
 		}
 	};
