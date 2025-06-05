@@ -8,7 +8,7 @@ export default defineConfig({
 	server: {
 		proxy: {
 			"/api":
-				"https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net/index.html",
+				"https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net",
 		},
 	},
 	plugins: [
