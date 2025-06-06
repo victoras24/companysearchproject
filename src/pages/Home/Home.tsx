@@ -113,7 +113,7 @@ export const Home: React.FC = () => {
 				</Card>
 
 				{/* CTA Section */}
-				<Card className="mb-16 bg-primary text-primary-foreground">
+				{/* <Card className="mb-16 bg-primary text-primary-foreground">
 					<CardHeader>
 						<CardTitle className="text-2xl text-center">
 							Need More Comprehensive Tools?
@@ -129,7 +129,7 @@ export const Home: React.FC = () => {
 							<ChevronRight className="ml-2 h-4 w-4" />
 						</Button>
 					</CardFooter>
-				</Card>
+				</Card> */}
 
 				{/* Updates Section */}
 				<Card className="mb-16">
@@ -189,12 +189,12 @@ export const Home: React.FC = () => {
 							</AccordionContent>
 						</AccordionItem>
 					</Accordion>
-					<div className="text-center mt-6">
+					{/* <div className="text-center mt-6">
 						<Button variant="link" className="gap-1">
 							View all FAQs
 							<ExternalLink className="h-4 w-4" />
 						</Button>
-					</div>
+					</div> */}
 				</div>
 			</div>
 		</div>
