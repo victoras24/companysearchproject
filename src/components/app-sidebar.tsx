@@ -60,7 +60,13 @@ export function AppSidebar() {
 		<Sidebar>
 			<SidebarContent>
 				<SidebarGroup>
-					<SidebarGroupLabel>Company Search Cyprus</SidebarGroupLabel>
+					<SidebarGroupLabel className="my-5 p-0">
+						<img
+							src="../../../public/fullgroup.svg"
+							alt="Company search cyprus logo"
+							className="w-50"
+						/>
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{items.map((item) => (
