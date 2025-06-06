@@ -109,13 +109,9 @@ export const Search = observer(() => {
 							)}
 						</div>
 
-						<Sheet>
+						<Sheet open={model.isFilterOpen} onOpenChange={model.setFilterOpen}>
 							<SheetTrigger asChild>
-								<Button
-									variant="outline"
-									size="icon"
-									onClick={() => model.showFilter(model.isFilterOpen)}
-								>
+								<Button variant="outline" size="icon">
 									<SlidersHorizontal className="h-4 w-4" />
 								</Button>
 							</SheetTrigger>
@@ -148,7 +144,7 @@ export const Search = observer(() => {
 										</Tabs>
 									</div>
 
-									<div className="space-y-2">
+									{/* <div className="space-y-2">
 										<h3 className="text-sm font-medium">Filter By</h3>
 										<Select
 											value={model.selectedFilter}
@@ -177,7 +173,7 @@ export const Search = observer(() => {
 												)}
 											</SelectContent>
 										</Select>
-									</div>
+									</div> */}
 
 									<Button
 										variant="default"
@@ -252,7 +248,7 @@ export const Search = observer(() => {
 													<h4 className="font-medium">
 														{model.selectedOption === "Organisation"
 															? data.organisationName
-															: data.person_or_organisation_name}
+															: data.personOrOrganisationName}
 													</h4>
 													{model.selectedOption === "Organisation" && (
 														<p className="text-sm text-muted-foreground">

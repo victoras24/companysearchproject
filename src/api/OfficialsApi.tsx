@@ -1,7 +1,9 @@
 import axios from "axios";
 
 export class OfficialsApi {
-	controller: string = `${import.meta.env.VITE_API_URL}/api/officials`;
+	controller: string = `${
+		import.meta.env.VITE_API_URL
+	}/api/organisation/officials`;
 
 	/**
 	 *

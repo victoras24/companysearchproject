@@ -81,13 +81,13 @@ class SearchModel {
 	};
 
 	@action
-	showFilter = (isFilterOpen: boolean) => {
-		this.isFilterOpen = !isFilterOpen;
+	closeFilter = () => {
+		this.isFilterOpen = false;
 	};
 
 	@action
-	closeFilter = () => {
-		this.isFilterOpen = false;
+	setFilterOpen = (isOpen: boolean) => {
+		this.isFilterOpen = isOpen;
 	};
 
 	@action
