@@ -18,41 +18,44 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ModeToggle } from "./mode-toggle";
-
-const items = [
-	{
-		title: "Home",
-		url: "/",
-		icon: Home,
-	},
-	{
-		title: "Search",
-		url: "/search",
-		icon: Search,
-	},
-	{
-		title: "Favorites",
-		url: "/favorites",
-		icon: Heart,
-	},
-	{
-		title: "Organiser",
-		url: "/organiser",
-		icon: Group,
-	},
-	{
-		title: "Account",
-		url: "/account",
-		icon: ScanFace,
-	},
-	{
-		title: "Cart",
-		url: "/cart",
-		icon: ShoppingCart,
-	},
-];
+import { useAuth } from "@/context/AuthStoreContext";
 
 export function AppSidebar() {
+	const { user } = useAuth();
+
+	const items = [
+		{
+			title: "Home",
+			url: "/",
+			icon: Home,
+		},
+		{
+			title: "Search",
+			url: "/search",
+			icon: Search,
+		},
+		{
+			title: "Favorites",
+			url: "/favorites",
+			icon: Heart,
+		},
+		{
+			title: "Organiser",
+			url: "/organiser",
+			icon: Group,
+		},
+		{
+			title: `${user ? "Account" : "Login"}`,
+			url: "/account",
+			icon: ScanFace,
+		},
+		{
+			title: "Cart",
+			url: "/cart",
+			icon: ShoppingCart,
+		},
+	];
+
 	return (
 		<Sidebar>
 			<SidebarContent>
