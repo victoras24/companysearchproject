@@ -35,7 +35,7 @@ export const Home: React.FC = () => {
 						<Button
 							size="lg"
 							onClick={() => navigate("/search")}
-							className="mt-4"
+							className="background-primary mt-4"
 						>
 							<Search className="mr-2 h-4 w-4" />
 							Begin Search
@@ -48,7 +48,7 @@ export const Home: React.FC = () => {
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Database className="h-6 w-6 text-primary" />
+								<Database className="h-6 w-6 " />
 							</div>
 							<CardTitle>Comprehensive Database</CardTitle>
 						</CardHeader>
@@ -60,7 +60,7 @@ export const Home: React.FC = () => {
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Zap className="h-6 w-6 text-primary" />
+								<Zap className="h-6 w-6 " />
 							</div>
 							<CardTitle>Real-time Updates</CardTitle>
 						</CardHeader>
@@ -72,7 +72,7 @@ export const Home: React.FC = () => {
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Shield className="h-6 w-6 text-primary" />
+								<Shield className="h-6 w-6 " />
 							</div>
 							<CardTitle>Verified Information</CardTitle>
 						</CardHeader>

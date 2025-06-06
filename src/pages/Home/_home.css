@@ -13,6 +13,14 @@
 	padding-right: 5%;
 }
 
+.text-primary {
+	color: #41b883;
+}
+
+.background-primary {
+	background-color: #41b883;
+}
+
 @media (min-width: 1024px) {
 	.home-container > div {
 		padding-left: 10%;

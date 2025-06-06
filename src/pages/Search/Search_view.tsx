@@ -202,7 +202,7 @@ export const Search = observer(() => {
 						<Card className="search-tips-card">
 							<CardContent className="p-6">
 								<div className="flex items-start gap-4">
-									<Info className="h-5 w-5 text-primary mt-1" />
+									<Info className="h-5 w-5  mt-1" />
 									<div>
 										<h2 className="font-semibold text-lg mb-2">Search Tips:</h2>
 										<ul className="space-y-2 list-disc list-inside text-sm text-muted-foreground">
