@@ -89,8 +89,9 @@ export const Home: React.FC = () => {
 							<span className="text-4xl text-primary/20 absolute top-0 left-0">
 								"
 							</span>
-							This tool has revolutionized our due diligence process. It's
-							indispensable for our business operations in Cyprus.
+							Company Search Cyprus is a tool that has revolutionized our due
+							diligence process. It's indispensable for our business operations
+							in Cyprus.
 							<span className="text-4xl text-primary/20 absolute bottom-0 right-0">
 								"
 							</span>
