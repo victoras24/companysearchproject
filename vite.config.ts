@@ -30,5 +30,14 @@ export default defineConfig({
 		minify: "esbuild",
 		target: "esnext",
 		sourcemap: false,
+		cssCodeSplit: true,
+		assetsInlineLimit: 4096,
+		chunkSizeWarningLimit: 500,
+	},
+	esbuild: {
+		drop: ["console", "debugger"],
+		minifyIdentifiers: true,
+		minifySyntax: true,
+		minifyWhitespace: true,
 	},
 });

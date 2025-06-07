@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /
-
-Sitemap: https://companysearchcyprus.com/sitemap.xml

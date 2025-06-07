@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-export const Home: React.FC = () => {
+const Home: React.FC = () => {
 	const navigate = useNavigate();
 
 	return (
@@ -187,3 +187,5 @@ export const Home: React.FC = () => {
 		</div>
 	);
 };
+
+export default Home;

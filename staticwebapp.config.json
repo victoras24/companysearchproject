@@ -1,30 +1,62 @@
 {
 	"navigationFallback": {
 		"rewrite": "/index.html",
-		"exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/api/*"]
+		"exclude": [
+			"/images/*.{png,jpg,gif}",
+			"/css/*",
+			"/api/*",
+			"/*.js",
+			"/*.css"
+		]
+	},
+	"globalHeaders": {
+		"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://company-search-39b6f.firebaseapp.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net https://apis.google.com;",
+		"X-Frame-Options": "DENY",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy": "strict-origin-when-cross-origin",
+		"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+		"Permissions-Policy": "camera=(), microphone=(), geolocation=()"
 	},
 	"routes": [
 		{
-			"route": "/*",
-			"serve": "/index.html",
-			"statusCode": 200
+			"route": "/assets/*",
+			"headers": {
+				"Cache-Control": "public, max-age=31536000, immutable"
+			}
+		},
+		{
+			"route": "/*.js",
+			"headers": {
+				"Cache-Control": "public, max-age=31536000, immutable"
+			}
+		},
+		{
+			"route": "/*.css",
+			"headers": {
+				"Cache-Control": "public, max-age=31536000, immutable"
+			}
+		},
+		{
+			"route": "/*.{png,jpg,jpeg,gif,svg,webp,ico}",
+			"headers": {
+				"Cache-Control": "public, max-age=31536000, immutable"
+			}
+		},
+		{
+			"route": "/manifest.json",
+			"headers": {
+				"Cache-Control": "public, max-age=86400"
+			}
 		}
 	],
+	"mimeTypes": {
+		".webp": "image/webp",
+		".woff2": "font/woff2"
+	},
 	"responseOverrides": {
 		"404": {
-			"rewrite": "/index.html"
+			"rewrite": "/index.html",
+			"statusCode": 200
 		}
-	},
-	"mimeTypes": {
-		".js": "application/javascript",
-		".css": "text/css"
-	},
-	"globalHeaders": {
-		"Cache-Control": "public, max-age=31536000, immutable",
-		"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-		"X-Frame-Options": "DENY",
-		"X-Content-Type-Options": "nosniff",
-		"Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self';",
-		"Referrer-Policy": "no-referrer"
 	}
 }
