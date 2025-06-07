@@ -64,7 +64,7 @@ export function AppSidebar() {
 						<img
 							src="/fullGroup.svg"
 							alt="Company search cyprus logo"
-							className="w-50"
+							className="w-50 h-56"
 						/>
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
