@@ -26,4 +26,9 @@ export default defineConfig({
 			"@": path.resolve(__dirname, "./src"),
 		},
 	},
+	build: {
+		minify: "esbuild",
+		target: "esnext",
+		sourcemap: false,
+	},
 });
