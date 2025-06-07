@@ -42,7 +42,7 @@ export const Search = observer(() => {
 	useEffect(() => {
 		const debounceSearch = setTimeout(() => {
 			model.handleSearch();
-		}, 300);
+		}, 666);
 
 		return () => clearTimeout(debounceSearch);
 	}, [model.searchQuery, model.selectedOption]);
@@ -256,8 +256,8 @@ export const Search = observer(() => {
 														<Badge
 															variant={
 																data.organisationStatus === "Εγγεγραμμένη"
-																	? "default"
-																	: "outline"
+																	? "active"
+																	: "inactive"
 															}
 														>
 															{data.organisationStatus === "Εγγεγραμμένη"

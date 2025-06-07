@@ -158,7 +158,7 @@ const OrganisationDetails: React.FC = observer(() => {
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
-					<Badge variant={isActive ? "default" : "outline"} className="text-sm">
+					<Badge variant={isActive ? "active" : "inactive"} className="text-md">
 						{isActive ? "Active" : "Inactive"}
 					</Badge>
 					<TooltipProvider>
