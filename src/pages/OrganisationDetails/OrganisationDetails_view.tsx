@@ -92,17 +92,6 @@ const OrganisationDetails: React.FC = observer(() => {
 				<Alert>
 					<Info className="h-4 w-4" />
 					<AlertDescription>No data found for this company.</AlertDescription>
-					<Button
-						onClick={() => {
-							if (model.detailedData) {
-								handleOrderReport(model.detailedData);
-							}
-						}}
-						className="w-full"
-					>
-						<FileText className="mr-2 h-4 w-4" />
-						Order Full Company Report
-					</Button>
 				</Alert>
 			</div>
 		);

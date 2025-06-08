@@ -43,11 +43,13 @@ class OrganisationDetailsModel {
 			if (res) {
 				this.setDetailData(res);
 			}
-			const addressRes = await CompaniesApi.getOrganisationAddress(
-				res.addressSeqNo
-			);
-			if (addressRes) {
-				this.setAddressData(addressRes);
+			if (res.addressSeqNo !== "") {
+				const addressRes = await CompaniesApi.getOrganisationAddress(
+					res.addressSeqNo
+				);
+				if (addressRes) {
+					this.setAddressData(addressRes);
+				}
 			}
 			const officialRes = await CompaniesApi.getOrganisationOfficials(
 				this.registrationNo
@@ -55,16 +57,6 @@ class OrganisationDetailsModel {
 			if (officialRes) {
 				this.setOfficialsData(officialRes);
 			}
-		} catch (error) {
-			console.error("Error fetching detail data:", error);
-		}
-	};
-
-	@action
-	getDetailedOrganisationOfficial = async () => {
-		try {
-			const res = await OfficialsApi.getDetailedOfficial(this.registrationNo);
-			this.setDetailOfficialsData(res);
 		} catch (error) {
 			console.error("Error fetching detail data:", error);
 		}
