@@ -30,6 +30,7 @@ import {
 	Building,
 	User,
 	Info,
+	Loader2,
 } from "lucide-react";
 
 import "./_search.css";
@@ -83,23 +84,29 @@ export const Search = observer(() => {
 					<div className="search-input-container flex gap-2 mb-6">
 						<div className="search-input-wrapper relative flex-1">
 							<Input
-								className="pl-10"
+								className="pl-10 pr-10" // Add right padding for the X button
 								placeholder={`Enter ${model.selectedOption}'s name`}
 								value={model.searchQuery}
 								onChange={(e) => model.handleInputChange(e.target.value)}
 							/>
 							<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-								<SearchIcon className="h-4 w-4 text-muted-foreground" />
+								{model.isLoading ? (
+									<Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+								) : (
+									<SearchIcon className="h-4 w-4 text-muted-foreground" />
+								)}
 							</div>
 							{model.searchQuery && (
-								<Button
-									variant="ghost"
-									size="icon"
-									className="absolute inset-y-0 right-0 h-full"
-									onClick={() => model.cleanInput()}
-								>
-									<X className="h-4 w-4" />
-								</Button>
+								<div className="absolute inset-y-0 right-0 flex items-center pr-2">
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8"
+										onClick={() => model.cleanInput()}
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								</div>
 							)}
 						</div>
 

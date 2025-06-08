@@ -38,6 +38,11 @@ export class CompaniesApi {
 		return req.data;
 	};
 
+	getRelatedCompanies = async (companyName: string) => {
+		const req = await axios.get(`${this.controller}/related/${companyName}`);
+		return req.data;
+	};
+
 	handleSelectedFilterForTheOrganisationApiCall = (filter: number) => {
 		if (filter == 1) {
 			return "/active";

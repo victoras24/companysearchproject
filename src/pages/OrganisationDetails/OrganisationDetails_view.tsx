@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import useSaveCompany from "@/hooks/useSaveCompany";
 import { useAuth } from "@/context/AuthStoreContext";
 import { observer } from "mobx-react";
@@ -40,6 +40,8 @@ import {
 	Info,
 	Lock,
 	FileText,
+	Link,
+	Loader2,
 } from "lucide-react";
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
@@ -52,6 +54,7 @@ const OrganisationDetails: React.FC = observer(() => {
 	const [model] = useState(
 		() => new OrganisationDetailsModel(`${companyId}`, id)
 	);
+	const [activeTab, setActiveTab] = useState("overview");
 	const cartStore = useCartStore();
 
 	const handleOrderReport = (company: gEntities.IOrganisationDetails) => {
@@ -64,6 +67,16 @@ const OrganisationDetails: React.FC = observer(() => {
 		};
 
 		cartStore.addItem(cartItem);
+	};
+
+	const handleTabChange = (value: string) => {
+		setActiveTab(value);
+
+		if (value === "people" && !model.officialsLoaded) {
+			model.loadOfficials();
+		} else if (value === "related" && !model.relatedLoaded) {
+			model.loadRelatedCompanies();
+		}
 	};
 
 	useEffect(() => {
@@ -106,7 +119,7 @@ const OrganisationDetails: React.FC = observer(() => {
 					model.addressData?.territory,
 			  ]
 					.filter(Boolean)
-					.join(", ")
+					.join(" ")
 			: "Address not available";
 
 	const isSaved = (company: gEntities.ICompany) => {
@@ -133,6 +146,20 @@ const OrganisationDetails: React.FC = observer(() => {
 					.join("")
 			: "CO";
 	};
+
+	const TabLoadingSkeleton = () => (
+		<div className="space-y-4 p-6">
+			<div className="flex items-center space-x-4">
+				<Skeleton className="h-12 w-12 rounded-full" />
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-[200px]" />
+					<Skeleton className="h-4 w-[160px]" />
+				</div>
+			</div>
+			<Skeleton className="h-4 w-full" />
+			<Skeleton className="h-4 w-3/4" />
+		</div>
+	);
 
 	return (
 		<div className="container mx-auto max-w-4xl p-6 space-y-8">
@@ -178,10 +205,15 @@ const OrganisationDetails: React.FC = observer(() => {
 				</div>
 			</div>
 
-			<Tabs defaultValue="overview" className="w-full">
-				<TabsList className="grid w-full max-w-md grid-cols-2">
+			<Tabs
+				value={activeTab}
+				onValueChange={handleTabChange}
+				className="w-full"
+			>
+				<TabsList className="grid w-full max-w-xxl grid-cols-3">
 					<TabsTrigger value="overview">Overview</TabsTrigger>
 					<TabsTrigger value="people">Key People</TabsTrigger>
+					<TabsTrigger value="related">Related</TabsTrigger>
 				</TabsList>
 				<TabsContent value="overview" className="space-y-6 pt-4">
 					<Card>
@@ -240,61 +272,68 @@ const OrganisationDetails: React.FC = observer(() => {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
 								<Users className="h-5 w-5" /> Key People
+								{model.isLoadingOfficials && (
+									<Loader2 className="h-4 w-4 animate-spin ml-2" />
+								)}
 							</CardTitle>
 							<CardDescription>
 								Officials and key individuals involved with the company.
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<ScrollArea className="h-[400px] pr-4">
-								{Array.isArray(officials) && officials.length > 0 ? (
-									<div className="space-y-4">
-										{officials.map((person, index) => (
-											<div
-												key={index}
-												className="flex items-start space-x-4 py-4"
-											>
-												<Avatar className="h-10 w-10 border">
-													<AvatarFallback className="bg-primary/10">
-														{getInitials(person.personOrOrganisationName)}
-													</AvatarFallback>
-												</Avatar>
-												<div className="space-y-1">
-													<p className="font-medium leading-none">
-														{person.personOrOrganisationName}
-													</p>
-													<p className="text-sm text-muted-foreground">
-														Official position: {person.officialPosition}
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Address:{" "}
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Country:{" "}
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Date of Appointment:{" "}
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Previous Address:{" "}
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
+							{model.isLoadingOfficials ? (
+								<TabLoadingSkeleton />
+							) : (
+								<ScrollArea className="h-[400px] pr-4">
+									{Array.isArray(officials) && officials.length > 0 ? (
+										<div className="space-y-4">
+											{officials.map((person, index) => (
+												<div
+													key={index}
+													className="flex items-start space-x-4 py-4"
+												>
+													<Avatar className="h-10 w-10 border">
+														<AvatarFallback className="bg-primary/10">
+															{getInitials(person.personOrOrganisationName)}
+														</AvatarFallback>
+													</Avatar>
+													<div className="space-y-1">
+														<p className="font-medium leading-none">
+															{person.personOrOrganisationName}
+														</p>
+														<p className="text-sm text-muted-foreground">
+															Official position: {person.officialPosition}
+														</p>
+														<p className="text-sm text-muted-foreground flex items-center">
+															Address:{" "}
+															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+														</p>
+														<p className="text-sm text-muted-foreground flex items-center">
+															Country:{" "}
+															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+														</p>
+														<p className="text-sm text-muted-foreground flex items-center">
+															Date of Appointment:{" "}
+															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+														</p>
+														<p className="text-sm text-muted-foreground flex items-center">
+															Previous Address:{" "}
+															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+														</p>
+													</div>
 												</div>
-											</div>
-										))}
-									</div>
-								) : (
-									<div className="flex flex-col items-center justify-center py-12 text-center">
-										<User className="h-12 w-12 text-muted-foreground/30 mb-3" />
-										<p className="text-muted-foreground">
-											No officials data available
-										</p>
-									</div>
-								)}
-							</ScrollArea>
+											))}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-12 text-center">
+											<User className="h-12 w-12 text-muted-foreground/30 mb-3" />
+											<p className="text-muted-foreground">
+												No officials data available
+											</p>
+										</div>
+									)}
+								</ScrollArea>
+							)}
 						</CardContent>
 						<CardFooter>
 							<Button
@@ -309,6 +348,65 @@ const OrganisationDetails: React.FC = observer(() => {
 								Order Full Company Report
 							</Button>
 						</CardFooter>
+					</Card>
+				</TabsContent>
+				<TabsContent value={"related"} className="pt-4">
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Link className="h-5 w-5" />
+								Potentially Related Companies
+								{model.isLoadingRelated && (
+									<Loader2 className="h-4 w-4 animate-spin ml-2" />
+								)}
+							</CardTitle>
+							<CardDescription>
+								Related companies with {model.detailedData?.organisationName}
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							{model.isLoadingRelated ? (
+								<TabLoadingSkeleton />
+							) : (
+								<ScrollArea className="h-[400px] pr-4">
+									{Array.isArray(model.relatedCompanies) &&
+									model.relatedCompanies.length > 0 ? (
+										<div className="space-y-0">
+											{model.relatedCompanies.map((relatedCompany, index) => (
+												<div key={index}>
+													<div className="flex items-start space-x-4 py-4">
+														<Avatar className="h-10 w-10 border">
+															<AvatarFallback className="bg-primary/10">
+																{getInitials(relatedCompany.relatedCompany)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="space-y-1">
+															<p className="font-medium leading-none">
+																{relatedCompany.relatedCompany}
+															</p>
+															<p className="text-sm text-muted-foreground">
+																Official position:{" "}
+																{relatedCompany.officialPosition}
+															</p>
+														</div>
+													</div>
+													{index < model.relatedCompanies.length - 1 && (
+														<Separator />
+													)}
+												</div>
+											))}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-12 text-center">
+											<Link className="h-12 w-12 text-muted-foreground/30 mb-3" />
+											<p className="text-muted-foreground">
+												No related data available
+											</p>
+										</div>
+									)}
+								</ScrollArea>
+							)}
+						</CardContent>
 					</Card>
 				</TabsContent>
 			</Tabs>

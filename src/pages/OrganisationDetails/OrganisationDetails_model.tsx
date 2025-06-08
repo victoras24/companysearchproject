@@ -9,11 +9,18 @@ import type { gEntities } from "@/gEntities";
 
 class OrganisationDetailsModel {
 	@observable accessor isLoading: boolean = true;
-	detailedData?: gEntities.IOrganisationDetails;
+	@observable accessor isLoadingOfficials: boolean = false;
+	@observable accessor isLoadingRelated: boolean = false;
 
+	detailedData?: gEntities.IOrganisationDetails;
 	@observable accessor detailedOfficialsData: any;
 	@observable accessor addressData: any;
 	@observable accessor officialsData: any;
+	@observable accessor relatedCompanies: gEntities.IRelatedCompany[] = [];
+
+	@observable accessor officialsLoaded: boolean = false;
+	@observable accessor relatedLoaded: boolean = false;
+
 	CompaniesApi: ICompaniesApi;
 	OfficialsApi: IOfficialsApi;
 	registrationNo: string;
@@ -42,23 +49,59 @@ class OrganisationDetailsModel {
 			);
 			if (res) {
 				this.setDetailData(res);
-			}
-			if (res.addressSeqNo !== "") {
-				const addressRes = await CompaniesApi.getOrganisationAddress(
-					res.addressSeqNo
-				);
-				if (addressRes) {
-					this.setAddressData(addressRes);
+
+				if (res.addressSeqNo !== "") {
+					const addressRes = await CompaniesApi.getOrganisationAddress(
+						res.addressSeqNo
+					);
+					if (addressRes) {
+						this.setAddressData(addressRes);
+					}
 				}
 			}
+		} catch (error) {
+			console.error("Error fetching detail data:", error);
+		}
+	};
+
+	@action
+	loadOfficials = async () => {
+		if (this.officialsLoaded || this.isLoadingOfficials) return;
+
+		this.setIsLoadingOfficials(true);
+		try {
 			const officialRes = await CompaniesApi.getOrganisationOfficials(
 				this.registrationNo
 			);
 			if (officialRes) {
 				this.setOfficialsData(officialRes);
 			}
+			this.officialsLoaded = true;
 		} catch (error) {
-			console.error("Error fetching detail data:", error);
+			console.error("Error fetching officials data:", error);
+		} finally {
+			this.setIsLoadingOfficials(false);
+		}
+	};
+
+	@action
+	loadRelatedCompanies = async () => {
+		if (this.relatedLoaded || this.isLoadingRelated || !this.detailedData)
+			return;
+
+		this.setIsLoadingRelated(true);
+		try {
+			const relatedCompanies = await CompaniesApi.getRelatedCompanies(
+				this.detailedData.organisationName
+			);
+			if (relatedCompanies) {
+				this.setRelatedCompanies(relatedCompanies);
+			}
+			this.relatedLoaded = true;
+		} catch (error) {
+			console.error("Error fetching related companies:", error);
+		} finally {
+			this.setIsLoadingRelated(false);
 		}
 	};
 
@@ -78,6 +121,11 @@ class OrganisationDetailsModel {
 	};
 
 	@action
+	setRelatedCompanies = (relatedCompanies: gEntities.IRelatedCompany[]) => {
+		this.relatedCompanies = relatedCompanies;
+	};
+
+	@action
 	setOfficialsData = (officialsData: gEntities.ICompanyAddress) => {
 		this.officialsData = officialsData;
 	};
@@ -85,6 +133,16 @@ class OrganisationDetailsModel {
 	@action
 	setIsLoading = (isLoading: boolean) => {
 		this.isLoading = isLoading;
+	};
+
+	@action
+	setIsLoadingOfficials = (isLoading: boolean) => {
+		this.isLoadingOfficials = isLoading;
+	};
+
+	@action
+	setIsLoadingRelated = (isLoading: boolean) => {
+		this.isLoadingRelated = isLoading;
 	};
 }
 

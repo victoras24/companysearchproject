@@ -24,6 +24,12 @@ export namespace gEntities {
 		registrationNo: string;
 	}
 
+	export interface IRelatedCompany {
+		organisationName: string;
+		relatedCompany: string;
+		officialPosition: string;
+	}
+
 	export interface ICompanyAddress {
 		addressSeqNo: number;
 		street: string;
