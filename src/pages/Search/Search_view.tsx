@@ -18,7 +18,6 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useSaveCompany from "@/hooks/useSaveCompany";
 import {
@@ -90,11 +89,7 @@ export const Search = observer(() => {
 								onChange={(e) => model.handleInputChange(e.target.value)}
 							/>
 							<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-								{model.isLoading ? (
-									<Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
-								) : (
-									<SearchIcon className="h-4 w-4 text-muted-foreground" />
-								)}
+								<SearchIcon className="h-4 w-4 text-muted-foreground" />
 							</div>
 							{model.searchQuery && (
 								<div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -157,20 +152,11 @@ export const Search = observer(() => {
 					</div>
 
 					{model.isLoading ? (
-						<div className="search-results-loading space-y-4">
-							{[1, 2, 3].map((i) => (
-								<Card key={i} className="search-result-skeleton">
-									<CardContent className="p-4">
-										<div className="flex justify-between items-start">
-											<div className="space-y-2">
-												<Skeleton className="h-4 w-[250px]" />
-												<Skeleton className="h-3 w-[200px]" />
-											</div>
-											<Skeleton className="h-8 w-16 rounded-full" />
-										</div>
-									</CardContent>
-								</Card>
-							))}
+						<div className="flex flex-col items-center justify-center py-12 text-center">
+							<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
+							<p className="text-muted-foreground">
+								Searching for {model.searchQuery}
+							</p>
 						</div>
 					) : model.searchData.length === 0 &&
 					  model.searchQuery.trim() === "" ? (

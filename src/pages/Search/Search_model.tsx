@@ -53,6 +53,9 @@ class SearchModel {
 	@action
 	handleInputChange = (value: string) => {
 		this.setSearchQuery(value);
+		if (value.trim()) {
+			this.setLoading(true);
+		}
 	};
 
 	@action
