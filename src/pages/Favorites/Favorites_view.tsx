@@ -110,7 +110,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium">
-				<Link to={`/search/${company.registrationNo}/${company.entryId}`}>
+				<Link to={`/search/${company.registrationNo}`}>
 					{company.organisationName}
 				</Link>
 			</TableCell>

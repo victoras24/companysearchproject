@@ -51,8 +51,7 @@ class OrganisationDetailsModel {
 	getDetailedOrganisation = async () => {
 		try {
 			const res = await CompaniesApi.getDetailedOrganisation(
-				this.registrationNo,
-				this.entryId
+				this.registrationNo
 			);
 			if (res) {
 				this.setDetailData(res);

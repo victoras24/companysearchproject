@@ -163,9 +163,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium py-2">
-				<Link to={`/search/${company.registrationNo}/${company.id}`}>
-					{company.name}
-				</Link>
+				<Link to={`/search/${company.registrationNo}`}>{company.name}</Link>
 			</TableCell>
 			<TableCell className="w-12 text-right">
 				<Button
