@@ -192,7 +192,6 @@ const Organiser: React.FC = observer(() => {
 	const [activeGroupId, setActiveGroupId] = useState(null);
 	const [, setActiveCompanyId] = useState(null);
 
-	// Configure DnD sensors
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -251,8 +250,6 @@ const Organiser: React.FC = observer(() => {
 			);
 
 			model.setGroups(updatedGroups);
-			// Save new order to database
-			// model.updateCompaniesOrder(updatedCompanies, groupId, user.uid);
 		}
 	};
 

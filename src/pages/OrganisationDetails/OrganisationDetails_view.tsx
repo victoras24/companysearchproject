@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
-import { useParams } from "react-router";
+import { NavLink, useParams } from "react-router";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const { companyId, entryId } = useParams();
@@ -282,9 +282,10 @@ const OrganisationDetails: React.FC = observer(() => {
 									{Array.isArray(officials) && officials.length > 0 ? (
 										<div className="space-y-4">
 											{officials.map((person, index) => (
-												<div
+												<NavLink
 													key={index}
 													className="flex items-start space-x-4 py-4"
+													to={`/official/${person.personOrOrganisationName}`}
 												>
 													<Avatar className="h-10 w-10 border">
 														<AvatarFallback className="bg-primary/10">
@@ -315,7 +316,7 @@ const OrganisationDetails: React.FC = observer(() => {
 															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
 														</p>
 													</div>
-												</div>
+												</NavLink>
 											))}
 										</div>
 									) : (

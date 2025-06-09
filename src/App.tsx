@@ -15,6 +15,7 @@ import Cart from "./pages/Cart/Cart_view";
 import { CartStoreProvider } from "./context/CartStore";
 import ReturnForm from "./pages/ReturnForm/ReturnForm_view";
 import { lazy, Suspense } from "react";
+import PersonOrOrganisation from "./pages/PersonOrOrganisation/PersonOrOrganisation_view";
 const Home = lazy(() => import("./pages/Home/Home"));
 
 const PageLoader = () => (
@@ -55,6 +56,11 @@ function AppRoutes() {
 							path="favorites"
 							element={user ? <Favorites /> : <Account />}
 						/>
+						<Route
+							path="official/:personOrOrganisationName"
+							element={<PersonOrOrganisation />}
+						/>
+
 						<Route
 							path="organiser"
 							element={user ? <Organiser /> : <Account />}
