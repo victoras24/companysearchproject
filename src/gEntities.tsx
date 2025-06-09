@@ -28,6 +28,7 @@ export namespace gEntities {
 		organisationName: string;
 		relatedCompany: string;
 		officialPosition: string;
+		registrationNo: string;
 	}
 
 	export interface ICompanyAddress {

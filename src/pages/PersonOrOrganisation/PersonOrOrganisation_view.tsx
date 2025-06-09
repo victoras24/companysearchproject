@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Link, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { NavLink, useParams } from "react-router";
 import PersonOrOrganisationModel from "./PersonOrOrganisation_model";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { observer } from "mobx-react";
@@ -71,7 +71,10 @@ const PersonOrOrganisation: React.FC = observer(() => {
 						  model.relatedCompanies.length > 0 ? (
 							<div className="space-y-0">
 								{model.relatedCompanies.map((relatedCompany, index) => (
-									<div key={index}>
+									<NavLink
+										key={index}
+										to={`/search/${relatedCompany.registrationNo}`}
+									>
 										<div className="flex items-start space-x-4 py-4">
 											<Avatar className="h-10 w-10 border">
 												<AvatarFallback className="bg-primary/10">
@@ -88,7 +91,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 											</div>
 										</div>
 										{index < model.relatedCompanies.length - 1 && <Separator />}
-									</div>
+									</NavLink>
 								))}
 							</div>
 						) : (

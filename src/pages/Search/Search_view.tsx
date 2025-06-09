@@ -193,7 +193,7 @@ export const Search = observer(() => {
 									className="search-result-card hover:shadow-md transition-shadow"
 								>
 									<NavLink
-										to={`/search/${data.registrationNo}/${data.entryId}`}
+										to={`/search/${data.registrationNo}`}
 										state={{ registrationNo: data.registrationNo }}
 										className="no-underline text-foreground"
 									>
