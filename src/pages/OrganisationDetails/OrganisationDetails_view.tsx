@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
 import useSaveCompany from "@/hooks/useSaveCompany";
 import { useAuth } from "@/context/AuthStoreContext";
 import { observer } from "mobx-react";
@@ -45,6 +44,7 @@ import {
 } from "lucide-react";
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
+import { useParams } from "react-router";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const { companyId, entryId } = useParams();
@@ -71,12 +71,6 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const handleTabChange = (value: string) => {
 		setActiveTab(value);
-
-		if (value === "people" && !model.officialsLoaded) {
-			model.loadOfficials();
-		} else if (value === "related" && !model.relatedLoaded) {
-			model.loadRelatedCompanies();
-		}
 	};
 
 	useEffect(() => {

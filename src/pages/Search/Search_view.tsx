@@ -84,7 +84,7 @@ export const Search = observer(() => {
 					<div className="search-input-container flex gap-2 mb-6">
 						<div className="search-input-wrapper relative flex-1">
 							<Input
-								className="pl-10 pr-10" // Add right padding for the X button
+								className="pl-10 pr-10"
 								placeholder={`Enter ${model.selectedOption}'s name`}
 								value={model.searchQuery}
 								onChange={(e) => model.handleInputChange(e.target.value)}
@@ -144,38 +144,6 @@ export const Search = observer(() => {
 											</TabsList>
 										</Tabs>
 									</div>
-
-									{/* <div className="space-y-2">
-										<h3 className="text-sm font-medium">Filter By</h3>
-										<Select
-											value={model.selectedFilter}
-											onValueChange={(e: any) => model.handleSelectFilter(e)}
-										>
-											<SelectTrigger className="w-full">
-												<SelectValue placeholder="Select filter" />
-											</SelectTrigger>
-											<SelectContent>
-												{model.selectedOption === "Organisation" ? (
-													<>
-														<SelectItem value="name">Company Name</SelectItem>
-														<SelectItem value="reg_no">
-															Registration Number
-														</SelectItem>
-														<SelectItem value="status">Status</SelectItem>
-													</>
-												) : (
-													<>
-														<SelectItem value="name">Official Name</SelectItem>
-														<SelectItem value="position">Position</SelectItem>
-														<SelectItem value="company">
-															Associated Company
-														</SelectItem>
-													</>
-												)}
-											</SelectContent>
-										</Select>
-									</div> */}
-
 									<Button
 										variant="default"
 										className="mt-4"

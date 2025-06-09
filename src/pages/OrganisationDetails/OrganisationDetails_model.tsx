@@ -38,6 +38,13 @@ class OrganisationDetailsModel {
 	onMount = async () => {
 		await this.getDetailedOrganisation();
 		this.setIsLoading(false);
+		await this.backgroundLoading();
+	};
+
+	@action
+	backgroundLoading = () => {
+		this.loadOfficials();
+		this.loadRelatedCompanies();
 	};
 
 	@action
