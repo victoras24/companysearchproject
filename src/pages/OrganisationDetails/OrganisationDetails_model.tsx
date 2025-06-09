@@ -11,7 +11,7 @@ class OrganisationDetailsModel {
 	@observable accessor isLoading: boolean = true;
 	@observable accessor isLoadingOfficials: boolean = false;
 	@observable accessor isLoadingRelated: boolean = false;
-
+	@observable accessor activeTab: string;
 	detailedData?: gEntities.IOrganisationDetails;
 	@observable accessor detailedOfficialsData: any;
 	@observable accessor addressData: any;
@@ -24,14 +24,13 @@ class OrganisationDetailsModel {
 	CompaniesApi: ICompaniesApi;
 	OfficialsApi: IOfficialsApi;
 	registrationNo: string;
-	entryId: number;
 
-	constructor(registrationNo: string, entryId: number) {
+	constructor(registrationNo: string, activeTab: string) {
 		makeObservable(this);
 		this.CompaniesApi = CompaniesApi;
 		this.OfficialsApi = OfficialsApi;
 		this.registrationNo = registrationNo;
-		this.entryId = entryId;
+		this.activeTab = activeTab;
 	}
 
 	@action
@@ -149,6 +148,11 @@ class OrganisationDetailsModel {
 	@action
 	setIsLoadingRelated = (isLoading: boolean) => {
 		this.isLoadingRelated = isLoading;
+	};
+
+	@action
+	setActiveTab = (activeTab: string) => {
+		this.activeTab = activeTab;
 	};
 }
 

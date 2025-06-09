@@ -47,14 +47,11 @@ import { useCartStore } from "@/context/CartStore";
 import { NavLink, useParams } from "react-router";
 
 const OrganisationDetails: React.FC = observer(() => {
-	const { companyId, entryId } = useParams();
-	const id = parseInt(entryId || "", 10);
+	const { companyId } = useParams();
 	const { user } = useAuth();
 	const { handleSaveCompany } = useSaveCompany();
-	const [model] = useState(
-		() => new OrganisationDetailsModel(`${companyId}`, id)
-	);
-	const [activeTab, setActiveTab] = useState("overview");
+	const [model, setModel] = useState<OrganisationDetailsModel | null>(null);
+
 	const cartStore = useCartStore();
 
 	const handleOrderReport = (company: gEntities.IOrganisationDetails) => {
@@ -70,14 +67,21 @@ const OrganisationDetails: React.FC = observer(() => {
 	};
 
 	const handleTabChange = (value: string) => {
-		setActiveTab(value);
+		model?.setActiveTab(value);
 	};
 
 	useEffect(() => {
-		model.onMount();
+		if (companyId) {
+			const newModel = new OrganisationDetailsModel(`${companyId}`, "overview");
+			setModel(newModel);
+		}
+	}, [companyId]);
+
+	useEffect(() => {
+		model?.onMount();
 	}, [model]);
 
-	if (model.isLoading) {
+	if (model?.isLoading) {
 		return (
 			<div className="container mx-auto max-w-4xl p-6 space-y-6">
 				<div className="space-y-2">
@@ -93,7 +97,7 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 	}
 
-	if (!model.detailedData)
+	if (!model?.detailedData)
 		return (
 			<div className="container mx-auto max-w-4xl p-6">
 				<Alert>
@@ -104,13 +108,13 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 
 	const fullAddress =
-		model.addressData?.street ||
-		model.addressData?.territory ||
-		model.addressData?.building
+		model?.addressData?.street ||
+		model?.addressData?.territory ||
+		model?.addressData?.building
 			? [
-					model.addressData?.street,
-					model.addressData?.building,
-					model.addressData?.territory,
+					model?.addressData?.street,
+					model?.addressData?.building,
+					model?.addressData?.territory,
 			  ]
 					.filter(Boolean)
 					.join(" ")
@@ -122,14 +126,14 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 	};
 
-	const officials = model.officialsData;
-	const registrationDate = model.detailedData?.registrationDate
-		? moment(model.detailedData.registrationDate, "DD/MM/YYYY").format(
+	const officials = model?.officialsData;
+	const registrationDate = model?.detailedData?.registrationDate
+		? moment(model?.detailedData.registrationDate, "DD/MM/YYYY").format(
 				"MMMM D, YYYY"
 		  )
 		: "Not available";
 
-	const isActive = model.detailedData?.organisationStatus === "Εγγεγραμμένη";
+	const isActive = model?.detailedData?.organisationStatus === "Εγγεγραμμένη";
 
 	const getInitials = (name: string) => {
 		return name
@@ -160,7 +164,7 @@ const OrganisationDetails: React.FC = observer(() => {
 			<div className="flex items-start justify-between">
 				<div className="space-y-1">
 					<h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-						{model.detailedData?.organisationName}
+						{model?.detailedData?.organisationName}
 					</h1>
 					<p className="text-muted-foreground flex items-center gap-2">
 						<Calendar className="h-4 w-4" />
@@ -179,10 +183,10 @@ const OrganisationDetails: React.FC = observer(() => {
 									size="icon"
 									onClick={(e) => {
 										e.preventDefault();
-										handleSaveCompany(model.detailedData);
+										handleSaveCompany(model?.detailedData);
 									}}
 								>
-									{isSaved(model.detailedData) ? (
+									{isSaved(model?.detailedData) ? (
 										<Bookmark className="h-4 w-4" />
 									) : (
 										<BookmarkPlus className="h-4 w-4" />
@@ -190,7 +194,7 @@ const OrganisationDetails: React.FC = observer(() => {
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								{isSaved(model.detailedData)
+								{isSaved(model?.detailedData)
 									? "Remove from saved"
 									: "Save company"}
 							</TooltipContent>
@@ -200,7 +204,7 @@ const OrganisationDetails: React.FC = observer(() => {
 			</div>
 
 			<Tabs
-				value={activeTab}
+				value={model?.activeTab}
 				onValueChange={handleTabChange}
 				className="w-full"
 			>
@@ -226,7 +230,9 @@ const OrganisationDetails: React.FC = observer(() => {
 									<h3 className="text-sm font-medium text-muted-foreground">
 										Registration Number
 									</h3>
-									<p>{model.detailedData?.registrationNo || "Not available"}</p>
+									<p>
+										{model?.detailedData?.registrationNo || "Not available"}
+									</p>
 								</div>
 								<div className="space-y-2">
 									<h3 className="text-sm font-medium text-muted-foreground">
@@ -249,8 +255,8 @@ const OrganisationDetails: React.FC = observer(() => {
 							<Button
 								className="w-full"
 								onClick={() => {
-									if (model.detailedData) {
-										handleOrderReport(model.detailedData);
+									if (model?.detailedData) {
+										handleOrderReport(model?.detailedData);
 									}
 								}}
 							>
@@ -266,7 +272,7 @@ const OrganisationDetails: React.FC = observer(() => {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
 								<Users className="h-5 w-5" /> Key People
-								{model.isLoadingOfficials && (
+								{model?.isLoadingOfficials && (
 									<Loader2 className="h-4 w-4 animate-spin ml-2" />
 								)}
 							</CardTitle>
@@ -275,7 +281,7 @@ const OrganisationDetails: React.FC = observer(() => {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							{model.isLoadingOfficials ? (
+							{model?.isLoadingOfficials ? (
 								<TabLoadingSkeleton />
 							) : (
 								<ScrollArea className="h-[400px] pr-4">
@@ -333,8 +339,8 @@ const OrganisationDetails: React.FC = observer(() => {
 						<CardFooter>
 							<Button
 								onClick={() => {
-									if (model.detailedData) {
-										handleOrderReport(model.detailedData);
+									if (model?.detailedData) {
+										handleOrderReport(model?.detailedData);
 									}
 								}}
 								className="w-full"
@@ -350,25 +356,28 @@ const OrganisationDetails: React.FC = observer(() => {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
 								<Link className="h-5 w-5" />
-								Potentially Related Companies
-								{model.isLoadingRelated && (
+								Potentially Related Entities
+								{model?.isLoadingRelated && (
 									<Loader2 className="h-4 w-4 animate-spin ml-2" />
 								)}
 							</CardTitle>
 							<CardDescription>
-								Related companies with {model.detailedData?.organisationName}
+								Related companies with {model?.detailedData?.organisationName}
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							{model.isLoadingRelated ? (
+							{model?.isLoadingRelated ? (
 								<TabLoadingSkeleton />
 							) : (
 								<ScrollArea className="h-[400px] pr-4">
-									{Array.isArray(model.relatedCompanies) &&
-									model.relatedCompanies.length > 0 ? (
+									{Array.isArray(model?.relatedCompanies) &&
+									model?.relatedCompanies.length > 0 ? (
 										<div className="space-y-0">
-											{model.relatedCompanies.map((relatedCompany, index) => (
-												<div key={index}>
+											{model?.relatedCompanies.map((relatedCompany, index) => (
+												<NavLink
+													key={index}
+													to={`/search/${relatedCompany.registrationNo}`}
+												>
 													<div className="flex items-start space-x-4 py-4">
 														<Avatar className="h-10 w-10 border">
 															<AvatarFallback className="bg-primary/10">
@@ -385,10 +394,10 @@ const OrganisationDetails: React.FC = observer(() => {
 															</p>
 														</div>
 													</div>
-													{index < model.relatedCompanies.length - 1 && (
+													{index < model?.relatedCompanies.length - 1 && (
 														<Separator />
 													)}
-												</div>
+												</NavLink>
 											))}
 										</div>
 									) : (
