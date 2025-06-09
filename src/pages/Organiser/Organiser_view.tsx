@@ -163,7 +163,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium py-2">
-				<Link to={`/search/${company.registrationNo}/${company.entryId}`}>
+				<Link to={`/search/${company.registrationNo}/${company.id}`}>
 					{company.name}
 				</Link>
 			</TableCell>
@@ -220,8 +220,6 @@ const Organiser: React.FC = observer(() => {
 
 			const updatedGroups = arrayMove(model.groups, oldIndex, newIndex);
 			model.setGroups(updatedGroups);
-			// Save new order to database
-			// model.updateGroupsOrder(updatedGroups, user.uid);
 		}
 	};
 

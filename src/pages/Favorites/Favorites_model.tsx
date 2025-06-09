@@ -111,7 +111,11 @@ export class FavoritesModel {
 				...group,
 				companies: [
 					...group.companies,
-					{ name: company.organisationName, id: company.entryId },
+					{
+						name: company.organisationName,
+						id: company.entryId,
+						registrationNo: company.registrationNo,
+					},
 				],
 			};
 
