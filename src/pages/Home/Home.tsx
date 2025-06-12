@@ -1,6 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Database, Search, Zap, Shield } from "lucide-react";
+import {
+	Database,
+	Search,
+	Zap,
+	Shield,
+	Archive,
+	Clock,
+	Users,
+} from "lucide-react";
 import "./_home.css";
 
 // Import ShadcN components
@@ -14,6 +22,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import Footer from "./Footer";
 
 const Home: React.FC = () => {
 	const navigate = useNavigate();
@@ -48,36 +57,39 @@ const Home: React.FC = () => {
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Database className="h-6 w-6 " />
+								<Users className="h-6 w-6 text-primary" />
 							</div>
-							<CardTitle>Comprehensive Database</CardTitle>
+							<CardTitle>Ownership Intelligence</CardTitle>
 						</CardHeader>
 						<CardContent className="text-center text-muted-foreground">
-							Access detailed information on all registered Cyprus companies
+							Uncover complete ownership structures, shareholder histories, and
+							registered address changes over time.
 						</CardContent>
 					</Card>
 
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Zap className="h-6 w-6 " />
+								<Clock className="h-6 w-6 text-primary" />
 							</div>
-							<CardTitle>Real-time Updates</CardTitle>
+							<CardTitle>Real-time Data</CardTitle>
 						</CardHeader>
 						<CardContent className="text-center text-muted-foreground">
-							Stay informed with the latest company data and changes
+							Access the most current information directly from official Cyprus
+							government registry sources.
 						</CardContent>
 					</Card>
 
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
 							<div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-2">
-								<Shield className="h-6 w-6 " />
+								<Archive className="h-6 w-6 text-primary" />
 							</div>
-							<CardTitle>Verified Information</CardTitle>
+							<CardTitle>Historical Records</CardTitle>
 						</CardHeader>
 						<CardContent className="text-center text-muted-foreground">
-							Trust in our accurate and officially sourced data
+							Track company evolution with previous names, addresses, and
+							comprehensive change histories.
 						</CardContent>
 					</Card>
 				</div>
@@ -99,32 +111,13 @@ const Home: React.FC = () => {
 					</CardContent>
 				</Card>
 
-				{/* CTA Section */}
-				{/* <Card className="mb-16 bg-primary text-primary-foreground">
-					<CardHeader>
-						<CardTitle className="text-2xl text-center">
-							Need More Comprehensive Tools?
-						</CardTitle>
-						<CardDescription className="text-center text-primary-foreground/90">
-							Discover our advanced features for in-depth analysis and
-							reporting.
-						</CardDescription>
-					</CardHeader>
-					<CardFooter className="flex justify-center pb-6">
-						<Button variant="secondary" size="lg">
-							Explore Premium Features
-							<ChevronRight className="ml-2 h-4 w-4" />
-						</Button>
-					</CardFooter>
-				</Card> */}
-
 				{/* Updates Section */}
 				<Card className="mb-16">
 					<CardHeader>
 						<div className="flex items-center">
-							<CardTitle>Latest Updates</CardTitle>
+							<CardTitle>Platform Updates</CardTitle>
 							<Badge variant="outline" className="ml-auto">
-								New
+								Latest
 							</Badge>
 						</div>
 						<Separator />
@@ -133,19 +126,29 @@ const Home: React.FC = () => {
 						<div className="flex gap-4 items-start">
 							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
 							<p className="text-sm text-muted-foreground">
-								New feature: Export search results to CSV
+								Enhanced related company discovery for comprehensive business
+								network analysis
 							</p>
 						</div>
 						<div className="flex gap-4 items-start">
 							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
 							<p className="text-sm text-muted-foreground">
-								Database updated with Q2 2024 company registrations
+								Direct official company name search for precise, targeted
+								results
 							</p>
 						</div>
 						<div className="flex gap-4 items-start">
 							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
 							<p className="text-sm text-muted-foreground">
-								Improved search algorithm for faster results
+								Weekly database synchronization with official Cyprus government
+								registry
+							</p>
+						</div>
+						<div className="flex gap-4 items-start">
+							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
+							<p className="text-sm text-muted-foreground">
+								Optimized search algorithms delivering faster, more accurate
+								results
 							</p>
 						</div>
 					</CardContent>
@@ -159,31 +162,49 @@ const Home: React.FC = () => {
 					<Accordion type="single" collapsible className="w-full">
 						<AccordionItem value="item-1">
 							<AccordionTrigger>
-								How often is the database updated?
+								How current is the company information?
 							</AccordionTrigger>
 							<AccordionContent>
-								Our database is updated daily with the latest information from
-								official sources.
+								Our database is synchronized weekly with the official Cyprus
+								government registry, ensuring you receive the most up-to-date
+								information available.
 							</AccordionContent>
 						</AccordionItem>
 						<AccordionItem value="item-2">
 							<AccordionTrigger>
-								Can I integrate this data into my own systems?
+								What information is included in detailed reports?
 							</AccordionTrigger>
 							<AccordionContent>
-								Yes, we offer API access for seamless integration. Contact our
-								support team for details.
+								Comprehensive reports include current shareholders and
+								addresses, all company documents, historical information on
+								company changes, previous names, registered address history, and
+								mortgage records where applicable.
+							</AccordionContent>
+						</AccordionItem>
+						<AccordionItem value="item-3">
+							<AccordionTrigger>
+								Can I integrate this data into my systems?
+							</AccordionTrigger>
+							<AccordionContent>
+								Yes, we offer API access for seamless integration into your
+								existing workflows. Contact our support team for technical
+								documentation and implementation guidance.
+							</AccordionContent>
+						</AccordionItem>
+						<AccordionItem value="item-4">
+							<AccordionTrigger>
+								How quickly are reports delivered?
+							</AccordionTrigger>
+							<AccordionContent>
+								Detailed company reports are typically delivered within 6 hours
+								of your request, complete with professional analysis and summary
+								prepared by our research experts.
 							</AccordionContent>
 						</AccordionItem>
 					</Accordion>
-					{/* <div className="text-center mt-6">
-						<Button variant="link" className="gap-1">
-							View all FAQs
-							<ExternalLink className="h-4 w-4" />
-						</Button>
-					</div> */}
 				</div>
 			</div>
+			<Footer />
 		</div>
 	);
 };

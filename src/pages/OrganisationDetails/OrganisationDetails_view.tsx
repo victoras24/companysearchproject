@@ -27,6 +27,14 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 
 import {
 	BookmarkPlus,
@@ -41,6 +49,8 @@ import {
 	FileText,
 	Link,
 	Loader2,
+	Clock,
+	CheckCircle,
 } from "lucide-react";
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
@@ -80,6 +90,60 @@ const OrganisationDetails: React.FC = observer(() => {
 	useEffect(() => {
 		model?.onMount();
 	}, [model]);
+
+	// Sample available documents data
+	const availableDocuments = [
+		{
+			document: "Certificate of Incorporation",
+			status: "Available",
+			lastUpdated: "2024-01-15",
+		},
+		{
+			document: "Memorandum of Association",
+			status: "Available",
+			lastUpdated: "2024-01-15",
+		},
+		{
+			document: "Articles of Association",
+			status: "Available",
+			lastUpdated: "2024-01-15",
+		},
+		{
+			document: "Annual Returns (Latest)",
+			status: "Available",
+			lastUpdated: "2024-03-20",
+		},
+		{
+			document: "Directors Register",
+			status: "Available",
+			lastUpdated: "2024-05-10",
+		},
+		{
+			document: "Shareholders Register",
+			status: "Available",
+			lastUpdated: "2024-05-10",
+		},
+		{
+			document: "Registered Address Changes",
+			status: "Available",
+			lastUpdated: "2024-02-28",
+		},
+		{
+			document: "Company Name Changes",
+			status: "Available",
+			lastUpdated: "2023-11-12",
+		},
+		{
+			document: "Mortgage Records",
+			status: "Available",
+			lastUpdated: "2024-01-30",
+		},
+		{
+			document: "Dissolution Records",
+			status: "Not Applicable",
+			lastUpdated: "-",
+		},
+	];
 
 	if (model?.isLoading) {
 		return (
@@ -251,19 +315,6 @@ const OrganisationDetails: React.FC = observer(() => {
 								<p>{fullAddress}</p>
 							</div>
 						</CardContent>
-						<CardFooter>
-							<Button
-								className="w-full"
-								onClick={() => {
-									if (model?.detailedData) {
-										handleOrderReport(model?.detailedData);
-									}
-								}}
-							>
-								<FileText className="mr-2 h-4 w-4" />
-								Order Full Company Report
-							</Button>
-						</CardFooter>
 					</Card>
 				</TabsContent>
 
@@ -336,19 +387,6 @@ const OrganisationDetails: React.FC = observer(() => {
 								</ScrollArea>
 							)}
 						</CardContent>
-						<CardFooter>
-							<Button
-								onClick={() => {
-									if (model?.detailedData) {
-										handleOrderReport(model?.detailedData);
-									}
-								}}
-								className="w-full"
-							>
-								<FileText className="mr-2 h-4 w-4" />
-								Order Full Company Report
-							</Button>
-						</CardFooter>
 					</Card>
 				</TabsContent>
 				<TabsContent value={"related"} className="pt-4">
@@ -414,6 +452,111 @@ const OrganisationDetails: React.FC = observer(() => {
 					</Card>
 				</TabsContent>
 			</Tabs>
+
+			{/* Comprehensive Reports Section */}
+			<Card className="bg-primary/5 border-primary/20">
+				<CardHeader>
+					<div className="flex items-center gap-3">
+						<div className="bg-primary/10 p-2 rounded-lg">
+							<FileText className="h-5 w-5 text-primary" />
+						</div>
+						<div>
+							<CardTitle className="text-xl">Comprehensive Reports</CardTitle>
+							<CardDescription>
+								Professional analysis within 6 hours
+							</CardDescription>
+						</div>
+					</div>
+				</CardHeader>
+				<CardContent>
+					<p className="text-muted-foreground mb-4">
+						Receive detailed reports with current information from the official
+						registry, including comprehensive data gathering and professional
+						summaries prepared by our experts.
+					</p>
+					<div className="space-y-2">
+						<div className="flex items-center gap-2 text-sm">
+							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
+							<span>Current and historical shareholders with addresses</span>
+						</div>
+						<div className="flex items-center gap-2 text-sm">
+							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
+							<span>Complete company documents and filings</span>
+						</div>
+						<div className="flex items-center gap-2 text-sm">
+							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
+							<span>Historical changes, previous names, and mortgages</span>
+						</div>
+					</div>
+				</CardContent>
+				<CardFooter>
+					<Button
+						className="w-full"
+						onClick={() => {
+							if (model?.detailedData) {
+								handleOrderReport(model?.detailedData);
+							}
+						}}
+					>
+						<FileText className="mr-2 h-4 w-4" />
+						Order Full Company Report
+					</Button>
+				</CardFooter>
+			</Card>
+
+			{/* Available Documents Section */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2">
+						<FileText className="h-5 w-5" />
+						Available Documents
+					</CardTitle>
+					<CardDescription>
+						Documents and records available in the comprehensive report
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Document Type</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead>Last Updated</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{availableDocuments.map((doc, index) => (
+								<TableRow key={index}>
+									<TableCell className="font-medium">{doc.document}</TableCell>
+									<TableCell>
+										<div className="flex items-center gap-2">
+											{doc.status === "Available" ? (
+												<>
+													<CheckCircle className="h-4 w-4 text-green-600" />
+													<Badge
+														variant="outline"
+														className="text-green-700 border-green-300"
+													>
+														{doc.status}
+													</Badge>
+												</>
+											) : (
+												<>
+													<Info className="h-4 w-4 text-gray-500" />
+													<Badge variant="secondary">{doc.status}</Badge>
+												</>
+											)}
+										</div>
+									</TableCell>
+									<TableCell className="text-muted-foreground">
+										{doc.lastUpdated}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</CardContent>
+			</Card>
 		</div>
 	);
 });

@@ -16,6 +16,8 @@ import { CartStoreProvider } from "./context/CartStore";
 import ReturnForm from "./pages/ReturnForm/ReturnForm_view";
 import { lazy, Suspense } from "react";
 import PersonOrOrganisation from "./pages/PersonOrOrganisation/PersonOrOrganisation_view";
+import LegalDisclaimer from "./pages/Legal/LegalDisclaimer_view";
+import TermsOfService from "./pages/Legal/TermsOfService_view";
 const Home = lazy(() => import("./pages/Home/Home"));
 
 const PageLoader = () => (
@@ -69,6 +71,8 @@ function AppRoutes() {
 						<Route path="cart" element={<Cart />} />
 
 						<Route path="/payment-result" element={<ReturnForm />} />
+						<Route path="/legal-disclaimer" element={<LegalDisclaimer />} />
+						<Route path="/terms" element={<TermsOfService />} />
 					</Route>
 				</Routes>
 			</Suspense>
