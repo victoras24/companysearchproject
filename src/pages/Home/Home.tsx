@@ -1,14 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-	Database,
-	Search,
-	Zap,
-	Shield,
-	Archive,
-	Clock,
-	Users,
-} from "lucide-react";
+import { Search, Archive, Clock, Users } from "lucide-react";
 import "./_home.css";
 
 // Import ShadcN components

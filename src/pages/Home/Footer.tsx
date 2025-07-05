@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Mail, ExternalLink } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const Footer: React.FC = () => {
@@ -59,15 +59,6 @@ const Footer: React.FC = () => {
 								>
 									Terms
 								</NavLink>
-								<a
-									href="https://www.companies.gov.cy"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-								>
-									Official Registry
-									<ExternalLink className="h-3 w-3" />
-								</a>
 							</nav>
 						</div>
 					</div>
