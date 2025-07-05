@@ -74,14 +74,11 @@ const OrganisationDetails: React.FC = observer(() => {
   };
 
   useEffect(() => {
-    if (companyData.addressSeqNo) {
-      const newModel = new OrganisationDetailsModel(
-        Number(companyData.addressSeqNo),
-        "overview"
-      );
+    if (companyData) {
+      const newModel = new OrganisationDetailsModel(companyData, "overview");
       setModel(newModel);
     }
-  }, [companyData.addressSeqNo]);
+  }, [companyData.addressSeqNo, companyData.registrationNo]);
 
   useEffect(() => {
     model?.onMount();
@@ -128,7 +125,7 @@ const OrganisationDetails: React.FC = observer(() => {
 
   const isSaved = (company: gEntities.ICompany) => {
     return user?.savedCompanies.some(
-      (saved: gEntities.ISavedCompany) => saved.entryId === company.entryId
+      (saved: gEntities.ISavedCompany) => saved.id === company.id
     );
   };
 
@@ -277,6 +274,13 @@ const OrganisationDetails: React.FC = observer(() => {
                       {officials.map((person, index) => (
                         <NavLink
                           key={index}
+                          state={{
+                            organisationName: companyData.organisationName,
+                            registrationNo: companyData.registrationNo,
+                            registrationDate: companyData.registrationDate,
+                            organisationStatus: companyData.organisationStatus,
+                            addressSeqNo: companyData.addressSeqNo,
+                          }}
                           className="flex items-start space-x-4 py-4"
                           to={`/official/${person.personOrOrganisationName}`}
                         >

@@ -33,13 +33,13 @@ export class CompaniesApi {
 
   getOrganisationOfficials = async (registrationNo: string) => {
     const req = await axios.get(
-      `${this.controller}/${registrationNo}/officials`
+      `${this.controller}/${registrationNo}/key-people`
     );
     return req.data;
   };
 
   getRelatedCompanies = async (companyName: string) => {
-    const req = await axios.get(`${this.controller}/related/${companyName}`);
+    const req = await axios.get(`${this.controller}/${companyName}/related`);
     return req.data;
   };
 

@@ -17,19 +17,19 @@ class OrganisationDetailsModel {
   @observable accessor addressData: any;
   @observable accessor officialsData: any;
   @observable accessor relatedCompanies: gEntities.IRelatedCompany[] = [];
+  companyData: gEntities.ICompany;
 
   @observable accessor officialsLoaded: boolean = false;
   @observable accessor relatedLoaded: boolean = false;
 
   CompaniesApi: ICompaniesApi;
   OfficialsApi: IOfficialsApi;
-  addressSeqNo: number;
 
-  constructor(addressSeqNo: number, activeTab: string) {
+  constructor(companyData: gEntities.ICompany, activeTab: string) {
     makeObservable(this);
     this.CompaniesApi = CompaniesApi;
     this.OfficialsApi = OfficialsApi;
-    this.addressSeqNo = addressSeqNo;
+    this.companyData = companyData;
     this.activeTab = activeTab;
   }
 
@@ -37,19 +37,21 @@ class OrganisationDetailsModel {
   onMount = async () => {
     await this.getCompanyAddress();
     this.setIsLoading(false);
-    // await this.backgroundLoading();
+    await this.backgroundLoading();
   };
 
-  //   @action
-  //   backgroundLoading = () => {
-  //     this.loadOfficials();
-  //     this.loadRelatedCompanies();
-  //   };
+  @action
+  backgroundLoading = () => {
+    this.loadKeyPeople();
+    this.loadRelatedCompanies();
+  };
 
   @action
   getCompanyAddress = async () => {
     try {
-      const res = await CompaniesApi.getOrganisationAddress(this.addressSeqNo);
+      const res = await CompaniesApi.getOrganisationAddress(
+        this.companyData.addressSeqNo
+      );
       if (res) {
         this.setCompanyAddress(res);
       }
@@ -58,46 +60,45 @@ class OrganisationDetailsModel {
     }
   };
 
-  //   @action
-  //   loadOfficials = async () => {
-  //     if (this.officialsLoaded || this.isLoadingOfficials) return;
+  @action
+  loadKeyPeople = async () => {
+    if (this.officialsLoaded || this.isLoadingOfficials) return;
 
-  //     this.setIsLoadingOfficials(true);
-  //     try {
-  //       const officialRes = await CompaniesApi.getOrganisationOfficials(
-  //         this.registrationNo
-  //       );
-  //       if (officialRes) {
-  //         this.setOfficialsData(officialRes);
-  //       }
-  //       this.officialsLoaded = true;
-  //     } catch (error) {
-  //       console.error("Error fetching officials data:", error);
-  //     } finally {
-  //       this.setIsLoadingOfficials(false);
-  //     }
-  //   };
+    this.setIsLoadingOfficials(true);
+    try {
+      const officialRes = await CompaniesApi.getOrganisationOfficials(
+        this.companyData.registrationNo
+      );
+      if (officialRes) {
+        this.setOfficialsData(officialRes);
+      }
+      this.officialsLoaded = true;
+    } catch (error) {
+      console.error("Error fetching officials data:", error);
+    } finally {
+      this.setIsLoadingOfficials(false);
+    }
+  };
 
-  //   @action
-  //   loadRelatedCompanies = async () => {
-  //     if (this.relatedLoaded || this.isLoadingRelated || !this.detailedData)
-  //       return;
+  @action
+  loadRelatedCompanies = async () => {
+    if (this.relatedLoaded || this.isLoadingRelated) return;
 
-  //     this.setIsLoadingRelated(true);
-  //     try {
-  //       const relatedCompanies = await CompaniesApi.getRelatedCompanies(
-  //         this.detailedData.organisationName
-  //       );
-  //       if (relatedCompanies) {
-  //         this.setRelatedCompanies(relatedCompanies);
-  //       }
-  //       this.relatedLoaded = true;
-  //     } catch (error) {
-  //       console.error("Error fetching related companies:", error);
-  //     } finally {
-  //       this.setIsLoadingRelated(false);
-  //     }
-  //   };
+    this.setIsLoadingRelated(true);
+    try {
+      const relatedCompanies = await CompaniesApi.getRelatedCompanies(
+        this.companyData.organisationName
+      );
+      if (relatedCompanies) {
+        this.setRelatedCompanies(relatedCompanies);
+      }
+      this.relatedLoaded = true;
+    } catch (error) {
+      console.error("Error fetching related companies:", error);
+    } finally {
+      this.setIsLoadingRelated(false);
+    }
+  };
 
   @action
   setCompanyAddress = (companyAddress: gEntities.ICompanyAddress) => {
