@@ -22,7 +22,7 @@ const useSaveCompany = () => {
 
 			const isAlreadySaved = user.savedCompanies.some(
 				(savedCompany: gEntities.ISavedCompany) =>
-					savedCompany.entryId === company.entryId
+					savedCompany.id === company.id
 			);
 
 			const currentUserRef = doc(firestore, "users", user.uid);
@@ -36,7 +36,7 @@ const useSaveCompany = () => {
 			if (isAlreadySaved) {
 				const updatedSavedCompanies = user.savedCompanies.filter(
 					(savedCompany: gEntities.ISavedCompany) =>
-						savedCompany.entryId !== company.entryId
+						savedCompany.id !== company.id
 				);
 
 				updateUser({

@@ -45,7 +45,7 @@ import {
 
 import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
-import { NavLink, useLocation, useParams } from "react-router";
+import { NavLink, useLocation } from "react-router";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const location = useLocation();

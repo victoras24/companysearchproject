@@ -51,7 +51,7 @@ export class FavoritesModel {
 			});
 			const updatedSavedCompanies = user.savedCompanies.filter(
 				(savedCompany: gEntities.ISavedCompany) =>
-					savedCompany.entryId !== company.entryId
+					savedCompany.id !== company.id
 			);
 
 			updateUser({
@@ -96,7 +96,7 @@ export class FavoritesModel {
 			const group = groups[groupIndex];
 
 			const companyExistsInGroup = group.companies.some(
-				(c: gEntities.ICompanyInGroup) => c.id === company.entryId
+				(c: gEntities.ICompanyInGroup) => c.id === company.id
 			);
 
 			if (companyExistsInGroup) {
@@ -113,7 +113,7 @@ export class FavoritesModel {
 					...group.companies,
 					{
 						name: company.organisationName,
-						id: company.entryId,
+						id: company.id,
 						registrationNo: company.registrationNo,
 					},
 				],
