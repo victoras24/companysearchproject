@@ -62,9 +62,7 @@ export const Search = observer(() => {
   const isCompanySaved = (companyId: number) => {
     if (!user || !user.savedCompanies) return false;
 
-    return user.savedCompanies.some(
-      (saved: any) => saved.entryId === companyId
-    );
+    return user.savedCompanies.some((saved: any) => saved.id === companyId);
   };
 
   return (
@@ -244,7 +242,7 @@ export const Search = observer(() => {
                             }}
                             disabled={isLoading}
                           >
-                            {isCompanySaved(data.entryId) ? (
+                            {isCompanySaved(data.id) ? (
                               <Bookmark className="h-4 w-4 text-primary" />
                             ) : (
                               <BookmarkPlus className="h-4 w-4" />

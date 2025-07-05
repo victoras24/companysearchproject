@@ -57,7 +57,7 @@ export namespace gEntities {
   }
 
   export interface ICompanyInGroup {
-    id: string;
+    id: number;
     name: string;
   }
 
