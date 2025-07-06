@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, useSearchParams } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { observer } from "mobx-react";
 import SearchModel from "./Search_model";
 import { useAuth } from "../../context/AuthStoreContext";
@@ -36,9 +36,11 @@ import "./_search.css";
 
 export const Search = observer(() => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { user } = useAuth();
   const [model] = useState(() => new SearchModel());
   const { handleSaveCompany, isLoading } = useSaveCompany();
+
   useEffect(() => {
     const debounceSearch = setTimeout(() => {
       model.handleSearch();
@@ -53,6 +55,13 @@ export const Search = observer(() => {
       model.setSelectedOption(filter);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (location.state?.organisationName) {
+      model.handleInputChange(location.state.organisationName);
+      model.handleSearch();
+    }
+  }, [location.key]);
 
   const handleSelectOption = (value: string) => {
     model.setSelectedOption(value);
@@ -185,20 +194,36 @@ export const Search = observer(() => {
             </Alert>
           ) : (
             <div className="search-results space-y-3">
-              {model.searchData.map((data) => (
+              {model.searchData.map((data, index) => (
                 <Card
-                  key={data.registrationNo}
+                  key={index}
                   className="search-result-card hover:shadow-md transition-shadow"
                 >
                   <NavLink
-                    to={`/search/${data.registrationNo}`}
-                    state={{
-                      organisationName: data.organisationName,
-                      registrationNo: data.registrationNo,
-                      registrationDate: data.registrationDate,
-                      organisationStatus: data.organisationStatus,
-                      addressSeqNo: data.addressSeqNo,
-                    }}
+                    to={
+                      model.selectedOption === "Organisation"
+                        ? `/search/${data.registrationNo}`
+                        : `/official/${data.personOrOrganisationName}`
+                    }
+                    state={
+                      model.selectedOption === "Organisation"
+                        ? {
+                            organisationName: data.organisationName,
+                            registrationNo: data.registrationNo,
+                            registrationDate: data.registrationDate,
+                            organisationStatus: data.organisationStatus,
+                            addressSeqNo: data.addressSeqNo,
+                            filter: model.selectedOption,
+                          }
+                        : {
+                            officialPosition: data.officialPosition,
+                            organisationName: data.organisationName,
+                            personOrOrganisationName:
+                              data.personOrOrganisationName,
+                            registrationNo: data.registrationNo,
+                            filter: model.selectedOption,
+                          }
+                    }
                     className="no-underline text-foreground"
                   >
                     <CardContent className="p-4">
