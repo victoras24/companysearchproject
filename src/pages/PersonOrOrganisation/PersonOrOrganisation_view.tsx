@@ -42,16 +42,16 @@ const PersonOrOrganisation: React.FC = observer(() => {
   return (
     <div className="container mx-auto max-w-4xl p-6 space-y-8">
       <div className="flex items-start justify-between m-0">
-        <div className="space-y-1 ">
+        <div className="space-y-1">
           <h1 className="text-3xl px-3 py-2 font-bold tracking-tight md:text-4xl">
             {personOrOrganisationName}
           </h1>
           <NavLink
             to={`/search?filter=${location.state.filter}`}
             state={{
-              organisationName: personOrOrganisationName,
+              organisationName: location.state.searchInput,
             }}
-            className="flex items-center gap-2 mb-3 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+            className="inline-flex mb-3 items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 bg-green-200 hover:bg-green-100 rounded-lg transition-colors duration-200 group border border-green-200 w-fit"
           >
             <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
             <span>Back to search</span>

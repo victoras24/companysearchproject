@@ -238,6 +238,7 @@ export const Search = observer(() => {
                             organisationStatus: data.organisationStatus,
                             addressSeqNo: data.addressSeqNo,
                             filter: model.selectedOption,
+                            searchInput: model.searchQuery,
                           }
                         : {
                             officialPosition: data.officialPosition,
@@ -246,6 +247,7 @@ export const Search = observer(() => {
                               data.personOrOrganisationName,
                             registrationNo: data.registrationNo,
                             filter: model.selectedOption,
+                            searchInput: model.searchQuery,
                           }
                     }
                     className="no-underline text-foreground"

@@ -174,9 +174,9 @@ const OrganisationDetails: React.FC = observer(() => {
           <NavLink
             to={`/search?filter=${location.state.filter}`}
             state={{
-              organisationName: companyData.organisationName,
+              organisationName: location.state.searchInput,
             }}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+            className="inline-flex mb-3 items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 bg-green-200 hover:bg-green-100 rounded-lg transition-colors duration-200 group border border-green-200 w-fit"
           >
             <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
             <span>Back to search</span>
