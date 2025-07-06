@@ -290,7 +290,8 @@ const OrganisationDetails: React.FC = observer(() => {
                             registrationDate: companyData.registrationDate,
                             organisationStatus: companyData.organisationStatus,
                             addressSeqNo: companyData.addressSeqNo,
-                            filter: "Official",
+                            searchInput: location.state.searchInput,
+                            filter: location.state.filter,
                           }}
                           className="flex items-start space-x-4 py-4"
                           to={`/official/${person.personOrOrganisationName}`}
