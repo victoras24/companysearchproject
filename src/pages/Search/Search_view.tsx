@@ -9,21 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useSaveCompany from "@/hooks/useSaveCompany";
 import {
   Search as SearchIcon,
   X,
-  SlidersHorizontal,
   Bookmark,
   BookmarkPlus,
   Building,
@@ -40,6 +30,7 @@ export const Search = observer(() => {
   const { user } = useAuth();
   const [model] = useState(() => new SearchModel());
   const { handleSaveCompany, isLoading } = useSaveCompany();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     const debounceSearch = setTimeout(() => {
@@ -47,12 +38,16 @@ export const Search = observer(() => {
     }, 666);
 
     return () => clearTimeout(debounceSearch);
-  }, [model.searchQuery, model.selectedOption]);
+  }, [model.searchQuery, model.selectedOption, statusFilter]);
 
   useEffect(() => {
     const filter = searchParams.get("filter");
+    const status = searchParams.get("status");
     if (filter) {
       model.setSelectedOption(filter);
+    }
+    if (status) {
+      setStatusFilter(status);
     }
   }, [searchParams]);
 
@@ -65,14 +60,44 @@ export const Search = observer(() => {
 
   const handleSelectOption = (value: string) => {
     model.setSelectedOption(value);
+    setStatusFilter("all"); // Reset status filter when changing search type
     setSearchParams({ filter: value });
+    // Clear search data and set loading state when switching types
+    model.setSearchData([]);
+    if (model.searchQuery.trim() !== "") {
+      model.setLoading(true);
+    }
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setSearchParams({
+      filter: model.selectedOption,
+      ...(value !== "all" && { status: value }),
+    });
   };
 
   const isCompanySaved = (companyId: number) => {
     if (!user || !user.savedCompanies) return false;
-
     return user.savedCompanies.some((saved: any) => saved.id === companyId);
   };
+
+  // Filter results based on status
+  const filteredResults = model.searchData.filter((data) => {
+    if (model.selectedOption !== "Organisation" || statusFilter === "all") {
+      return true;
+    }
+
+    if (statusFilter === "active") {
+      return data.organisationStatus === "Εγγεγραμμένη";
+    }
+
+    if (statusFilter === "inactive") {
+      return data.organisationStatus !== "Εγγεγραμμένη";
+    }
+
+    return true;
+  });
 
   return (
     <div className="search-page-container">
@@ -87,8 +112,9 @@ export const Search = observer(() => {
         </div>
 
         <div className="search-content">
-          <div className="search-input-container flex gap-2 mb-6">
-            <div className="search-input-wrapper relative flex-1">
+          {/* Search Input */}
+          <div className="search-input-container mb-4">
+            <div className="search-input-wrapper relative">
               <Input
                 className="pl-10 pr-10"
                 placeholder={`Enter ${model.selectedOption}'s name`}
@@ -111,53 +137,52 @@ export const Search = observer(() => {
                 </div>
               )}
             </div>
-
-            <Sheet open={model.isFilterOpen} onOpenChange={model.setFilterOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Search Filters</SheetTitle>
-                  <SheetDescription>
-                    Refine your search results.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 p-4">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Search Type</h3>
-                    <Tabs
-                      defaultValue={model.selectedOption}
-                      value={model.selectedOption}
-                      onValueChange={handleSelectOption}
-                      className="w-full"
-                    >
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="Organisation">
-                          <Building className="h-4 w-4 mr-2" />
-                          Companies
-                        </TabsTrigger>
-                        <TabsTrigger value="Official">
-                          <User className="h-4 w-4 mr-2" />
-                          Officials
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                  <Button
-                    variant="default"
-                    className="mt-4"
-                    onClick={() => model.closeFilter()}
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
           </div>
 
+          {/* Search Type Filter */}
+          <div className="mb-4">
+            <Tabs
+              value={model.selectedOption}
+              onValueChange={handleSelectOption}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 h-10">
+                <TabsTrigger value="Organisation" className="text-sm">
+                  <Building className="h-4 w-4 mr-2" />
+                  Companies
+                </TabsTrigger>
+                <TabsTrigger value="Official" className="text-sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Officials
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Status Filter - Only show for Organisation */}
+          {/* {model.selectedOption === "Organisation" && (
+            <div className="mb-6">
+              <Tabs
+                value={statusFilter}
+                onValueChange={handleStatusFilter}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3 h-9">
+                  <TabsTrigger value="all" className="text-sm">
+                    All Companies
+                  </TabsTrigger>
+                  <TabsTrigger value="active" className="text-sm">
+                    Active
+                  </TabsTrigger>
+                  <TabsTrigger value="inactive" className="text-sm">
+                    Inactive
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )} */}
+
+          {/* Results */}
           {model.isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
@@ -165,12 +190,12 @@ export const Search = observer(() => {
                 Searching for {model.searchQuery}
               </p>
             </div>
-          ) : model.searchData.length === 0 &&
+          ) : filteredResults.length === 0 &&
             model.searchQuery.trim() === "" ? (
             <Card className="search-tips-card">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <Info className="h-5 w-5  mt-1" />
+                  <Info className="h-5 w-5 mt-1" />
                   <div>
                     <h2 className="font-semibold text-lg mb-2">Search Tips:</h2>
                     <ul className="space-y-2 list-disc list-inside text-sm text-muted-foreground">
@@ -179,22 +204,22 @@ export const Search = observer(() => {
                         Results will show company name, status, and address
                       </li>
                       <li>Click on a result to view more details</li>
-                      <li>Use the filter icon to refine your search</li>
+                      <li>Use the filters above to refine your search</li>
                     </ul>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ) : model.searchData.length === 0 ? (
+          ) : filteredResults.length === 0 ? (
             <Alert variant="default" className="bg-muted">
               <AlertDescription className="text-center py-8">
                 No results found for "{model.searchQuery}". Try a different
-                search term.
+                search term or adjust your filters.
               </AlertDescription>
             </Alert>
           ) : (
             <div className="search-results space-y-3">
-              {model.searchData.map((data, index) => (
+              {filteredResults.map((data, index) => (
                 <Card
                   key={index}
                   className="search-result-card hover:shadow-md transition-shadow"
