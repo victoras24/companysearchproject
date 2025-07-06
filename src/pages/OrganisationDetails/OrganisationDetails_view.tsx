@@ -41,6 +41,7 @@ import {
   FileText,
   Link,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 
 import type { gEntities } from "@/gEntities";
@@ -170,6 +171,16 @@ const OrganisationDetails: React.FC = observer(() => {
             <Calendar className="h-4 w-4" />
             Incorporated on {registrationDate}
           </p>
+          <NavLink
+            to={`/search?filter=${location.state.filter}`}
+            state={{
+              organisationName: companyData.organisationName,
+            }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            <span>Back to search</span>
+          </NavLink>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={isActive ? "active" : "inactive"} className="text-md">

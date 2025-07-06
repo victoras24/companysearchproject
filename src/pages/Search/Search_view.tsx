@@ -69,13 +69,13 @@ export const Search = observer(() => {
     }
   };
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    setSearchParams({
-      filter: model.selectedOption,
-      ...(value !== "all" && { status: value }),
-    });
-  };
+  //   const handleStatusFilter = (value: string) => {
+  //     setStatusFilter(value);
+  //     setSearchParams({
+  //       filter: model.selectedOption,
+  //       ...(value !== "all" && { status: value }),
+  //     });
+  //   };
 
   const isCompanySaved = (companyId: number) => {
     if (!user || !user.savedCompanies) return false;
