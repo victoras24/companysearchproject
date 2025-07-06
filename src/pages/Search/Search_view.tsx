@@ -60,9 +60,9 @@ export const Search = observer(() => {
 
   const handleSelectOption = (value: string) => {
     model.setSelectedOption(value);
-    setStatusFilter("all"); // Reset status filter when changing search type
+    setStatusFilter("all");
     setSearchParams({ filter: value });
-    // Clear search data and set loading state when switching types
+
     model.setSearchData([]);
     if (model.searchQuery.trim() !== "") {
       model.setLoading(true);
@@ -82,7 +82,6 @@ export const Search = observer(() => {
     return user.savedCompanies.some((saved: any) => saved.id === companyId);
   };
 
-  // Filter results based on status
   const filteredResults = model.searchData.filter((data) => {
     if (model.selectedOption !== "Organisation" || statusFilter === "all") {
       return true;
