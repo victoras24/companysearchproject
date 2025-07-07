@@ -69,13 +69,13 @@ export const Search = observer(() => {
     }
   };
 
-  //   const handleStatusFilter = (value: string) => {
-  //     setStatusFilter(value);
-  //     setSearchParams({
-  //       filter: model.selectedOption,
-  //       ...(value !== "all" && { status: value }),
-  //     });
-  //   };
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setSearchParams({
+      filter: model.selectedOption,
+      ...(value !== "all" && { status: value }),
+    });
+  };
 
   const isCompanySaved = (companyId: number) => {
     if (!user || !user.savedCompanies) return false;
@@ -159,7 +159,7 @@ export const Search = observer(() => {
           </div>
 
           {/* Status Filter - Only show for Organisation */}
-          {/* {model.selectedOption === "Organisation" && (
+          {model.selectedOption === "Organisation" && (
             <div className="mb-6">
               <Tabs
                 value={statusFilter}
@@ -179,7 +179,7 @@ export const Search = observer(() => {
                 </TabsList>
               </Tabs>
             </div>
-          )} */}
+          )}
 
           {/* Results */}
           {model.isLoading ? (
@@ -281,24 +281,25 @@ export const Search = observer(() => {
                                 : "Inactive"}
                             </Badge>
                           )}
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleSaveCompany(data);
-                            }}
-                            disabled={isLoading}
-                          >
-                            {isCompanySaved(data.id) ? (
-                              <Bookmark className="h-4 w-4 text-primary" />
-                            ) : (
-                              <BookmarkPlus className="h-4 w-4" />
-                            )}
-                          </Button>
+                          {model.selectedOption === "Organisation" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSaveCompany(data);
+                              }}
+                              disabled={isLoading}
+                            >
+                              {isCompanySaved(data.id) ? (
+                                <Bookmark className="h-4 w-4 text-primary" />
+                              ) : (
+                                <BookmarkPlus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
