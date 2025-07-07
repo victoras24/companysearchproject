@@ -47,7 +47,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
             {personOrOrganisationName}
           </h1>
           <NavLink
-            to={`/search?filter=${location.state.filter}`}
+            to={`/search/${location.state.filter}`}
             state={{
               organisationName: location.state.searchInput,
             }}
