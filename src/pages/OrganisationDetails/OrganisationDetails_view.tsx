@@ -172,7 +172,7 @@ const OrganisationDetails: React.FC = observer(() => {
             Incorporated on {registrationDate}
           </p>
           <NavLink
-            to={`/search?filter=${location.state.filter}`}
+            to={`/search/${location.state.filter}`}
             state={{
               organisationName: location.state.searchInput,
             }}

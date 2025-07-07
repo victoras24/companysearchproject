@@ -237,7 +237,7 @@ export const Search = observer(() => {
                             registrationDate: data.registrationDate,
                             organisationStatus: data.organisationStatus,
                             addressSeqNo: data.addressSeqNo,
-                            filter: model.selectedOption,
+                            filter: location.search,
                             searchInput: model.searchQuery,
                           }
                         : {
