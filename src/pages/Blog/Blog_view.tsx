@@ -40,8 +40,6 @@ const Blog: React.FC = () => {
 	];
 
 	const handleReadMore = (slug: string) => {
-		// Navigate to the individual blog post
-		// You can create routes like /blog/cyprus-company-search-guide
 		navigate(`/blog/${slug}`);
 	};
 
@@ -57,7 +55,7 @@ const Blog: React.FC = () => {
 
 	return (
 		<div className="blog-container">
-			<div className="w-full p-12">
+			<div className="w-full p-5 lg:p-12">
 				{/* Hero Section */}
 				<div className="text-center space-y-6 mb-16">
 					<h1 className="text-4xl font-bold tracking-tight md:text-5xl">
