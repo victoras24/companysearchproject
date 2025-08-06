@@ -18,6 +18,8 @@ import { lazy, Suspense } from "react";
 import PersonOrOrganisation from "./pages/PersonOrOrganisation/PersonOrOrganisation_view";
 import LegalDisclaimer from "./pages/Legal/LegalDisclaimer_view";
 import TermsOfService from "./pages/Legal/TermsOfService_view";
+import Blog from "./pages/Blog/Blog_view";
+import BlogPost from "./pages/Blog/BlogPosts_view";
 const Home = lazy(() => import("./pages/Home/Home"));
 
 const PageLoader = () => (
@@ -69,6 +71,8 @@ function AppRoutes() {
 							element={user ? <AccountDetails /> : <Account />}
 						/>
 						<Route path="cart" element={<Cart />} />
+						<Route path="blog" element={<Blog />} />
+						<Route path="/blog/:slug" element={<BlogPost />} />
 
 						<Route path="/payment-result" element={<ReturnForm />} />
 						<Route path="/legal-disclaimer" element={<LegalDisclaimer />} />

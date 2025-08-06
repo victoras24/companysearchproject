@@ -1,4 +1,5 @@
 import {
+	FileText,
 	Group,
 	Heart,
 	Home,
@@ -50,6 +51,12 @@ export function AppSidebar() {
 			icon: ScanFace,
 		},
 		{
+			title: "Blog",
+			url: "/blog",
+			icon: FileText,
+		},
+		,
+		{
 			title: "Cart",
 			url: "/cart",
 			icon: ShoppingCart,
@@ -68,17 +75,21 @@ export function AppSidebar() {
 						/>
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
-						<SidebarMenu>
-							{items.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton asChild>
-										<a href={item.url}>
-											<item.icon />
-											<span>{item.title}</span>
-										</a>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
+						<SidebarMenu className="mt-5">
+							{items.map((item) => {
+								return (
+									item && (
+										<SidebarMenuItem key={item.title}>
+											<SidebarMenuButton asChild>
+												<a href={item.url}>
+													<item.icon />
+													<span>{item.title}</span>
+												</a>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									)
+								);
+							})}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
