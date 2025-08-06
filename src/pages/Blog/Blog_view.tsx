@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, ArrowRight, FileText } from "lucide-react";
 import "./_blog.css";
 

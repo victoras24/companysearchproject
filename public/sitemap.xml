@@ -4,13 +4,23 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
-
 
 <url>
   <loc>https://companysearchcyprus.com/</loc>
   <lastmod>2025-06-07T05:37:01+00:00</lastmod>
+  <priority>1.0</priority>
 </url>
 
+<url>
+  <loc>https://companysearchcyprus.com/blog/</loc>
+  <lastmod>2025-06-07T05:37:01+00:00</lastmod>
+  <priority>0.8</priority>
+</url>
+
+<url>
+  <loc>https://companysearchcyprus.com/blog/cyprus-company-search-guide</loc>
+  <lastmod>2025-06-07T05:37:01+00:00</lastmod>
+  <priority>0.7</priority>
+</url>
 
 </urlset>
