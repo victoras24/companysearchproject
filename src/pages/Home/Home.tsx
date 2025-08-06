@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Archive, Clock, Users } from "lucide-react";
+import { Search, Archive, Clock, Users, BookOpen } from "lucide-react";
 import "./_home.css";
 
 // Import ShadcN components
@@ -22,7 +22,6 @@ const Home: React.FC = () => {
 	return (
 		<div className="home-container">
 			<div className="w-full py-12">
-				{/* Hero Section */}
 				<div className="text-center space-y-6 mb-16">
 					<h1 className="text-4xl font-bold tracking-tight md:text-5xl">
 						Save time <span className="text-primary">searching</span> for Cyprus
@@ -44,7 +43,6 @@ const Home: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Features Section */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
 					<Card className="transition-all hover:shadow-md">
 						<CardHeader className="text-center pb-2">
@@ -86,7 +84,6 @@ const Home: React.FC = () => {
 					</Card>
 				</div>
 
-				{/* Testimonial Section */}
 				<Card className="mb-16 border-none bg-muted/50">
 					<CardContent className="pt-6">
 						<blockquote className="text-xl italic text-center relative px-8">
@@ -103,7 +100,6 @@ const Home: React.FC = () => {
 					</CardContent>
 				</Card>
 
-				{/* Updates Section */}
 				<Card className="mb-16">
 					<CardHeader>
 						<div className="flex items-center">
@@ -115,6 +111,34 @@ const Home: React.FC = () => {
 						<Separator />
 					</CardHeader>
 					<CardContent className="space-y-4">
+						<div className="flex gap-4 items-start p-3 bg-primary/5 rounded-lg">
+							<div className="h-2 w-2 mt-2 rounded-full bg-primary animate-pulse"></div>
+							<div className="flex-1">
+								<div className="flex items-center gap-2 mb-1">
+									<BookOpen className="h-4 w-4 text-primary" />
+									<Badge variant="secondary" className="text-xs">
+										New Article
+									</Badge>
+								</div>
+								<p className="text-sm font-medium text-foreground mb-1">
+									How to Find Cyprus Company Information Online: Registrar
+									Search & Audit Files
+								</p>
+								<p className="text-xs text-muted-foreground mb-2">
+									A comprehensive step-by-step guide on accessing Cyprus company
+									information through official registrar channels.
+								</p>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => navigate("/blog/cyprus-company-search-guide")}
+									className="text-xs h-7"
+								>
+									Read Article
+								</Button>
+							</div>
+						</div>
+
 						<div className="flex gap-4 items-start">
 							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
 							<p className="text-sm text-muted-foreground">
@@ -130,7 +154,7 @@ const Home: React.FC = () => {
 							</p>
 						</div>
 						<div className="flex gap-4 items-start">
-							<div className="h-2 w-2 mt-2 rounded-full bg-primary"></div>
+							<div className="h-2 w-2 rounded-full bg-primary"></div>
 							<p className="text-sm text-muted-foreground">
 								Weekly database synchronization with official Cyprus government
 								registry
@@ -146,7 +170,6 @@ const Home: React.FC = () => {
 					</CardContent>
 				</Card>
 
-				{/* FAQ Section */}
 				<div className="mb-16">
 					<h2 className="text-2xl font-semibold mb-6 text-center">
 						Frequently Asked Questions
