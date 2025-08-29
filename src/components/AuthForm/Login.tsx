@@ -102,11 +102,7 @@ export default function Login({ isRegister }: LoginProps) {
 				</div>
 			</CardContent>
 			<CardFooter className="flex flex-col space-y-4">
-				<Button
-					className="w-full"
-					onClick={handleLogin}
-					disabled={loading || !inputs.email || !inputs.password ? true : false}
-				>
+				<Button className="w-full" onClick={handleLogin}>
 					{loading ? "Signing in..." : "Sign in"}
 					{!loading && <ArrowRight className="ml-2 h-4 w-4" />}
 				</Button>
