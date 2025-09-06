@@ -18,11 +18,13 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ModeToggle } from "./mode-toggle";
 import { useAuth } from "@/context/AuthStoreContext";
+import { NavUser } from "./sidebar-user";
+import { getAuth } from "firebase/auth";
 
 export function AppSidebar() {
 	const { user } = useAuth();
+	const auth = getAuth();
 
 	const items = [
 		{
@@ -94,7 +96,17 @@ export function AppSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<ModeToggle />
+			{user ? (
+				<NavUser
+					user={{
+						name: user.username,
+						email: user.email,
+						avatar: auth.currentUser?.photoURL ?? "",
+					}}
+				/>
+			) : (
+				""
+			)}
 		</Sidebar>
 	);
 }

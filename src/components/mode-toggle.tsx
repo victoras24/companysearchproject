@@ -8,9 +8,17 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
+import { toast } from "sonner";
 
 export function ModeToggle() {
-	const { setTheme } = useTheme();
+	const { setTheme, theme } = useTheme();
+
+	const handleThemeChange = (themeName: any, event: React.MouseEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
+		setTheme(themeName);
+		toast.info(`Theme changed to ${theme}`);
+	};
 
 	return (
 		<DropdownMenu>
@@ -22,13 +30,13 @@ export function ModeToggle() {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={() => setTheme("light")}>
+				<DropdownMenuItem onClick={(e) => handleThemeChange("light", e)}>
 					Light
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("dark")}>
+				<DropdownMenuItem onClick={(e) => handleThemeChange("dark", e)}>
 					Dark
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("system")}>
+				<DropdownMenuItem onClick={(e) => handleThemeChange("system", e)}>
 					System
 				</DropdownMenuItem>
 			</DropdownMenuContent>
