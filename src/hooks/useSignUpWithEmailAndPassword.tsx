@@ -1,9 +1,8 @@
 import {
 	useAuthState,
-	useSignInWithEmailAndPassword,
+	useCreateUserWithEmailAndPassword,
 } from "react-firebase-hooks/auth";
 import { auth, firestore } from "../Firebase/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
 	setDoc,
 	doc,
@@ -16,7 +15,8 @@ import { useAuth } from "../context/AuthStoreContext";
 import { toast } from "sonner";
 
 export default function useSignUpWithEmailAndPassword() {
-	const [user, loading, error] = useSignInWithEmailAndPassword(auth);
+	const [createUserWithEmailAndPassword, user, loading, error] =
+		useCreateUserWithEmailAndPassword(auth);
 	const [currentUser] = useAuthState(auth);
 	const { userLogin } = useAuth();
 
@@ -32,39 +32,43 @@ export default function useSignUpWithEmailAndPassword() {
 			toast.error("Please fill all the fields");
 			return;
 		}
-		const q = query(usersRef, where("username", "==", inputs.username));
-		const querySnapshot = await getDocs(q);
 
-		if (!querySnapshot.empty) {
-			toast.info("Username already exists");
-			return;
-		}
 		try {
 			const newUser = await createUserWithEmailAndPassword(
-				auth,
 				inputs.email,
 				inputs.password
 			);
-			if (!newUser && error) {
-				toast.error("User does not exist");
+
+			if (!newUser) {
+				toast.error("Failed to create user");
+				return;
 			}
-			if (newUser) {
-				const userDoc = {
-					uid: newUser.user.uid,
-					email: inputs.email,
-					username: inputs.username,
-					fullName: inputs.fullName,
-					savedCompanies: [],
-					groups: [],
-					phoneNumber: "",
-				};
-				await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
-				localStorage.setItem("user-info", JSON.stringify(userDoc));
-				userLogin(userDoc);
-				toast.success(`User ${userDoc.username} is created!`);
+
+			const q = query(usersRef, where("username", "==", inputs.username));
+			const querySnapshot = await getDocs(q);
+
+			if (!querySnapshot.empty) {
+				await newUser.user.delete();
+				toast.info("Username already exists");
+				return;
 			}
+
+			const userDoc = {
+				uid: newUser.user.uid,
+				email: inputs.email,
+				username: inputs.username,
+				fullName: inputs.fullName,
+				savedCompanies: [],
+				groups: [],
+				phoneNumber: "",
+			};
+
+			await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
+			localStorage.setItem("user-info", JSON.stringify(userDoc));
+			userLogin(userDoc);
+			toast.success(`User ${userDoc.username} is created!`);
 		} catch (error: any) {
-			toast.error(error.message);
+			toast.error(`Signup failed: ${error.message}`);
 		}
 	};
 
