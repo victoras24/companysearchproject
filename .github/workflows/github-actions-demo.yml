@@ -1,0 +1,8 @@
+on:
+  schedule:
+    - cron: "*/18 * * * *"   # every 18 minutes
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -s https://companysearchalwayson.azurewebsites.net/api/company/open
