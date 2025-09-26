@@ -1,8 +1,15 @@
+name: Keep Azure Function Warm
+
 on:
   schedule:
-    - cron: "*/18 * * * *"   # every 18 minutes
+    - cron: "*/18 * * * *"  # every 18 minutes
+  workflow_dispatch:  # optional: allows manual run
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - run: curl -s https://companysearchalwayson.azurewebsites.net/api/company/open
+      - name: Ping Azure Function
+        run: |
+          echo "Pinging the Azure Function..."
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" https://companysearchalwayson.azurewebsites.net/api/company/open
