@@ -9,8 +9,8 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Azure Function
+      - name: Ping Azure Server
         run: |
-          echo "Pinging the Azure Function..."
+          echo "Pinging the Azure Server..."
           curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net/api/company/open
 
