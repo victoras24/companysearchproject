@@ -1,4 +1,4 @@
-name: Keep Azure Function Warm
+name: Keep Server Warm
 
 on:
   schedule:
