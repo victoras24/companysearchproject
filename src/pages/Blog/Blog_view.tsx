@@ -31,7 +31,7 @@ const Blog: React.FC = () => {
 				"How to Find Cyprus Company Information Online: Registrar Search & Audit Files",
 			excerpt:
 				"A comprehensive step-by-step guide on accessing Cyprus company information through official registrar channels, including due diligence processes and competitive research.",
-			date: "2025-01-15",
+			date: "2025-09-15",
 			readTime: "8 min read",
 			category: "Guides",
 			slug: "cyprus-company-search-guide",

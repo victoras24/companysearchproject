@@ -8,16 +8,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
-import { toast } from "sonner";
 
 export function ModeToggle() {
-	const { setTheme, theme } = useTheme();
+	const { setTheme } = useTheme();
 
 	const handleThemeChange = (themeName: any, event: React.MouseEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
 		setTheme(themeName);
-		toast.info(`Theme changed to ${theme}`);
 	};
 
 	return (
