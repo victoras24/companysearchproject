@@ -1,0 +1,15 @@
+name: Cache Data
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"  # every 1st of the month
+  workflow_dispatch:  # optional: allows manual run
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache data
+        run: |
+          echo "Caching data..."
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" https://companysearchcyprus-cshzasdadrgdcjf4.westeurope-01.azurewebsites.net/api/cache/create
