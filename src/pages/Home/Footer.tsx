@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
 							<h4 className="text-sm font-medium">Pages</h4>
 							<nav className="flex flex-col space-y-2">
 								<NavLink
-									to="/search"
+									to="/cyprus-company-search"
 									className="text-xs text-muted-foreground hover:text-primary transition-colors"
 								>
 									Company Search

@@ -197,7 +197,7 @@ const BlogPost: React.FC = () => {
 						</p>
 						<Button
 							size="lg"
-							onClick={() => navigate("/search")}
+							onClick={() => navigate("/cyprus-company-search")}
 							className="background-primary"
 						>
 							Start Your Search

@@ -38,7 +38,7 @@ export const Search = observer(() => {
 		}, 233);
 
 		return () => clearTimeout(debounceSearch);
-	}, [model.searchQuery, model.selectedOption, statusFilter]);
+	}, [model, model.searchQuery, statusFilter]);
 
 	useEffect(() => {
 		const filter = searchParams.get("filter");
@@ -49,14 +49,14 @@ export const Search = observer(() => {
 		if (status) {
 			setStatusFilter(status);
 		}
-	}, [searchParams]);
+	}, [model, searchParams]);
 
 	useEffect(() => {
 		if (location.state?.organisationName) {
 			model.handleInputChange(location.state.organisationName);
 			model.handleSearch();
 		}
-	}, [location.key]);
+	}, [model, location]);
 
 	const handleSelectOption = (value: string) => {
 		model.setSelectedOption(value);
@@ -79,7 +79,7 @@ export const Search = observer(() => {
 
 	const isCompanySaved = (companyId: number) => {
 		if (!user || !user.savedCompanies) return false;
-		return user.savedCompanies.some((saved: any) => saved.id === companyId);
+		return user.savedCompanies.some((saved) => saved.id === companyId);
 	};
 
 	const filteredResults = model.searchData.filter((data) => {
@@ -226,7 +226,7 @@ export const Search = observer(() => {
 									<NavLink
 										to={
 											model.selectedOption === "Organisation"
-												? `/search/${data.registrationNo}`
+												? `/cyprus-company-search/${data.registrationNo}`
 												: `/official/${data.personOrOrganisationName}`
 										}
 										state={

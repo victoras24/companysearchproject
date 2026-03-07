@@ -170,7 +170,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
             organisationStatus: company.organisationStatus,
             addressSeqNo: company.addressSeqNo,
           }}
-          to={`/search/${company.registrationNo}`}
+          to={`/cyprus-company-search/${company.registrationNo}`}
         > */}
 				{company.name}
 				{/* </NavLink> */}

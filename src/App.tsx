@@ -20,6 +20,7 @@ import LegalDisclaimer from "./pages/Legal/LegalDisclaimer_view";
 import TermsOfService from "./pages/Legal/TermsOfService_view";
 import Blog from "./pages/Blog/Blog_view";
 import BlogPost from "./pages/Blog/BlogPosts_view";
+
 const Home = lazy(() => import("./pages/Home/Home"));
 
 const PageLoader = () => (
@@ -51,8 +52,11 @@ function AppRoutes() {
 				<Routes>
 					<Route path="/" element={<Layout />}>
 						<Route index element={<Home />} />
-						<Route path="search" element={<Search />} />
-						<Route path="search/:companyId" element={<OrganisationDetails />} />
+						<Route path="cyprus-company-search" element={<Search />} />
+						<Route
+							path="cyprus-company-search/:companyId"
+							element={<OrganisationDetails />}
+						/>
 						<Route
 							path="favorites"
 							element={user ? <Favorites /> : <Account />}

@@ -34,7 +34,7 @@ const Home: React.FC = () => {
 					<div>
 						<Button
 							size="lg"
-							onClick={() => navigate("/search")}
+							onClick={() => navigate("/cyprus-company-search")}
 							className="background-primary mt-4"
 						>
 							<Search className="mr-2 h-4 w-4" />

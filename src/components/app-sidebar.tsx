@@ -34,7 +34,7 @@ export function AppSidebar() {
 		},
 		{
 			title: "Search",
-			url: "/search",
+			url: "/cyprus-company-search",
 			icon: Search,
 		},
 		{
@@ -57,7 +57,6 @@ export function AppSidebar() {
 			url: "/blog",
 			icon: FileText,
 		},
-		,
 		{
 			title: "Cart",
 			url: "/cart",

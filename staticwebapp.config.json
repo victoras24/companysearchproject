@@ -2,11 +2,17 @@
 	"navigationFallback": {
 		"rewrite": "/index.html",
 		"exclude": [
-			"/images/*.{png,jpg,gif}",
-			"/css/*",
+			"/assets/*",
+			"/images/*",
 			"/api/*",
 			"/*.js",
-			"/*.css"
+			"/*.css",
+			"/*.png",
+			"/*.jpg",
+			"/*.jpeg",
+			"/*.svg",
+			"/robots.txt",
+			"/sitemap.xml"
 		]
 	},
 	"globalHeaders": {
@@ -55,8 +61,8 @@
 	},
 	"responseOverrides": {
 		"404": {
-			"rewrite": "/index.html",
-			"statusCode": 200
+			"rewrite": "/404.html",
+			"statusCode": 404
 		}
 	}
 }
