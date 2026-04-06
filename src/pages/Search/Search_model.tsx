@@ -14,7 +14,7 @@ const api_config = {
 };
 
 class SearchModel {
-	@observable accessor searchData: any[] = [];
+	@observable.ref accessor searchData: any[] = [];
 	@observable accessor searchQuery: string = "";
 	@observable accessor isLoading: boolean = false;
 	@observable accessor isFilterOpen: boolean = false;
@@ -27,6 +27,8 @@ class SearchModel {
 
 	@action
 	handleSearch = async () => {
+		if (this.searchQuery.length <= 2) return;
+
 		if (!this.searchQuery.trim()) {
 			this.setSearchData([]);
 			return;

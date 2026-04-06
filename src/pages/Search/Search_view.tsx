@@ -184,10 +184,18 @@ export const Search = observer(() => {
 					{/* Results */}
 					{model.isLoading ? (
 						<div className="flex flex-col items-center justify-center py-12 text-center">
-							<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
-							<p className="text-muted-foreground">
-								Searching for {model.searchQuery}
-							</p>
+							{model.searchQuery.length > 2 ? (
+								<>
+									<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
+									<p className="text-muted-foreground">
+										Searching for {model.searchQuery}
+									</p>
+								</>
+							) : (
+								<p className="text-muted-foreground">
+									Enter at least 3 characters.
+								</p>
+							)}
 						</div>
 					) : filteredResults.length === 0 &&
 					  model.searchQuery.trim() === "" ? (
