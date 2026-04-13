@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import "./_search.css";
+import { PaginationDemo } from "@/components/pagination-demo";
 
 export const Search = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -43,11 +44,16 @@ export const Search = observer(() => {
 	useEffect(() => {
 		const filter = searchParams.get("filter");
 		const status = searchParams.get("status");
+		const page = searchParams.get("page");
+
 		if (filter) {
 			model.setSelectedOption(filter);
 		}
 		if (status) {
 			setStatusFilter(status);
+		}
+		if (page) {
+			model.setPage(+page);
 		}
 	}, [model, searchParams]);
 
@@ -123,8 +129,9 @@ export const Search = observer(() => {
 							<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
 								<SearchIcon className="h-4 w-4 text-muted-foreground" />
 							</div>
+
 							{model.searchQuery && (
-								<div className="absolute inset-y-0 right-0 flex items-center pr-2">
+								<div className="absolute inset-y-0 right-0 flex items-center">
 									<Button
 										variant="ghost"
 										size="icon"
@@ -314,6 +321,9 @@ export const Search = observer(() => {
 									</NavLink>
 								</Card>
 							))}
+							{model.searchData.length > 5 && (
+								<PaginationDemo dataSize={model.searchData.length} />
+							)}
 						</div>
 					)}
 				</div>
