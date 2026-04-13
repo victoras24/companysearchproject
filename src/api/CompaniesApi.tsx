@@ -1,57 +1,68 @@
 import axios from "axios";
 
 export class CompaniesApi {
-  controller: string = `${import.meta.env.VITE_API_URL}/api/company`;
+	controller: string = `${import.meta.env.VITE_API_URL}/api/company`;
 
-  /**
-   *
-   */
-  constructor() {}
+	/**
+	 *
+	 */
+	constructor() {}
 
-  getOrganisation = async (organisationName: string, filter: number) => {
-    const req = await axios.get(
-      `${
-        this.controller
-      }/${organisationName}${this.handleSelectedFilterForTheOrganisationApiCall(
-        filter
-      )}`
-    );
-    return req.data;
-  };
+	getOrganisation = async (organisationName: string, filter: number) => {
+		const req = await axios.get(
+			`${
+				this.controller
+			}/${organisationName}${this.handleSelectedFilterForTheOrganisationApiCall(
+				filter
+			)}`
+		);
+		return req.data;
+	};
 
-  getOrganisationAddress = async (addressSeqNo: number) => {
-    const req = await axios.get(`${this.controller}/${addressSeqNo}/address`);
-    return req.data;
-  };
+	getOrganisationPaginated = async (
+		organisationName: string,
+		currentPage: number
+	) => {
+		const req = await axios.get(
+			`${this.controller}/paginated/${currentPage}/${organisationName}`
+		);
 
-  getDetailedOrganisation = async (registrationNo: string) => {
-    const req = await axios.get(
-      `${this.controller}/${registrationNo}/detailed`
-    );
-    return req.data;
-  };
+		return req.data;
+	};
 
-  getOrganisationOfficials = async (registrationNo: string) => {
-    const req = await axios.get(
-      `${this.controller}/${registrationNo}/key-people`
-    );
-    return req.data;
-  };
+	getOrganisationAddress = async (addressSeqNo: number) => {
+		const req = await axios.get(`${this.controller}/${addressSeqNo}/address`);
+		return req.data;
+	};
 
-  getRelatedCompanies = async (companyName: string) => {
-    const req = await axios.get(`${this.controller}/${companyName}/related`);
-    return req.data;
-  };
+	getDetailedOrganisation = async (registrationNo: string) => {
+		const req = await axios.get(
+			`${this.controller}/${registrationNo}/detailed`
+		);
+		return req.data;
+	};
 
-  handleSelectedFilterForTheOrganisationApiCall = (filter: number) => {
-    if (filter == 1) {
-      return "/active";
-    } else if (filter == 2) {
-      return "/inactive";
-    } else {
-      return "";
-    }
-  };
+	getOrganisationOfficials = async (registrationNo: string) => {
+		const req = await axios.get(
+			`${this.controller}/${registrationNo}/key-people`
+		);
+		return req.data;
+	};
+
+	getRelatedCompanies = async (companyName: string) => {
+		const req = await axios.get(`${this.controller}/${companyName}/related`);
+		return req.data;
+	};
+
+	handleSelectedFilterForTheOrganisationApiCall = (filter: number) => {
+		if (filter == 1) {
+			return "/active";
+		} else if (filter == 2) {
+			return "/inactive";
+		} else {
+			return "";
+		}
+	};
 }
 
 const instance = new CompaniesApi();
