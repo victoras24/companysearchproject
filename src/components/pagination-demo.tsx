@@ -13,12 +13,14 @@ export const PaginationDemo: React.FC<{
 	query: string;
 	currentPage: number;
 	dataSize: number;
-}> = ({ query, currentPage, dataSize }) => {
+	pageDataSize: number;
+}> = ({ query, currentPage, dataSize, pageDataSize }) => {
 	return (
 		<Pagination>
 			<PaginationContent>
 				<PaginationItem>
 					<PaginationPrevious
+						className={`${currentPage === 1 && "hidden"}`}
 						href={`/cyprus-company-search?q=${query}&page=${currentPage - 1}`}
 					/>
 				</PaginationItem>
@@ -63,6 +65,7 @@ export const PaginationDemo: React.FC<{
 				)}
 				<PaginationItem>
 					<PaginationNext
+						className={`${pageDataSize < 5 && "hidden"}`}
 						href={`/cyprus-company-search?q=${query}&page=${currentPage + 1}`}
 					/>
 				</PaginationItem>

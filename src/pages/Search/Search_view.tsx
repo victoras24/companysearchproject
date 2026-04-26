@@ -349,6 +349,7 @@ export const Search = observer(() => {
 									query={model.searchQuery}
 									currentPage={model.currentPage}
 									dataSize={model.paginatedSearchData.totalItemsCount}
+									pageDataSize={model.paginatedSearchData.items.length}
 								/>
 							)}
 						</div>
