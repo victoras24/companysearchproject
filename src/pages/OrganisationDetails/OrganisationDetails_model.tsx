@@ -1,149 +1,149 @@
 import { makeObservable, observable, action } from "mobx";
 import CompaniesApi, {
-  CompaniesApi as ICompaniesApi,
+	CompaniesApi as ICompaniesApi,
 } from "../../api/CompaniesApi";
 import OfficialsApi, {
-  OfficialsApi as IOfficialsApi,
+	OfficialsApi as IOfficialsApi,
 } from "../../api/OfficialsApi";
-import type { gEntities } from "@/gEntities";
+import type { ICompanyAddress, IRelatedCompany, ICompany } from "@/gEntities";
 
 class OrganisationDetailsModel {
-  @observable accessor isLoading: boolean = true;
-  @observable accessor isLoadingOfficials: boolean = false;
-  @observable accessor isLoadingRelated: boolean = false;
-  @observable accessor activeTab: string;
-  companyAddressData?: gEntities.ICompanyAddress;
-  @observable accessor detailedOfficialsData: any;
-  @observable accessor addressData: any;
-  @observable accessor officialsData: any;
-  @observable accessor relatedCompanies: gEntities.IRelatedCompany[] = [];
-  companyData: gEntities.ICompany;
+	@observable accessor isLoading: boolean = true;
+	@observable accessor isLoadingOfficials: boolean = false;
+	@observable accessor isLoadingRelated: boolean = false;
+	@observable accessor activeTab: string;
+	companyAddressData?: ICompanyAddress;
+	@observable accessor detailedOfficialsData: any;
+	@observable accessor addressData: any;
+	@observable accessor officialsData: any;
+	@observable accessor relatedCompanies: IRelatedCompany[] = [];
+	companyData: ICompany;
 
-  @observable accessor officialsLoaded: boolean = false;
-  @observable accessor relatedLoaded: boolean = false;
+	@observable accessor officialsLoaded: boolean = false;
+	@observable accessor relatedLoaded: boolean = false;
 
-  CompaniesApi: ICompaniesApi;
-  OfficialsApi: IOfficialsApi;
+	CompaniesApi: ICompaniesApi;
+	OfficialsApi: IOfficialsApi;
 
-  constructor(companyData: gEntities.ICompany, activeTab: string) {
-    makeObservable(this);
-    this.CompaniesApi = CompaniesApi;
-    this.OfficialsApi = OfficialsApi;
-    this.companyData = companyData;
-    this.activeTab = activeTab;
-  }
+	constructor(companyData: ICompany, activeTab: string) {
+		makeObservable(this);
+		this.CompaniesApi = CompaniesApi;
+		this.OfficialsApi = OfficialsApi;
+		this.companyData = companyData;
+		this.activeTab = activeTab;
+	}
 
-  @action
-  onMount = async () => {
-    await this.getCompanyAddress();
-    this.setIsLoading(false);
-    await this.backgroundLoading();
-  };
+	@action
+	onMount = async () => {
+		await this.getCompanyAddress();
+		this.setIsLoading(false);
+		await this.backgroundLoading();
+	};
 
-  @action
-  backgroundLoading = () => {
-    this.loadKeyPeople();
-    this.loadRelatedCompanies();
-  };
+	@action
+	backgroundLoading = () => {
+		this.loadKeyPeople();
+		this.loadRelatedCompanies();
+	};
 
-  @action
-  getCompanyAddress = async () => {
-    try {
-      const res = await CompaniesApi.getOrganisationAddress(
-        this.companyData.addressSeqNo
-      );
-      if (res) {
-        this.setCompanyAddress(res);
-      }
-    } catch (error) {
-      console.error("Error fetching detail data:", error);
-    }
-  };
+	@action
+	getCompanyAddress = async () => {
+		try {
+			const res = await CompaniesApi.getOrganisationAddress(
+				this.companyData.addressSeqNo
+			);
+			if (res) {
+				this.setCompanyAddress(res);
+			}
+		} catch (error) {
+			console.error("Error fetching detail data:", error);
+		}
+	};
 
-  @action
-  loadKeyPeople = async () => {
-    if (this.officialsLoaded || this.isLoadingOfficials) return;
+	@action
+	loadKeyPeople = async () => {
+		if (this.officialsLoaded || this.isLoadingOfficials) return;
 
-    this.setIsLoadingOfficials(true);
-    try {
-      const officialRes = await CompaniesApi.getOrganisationOfficials(
-        this.companyData.registrationNo
-      );
-      if (officialRes) {
-        this.setOfficialsData(officialRes);
-      }
-      this.officialsLoaded = true;
-    } catch (error) {
-      console.error("Error fetching officials data:", error);
-    } finally {
-      this.setIsLoadingOfficials(false);
-    }
-  };
+		this.setIsLoadingOfficials(true);
+		try {
+			const officialRes = await CompaniesApi.getOrganisationOfficials(
+				this.companyData.registrationNo
+			);
+			if (officialRes) {
+				this.setOfficialsData(officialRes);
+			}
+			this.officialsLoaded = true;
+		} catch (error) {
+			console.error("Error fetching officials data:", error);
+		} finally {
+			this.setIsLoadingOfficials(false);
+		}
+	};
 
-  @action
-  loadRelatedCompanies = async () => {
-    if (this.relatedLoaded || this.isLoadingRelated) return;
+	@action
+	loadRelatedCompanies = async () => {
+		if (this.relatedLoaded || this.isLoadingRelated) return;
 
-    this.setIsLoadingRelated(true);
-    try {
-      const relatedCompanies = await CompaniesApi.getRelatedCompanies(
-        this.companyData.organisationName
-      );
-      if (relatedCompanies) {
-        this.setRelatedCompanies(relatedCompanies);
-      }
-      this.relatedLoaded = true;
-    } catch (error) {
-      console.error("Error fetching related companies:", error);
-    } finally {
-      this.setIsLoadingRelated(false);
-    }
-  };
+		this.setIsLoadingRelated(true);
+		try {
+			const relatedCompanies = await CompaniesApi.getRelatedCompanies(
+				this.companyData.organisationName
+			);
+			if (relatedCompanies) {
+				this.setRelatedCompanies(relatedCompanies);
+			}
+			this.relatedLoaded = true;
+		} catch (error) {
+			console.error("Error fetching related companies:", error);
+		} finally {
+			this.setIsLoadingRelated(false);
+		}
+	};
 
-  @action
-  setCompanyAddress = (companyAddress: gEntities.ICompanyAddress) => {
-    this.companyAddressData = companyAddress;
-  };
+	@action
+	setCompanyAddress = (companyAddress: ICompanyAddress) => {
+		this.companyAddressData = companyAddress;
+	};
 
-  @action
-  setDetailOfficialsData = (detailedData: gEntities.ICompany) => {
-    this.detailedOfficialsData = detailedData;
-  };
+	@action
+	setDetailOfficialsData = (detailedData: ICompany) => {
+		this.detailedOfficialsData = detailedData;
+	};
 
-  @action
-  setAddressData = (addressData: gEntities.ICompanyAddress) => {
-    this.addressData = addressData;
-  };
+	@action
+	setAddressData = (addressData: ICompanyAddress) => {
+		this.addressData = addressData;
+	};
 
-  @action
-  setRelatedCompanies = (relatedCompanies: gEntities.IRelatedCompany[]) => {
-    this.relatedCompanies = relatedCompanies;
-  };
+	@action
+	setRelatedCompanies = (relatedCompanies: IRelatedCompany[]) => {
+		this.relatedCompanies = relatedCompanies;
+	};
 
-  @action
-  setOfficialsData = (officialsData: gEntities.ICompanyAddress) => {
-    this.officialsData = officialsData;
-  };
+	@action
+	setOfficialsData = (officialsData: ICompanyAddress) => {
+		this.officialsData = officialsData;
+	};
 
-  @action
-  setIsLoading = (isLoading: boolean) => {
-    this.isLoading = isLoading;
-  };
+	@action
+	setIsLoading = (isLoading: boolean) => {
+		this.isLoading = isLoading;
+	};
 
-  @action
-  setIsLoadingOfficials = (isLoading: boolean) => {
-    this.isLoadingOfficials = isLoading;
-  };
+	@action
+	setIsLoadingOfficials = (isLoading: boolean) => {
+		this.isLoadingOfficials = isLoading;
+	};
 
-  @action
-  setIsLoadingRelated = (isLoading: boolean) => {
-    this.isLoadingRelated = isLoading;
-  };
+	@action
+	setIsLoadingRelated = (isLoading: boolean) => {
+		this.isLoadingRelated = isLoading;
+	};
 
-  @action
-  setActiveTab = (activeTab: string) => {
-    this.activeTab = activeTab;
-  };
+	@action
+	setActiveTab = (activeTab: string) => {
+		this.activeTab = activeTab;
+	};
 }
 
 export default OrganisationDetailsModel;

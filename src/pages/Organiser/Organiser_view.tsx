@@ -55,7 +55,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import type { gEntities } from "@/gEntities";
+import type { IUser } from "@/gEntities";
 
 interface SortableGroupTableRowProps {
 	group: any;
@@ -76,7 +76,7 @@ interface SortableCompanyProps {
 	company: ICompany;
 	groupId: number;
 	model: any;
-	user: gEntities.IUser;
+	user: IUser;
 }
 
 // Sortable Group Component

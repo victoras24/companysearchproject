@@ -1,3 +1,4 @@
+import { paginationConfig } from "@/constants/pagination";
 import axios from "axios";
 
 export class CompaniesApi {
@@ -18,13 +19,13 @@ export class CompaniesApi {
 		);
 		return req.data;
 	};
-
+	// paginated/{currentPage}/{totalDataSize}/{name}
 	getOrganisationPaginated = async (
 		organisationName: string,
 		currentPage: number
 	) => {
 		const req = await axios.get(
-			`${this.controller}/paginated/${currentPage}/${organisationName}`
+			`${this.controller}/paginated/${currentPage}/${paginationConfig.defaultLimit}/${organisationName}`
 		);
 
 		return req.data;

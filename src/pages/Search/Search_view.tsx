@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { observer } from "mobx-react";
-import SearchModel from "./Search_model";
+import SearchModel, { api_config } from "./Search_model";
 import { useAuth } from "../../context/AuthStoreContext";
 
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
 
 import "./_search.css";
 import { PaginationDemo } from "@/components/pagination-demo";
+import type { ICompany, IOfficials } from "@/gEntities";
 
 export const Search = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -32,17 +33,19 @@ export const Search = observer(() => {
 	const [model] = useState(() => new SearchModel());
 	const { handleSaveCompany, isLoading } = useSaveCompany();
 	const [statusFilter, setStatusFilter] = useState<string>("all");
-
+	window.console.log("hey");
+	console.warn("WARN TEST");
+	console.error("ERROR TEST");
 	useEffect(() => {
 		const debounceSearch = setTimeout(() => {
-			model.handleSearch();
+			model.handlePaginatedSearch();
 		}, 233);
 
 		return () => clearTimeout(debounceSearch);
 	}, [model, model.searchQuery, statusFilter]);
 
 	useEffect(() => {
-		const filter = searchParams.get("filter");
+		const filter = searchParams.get("filter") as keyof typeof api_config;
 		const status = searchParams.get("status");
 		const page = searchParams.get("page");
 
@@ -60,14 +63,15 @@ export const Search = observer(() => {
 	useEffect(() => {
 		if (location.state?.organisationName) {
 			model.handleInputChange(location.state.organisationName);
-			model.handleSearch();
+			model.handlePaginatedSearch();
+			console.log(model.paginatedSearchData);
 		}
 	}, [model, location]);
 
-	const handleSelectOption = (value: string) => {
-		model.setSelectedOption(value);
+	const handleSelectOption = (filter: keyof typeof api_config) => {
+		model.setSelectedOption(filter);
 		setStatusFilter("all");
-		setSearchParams({ filter: value });
+		setSearchParams({ filter: filter });
 
 		model.setSearchData([]);
 		if (model.searchQuery.trim() !== "") {
@@ -88,7 +92,7 @@ export const Search = observer(() => {
 		return user.savedCompanies.some((saved) => saved.id === companyId);
 	};
 
-	const filteredResults = model.searchData.filter((data) => {
+	const filteredResults = model.paginatedSearchData.items.filter((data) => {
 		if (model.selectedOption !== "Organisation" || statusFilter === "all") {
 			return true;
 		}
@@ -103,6 +107,46 @@ export const Search = observer(() => {
 
 		return true;
 	});
+
+	const getState = (
+		selectedOption: "Organisation" | "Official",
+		data: ICompany | IOfficials
+	) => {
+		if (selectedOption === "Official" && "officialPosition" in data) {
+			return {
+				officialPosition: data.officialPosition,
+				organisationName: data.organisationName,
+				personOrOrganisationName: data.personOrOrganisationName,
+				registrationNo: data.registrationNo,
+				filter: location.search,
+				searchInput: model.searchQuery,
+			};
+		} else if (
+			selectedOption === "Organisation" &&
+			!("officialPosition" in data)
+		) {
+			return {
+				organisationName: data.organisationName,
+				registrationNo: data.registrationNo,
+				registrationDate: data.registrationDate,
+				organisationStatus: data.organisationStatus,
+				addressSeqNo: data.addressSeqNo,
+				filter: location.search,
+				searchInput: model.searchQuery,
+			};
+		}
+	};
+
+	const getName = (
+		selectedOption: "Organisation" | "Official",
+		data: ICompany | IOfficials
+	) => {
+		if (selectedOption === "Official" && "officialPosition" in data) {
+			return data.personOrOrganisationName;
+		}
+
+		return data.organisationName;
+	};
 
 	return (
 		<div className="search-page-container">
@@ -233,47 +277,26 @@ export const Search = observer(() => {
 						</Alert>
 					) : (
 						<div className="search-results space-y-3">
-							{filteredResults.map((data, index) => (
+							{filteredResults.map((data: ICompany | IOfficials, index) => (
 								<Card
 									key={index}
 									className="search-result-card hover:shadow-md transition-shadow"
 								>
 									<NavLink
 										to={
-											model.selectedOption === "Organisation"
-												? `/cyprus-company-search/${data.registrationNo}`
-												: `/official/${data.personOrOrganisationName}`
+											model.selectedOption === "Official" &&
+											"officialPosition" in data
+												? `/official/${data.personOrOrganisationName}`
+												: `/cyprus-company-search/${data.registrationNo}`
 										}
-										state={
-											model.selectedOption === "Organisation"
-												? {
-														organisationName: data.organisationName,
-														registrationNo: data.registrationNo,
-														registrationDate: data.registrationDate,
-														organisationStatus: data.organisationStatus,
-														addressSeqNo: data.addressSeqNo,
-														filter: location.search,
-														searchInput: model.searchQuery,
-												  }
-												: {
-														officialPosition: data.officialPosition,
-														organisationName: data.organisationName,
-														personOrOrganisationName:
-															data.personOrOrganisationName,
-														registrationNo: data.registrationNo,
-														filter: location.search,
-														searchInput: model.searchQuery,
-												  }
-										}
+										state={getState(model.selectedOption, data)}
 										className="no-underline text-foreground"
 									>
 										<CardContent className="p-4">
 											<div className="flex justify-between items-start">
 												<div className="space-y-1">
 													<h4 className="font-medium">
-														{model.selectedOption === "Organisation"
-															? data.organisationName
-															: data.personOrOrganisationName}
+														{getName(model.selectedOption, data)}
 													</h4>
 													{model.selectedOption === "Organisation" && (
 														<p className="text-sm text-muted-foreground">
@@ -283,19 +306,20 @@ export const Search = observer(() => {
 												</div>
 
 												<div className="flex items-center gap-2">
-													{model.selectedOption === "Organisation" && (
-														<Badge
-															variant={
-																data.organisationStatus === "Εγγεγραμμένη"
-																	? "active"
-																	: "inactive"
-															}
-														>
-															{data.organisationStatus === "Εγγεγραμμένη"
-																? "Active"
-																: "Inactive"}
-														</Badge>
-													)}
+													{model.selectedOption === "Organisation" &&
+														!("officialPosition" in data) && (
+															<Badge
+																variant={
+																	data.organisationStatus === "Εγγεγραμμένη"
+																		? "active"
+																		: "inactive"
+																}
+															>
+																{data.organisationStatus === "Εγγεγραμμένη"
+																	? "Active"
+																	: "Inactive"}
+															</Badge>
+														)}
 													{model.selectedOption === "Organisation" && (
 														<Button
 															variant="ghost"
@@ -308,7 +332,8 @@ export const Search = observer(() => {
 															}}
 															disabled={isLoading}
 														>
-															{isCompanySaved(data.id) ? (
+															{!("officialPosition" in data) &&
+															isCompanySaved(data.id) ? (
 																<Bookmark className="h-4 w-4 text-primary" />
 															) : (
 																<BookmarkPlus className="h-4 w-4" />

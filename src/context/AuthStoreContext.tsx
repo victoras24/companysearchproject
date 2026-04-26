@@ -1,10 +1,11 @@
-import type { gEntities } from "@/gEntities";
+import type { IUser } from "@/gEntities";
+import type { DocumentData } from "firebase/firestore";
 import { createContext, useState, useContext, type ReactNode } from "react";
 
 interface AuthContextType {
-	user: gEntities.IUser;
-	updateUser: (user: any) => void;
-	userLogin: (user: any) => void;
+	user: IUser;
+	updateUser: (user: DocumentData) => void;
+	userLogin: (user: DocumentData) => void;
 	userLogout: () => void;
 }
 
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		}
 	});
 
-	const updateUser = (newUser: gEntities.IUser) => {
+	const updateUser = (newUser: DocumentData) => {
 		setUser(newUser);
 	};
 
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		setUser(null);
 	};
 
-	const userLogin = (user: gEntities.IUser) => {
+	const userLogin = (user: DocumentData) => {
 		setUser(user);
 	};
 

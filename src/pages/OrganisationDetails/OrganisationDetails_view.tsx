@@ -44,9 +44,14 @@ import {
 	ArrowLeft,
 } from "lucide-react";
 
-import type { gEntities } from "@/gEntities";
 import { useCartStore } from "@/context/CartStore";
 import { NavLink, useLocation } from "react-router";
+import type {
+	IOrganisationDetails,
+	ICartItem,
+	ICompany,
+	ISavedCompany,
+} from "@/gEntities";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const location = useLocation();
@@ -57,10 +62,10 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const cartStore = useCartStore();
 
-	const handleOrderReport = (company: gEntities.IOrganisationDetails) => {
+	const handleOrderReport = (company: IOrganisationDetails) => {
 		if (!company) return;
 
-		const cartItem: gEntities.ICartItem = {
+		const cartItem: ICartItem = {
 			entryId: company?.entryId,
 			name: company?.organisationName,
 			price: 39.99,
@@ -123,9 +128,9 @@ const OrganisationDetails: React.FC = observer(() => {
 					.join(" ")
 			: "Address not available";
 
-	const isSaved = (company: gEntities.ICompany) => {
+	const isSaved = (company: ICompany) => {
 		return user?.savedCompanies.some(
-			(saved: gEntities.ISavedCompany) => saved.id === company.id
+			(saved: ISavedCompany) => saved.id === company.id
 		);
 	};
 

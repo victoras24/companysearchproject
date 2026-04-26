@@ -30,6 +30,8 @@ const PageLoader = () => (
 );
 
 function App() {
+	console.log("App rendered");
+
 	return (
 		<AuthProvider>
 			<SavedCompanyProvider>
@@ -45,6 +47,7 @@ function App() {
 }
 
 function AppRoutes() {
+	console.log("routes");
 	const { user } = useAuth();
 	return (
 		<BrowserRouter>

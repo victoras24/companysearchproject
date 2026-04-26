@@ -1,5 +1,4 @@
 import { action, makeObservable, observable } from "mobx";
-import { v4 as uuidv4 } from "uuid";
 import {
 	arrayRemove,
 	arrayUnion,
@@ -8,19 +7,19 @@ import {
 	updateDoc,
 } from "firebase/firestore";
 import { firestore } from "../../Firebase/firebase";
-import type { gEntities } from "@/gEntities";
+import type { IUser, IGroup } from "@/gEntities";
 
 export class OrganiserModel {
 	@observable accessor groupName: string = "";
 	@observable accessor groups: any[] = [];
 	@observable accessor isLoading: boolean;
 	@observable accessor expandedGroups: { [key: string]: boolean } = {};
-	user: gEntities.IUser;
+	user: IUser;
 
 	/**
 	 *
 	 */
-	constructor(user: gEntities.IUser) {
+	constructor(user: IUser) {
 		makeObservable(this);
 		this.isLoading = true;
 		this.user = user;
@@ -46,6 +45,12 @@ export class OrganiserModel {
 		}
 	};
 
+	uniqueId = () => {
+		const dateString = Date.now().toString(36);
+		const randomness = Math.random().toString(36).substr(2);
+		return dateString + randomness;
+	};
+
 	@action
 	createGroup = async (ref: any) => {
 		if (this.groupName == "") {
@@ -54,7 +59,7 @@ export class OrganiserModel {
 
 		await updateDoc(ref, {
 			groups: arrayUnion({
-				id: uuidv4(),
+				id: this.uniqueId(),
 				name: this.groupName,
 				companies: [],
 			}),
@@ -71,7 +76,7 @@ export class OrganiserModel {
 	};
 
 	@action
-	deleteGroup = async (ref: any, group: gEntities.IGroup) => {
+	deleteGroup = async (ref: any, group: IGroup) => {
 		await updateDoc(ref, {
 			groups: arrayRemove(group),
 		});
@@ -90,7 +95,7 @@ export class OrganiserModel {
 		const data = querySnapshot.data();
 		const groups = data?.groups;
 
-		const updatedGroup = groups.map((group: gEntities.IGroup) => {
+		const updatedGroup = groups.map((group: IGroup) => {
 			if (group.id !== groupId) return group;
 
 			return {

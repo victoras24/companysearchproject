@@ -1,11 +1,11 @@
-import type { gEntities } from "@/gEntities";
+import type { ICartItem } from "@/gEntities";
 import { makeObservable, observable, action } from "mobx";
 import { toast } from "sonner";
 
 const CART_STORAGE_KEY = "user_cart_items";
 
 export class CartModel {
-	@observable accessor cartItems: gEntities.ICartItem[] = [];
+	@observable accessor cartItems: ICartItem[] = [];
 	@observable accessor isLoading: boolean = false;
 
 	constructor() {
@@ -40,13 +40,13 @@ export class CartModel {
 	@action
 	subtotal = () => {
 		return this.cartItems.reduce(
-			(total: number, item: gEntities.ICartItem) => total + item.price,
+			(total: number, item: ICartItem) => total + item.price,
 			0
 		);
 	};
 
 	@action
-	addItem = (item: gEntities.ICartItem) => {
+	addItem = (item: ICartItem) => {
 		const existingItem = this.cartItems.find(
 			(cartItem) => cartItem.entryId === item.entryId
 		);

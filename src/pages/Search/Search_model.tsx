@@ -2,8 +2,9 @@ import { action, makeObservable, observable } from "mobx";
 import CompaniesApi from "../../api/CompaniesApi";
 import OfficialsApi from "../../api/OfficialsApi";
 import { paginationConfig } from "@/constants/pagination";
+import type { ICompany, IOfficials, IPaginatedSearchData } from "@/gEntities";
 
-const api_config = {
+export const api_config = {
 	Organisation: {
 		method: CompaniesApi.getOrganisation,
 		paginatedMethod: CompaniesApi.getOrganisationPaginated,
@@ -17,11 +18,15 @@ const api_config = {
 };
 
 class SearchModel {
-	@observable.ref accessor searchData: any[] = [];
+	@observable.ref accessor searchData: ICompany[] | IOfficials[] = [];
+	@observable accessor paginatedSearchData: IPaginatedSearchData = {
+		items: [],
+		itemsCount: undefined,
+	};
 	@observable accessor searchQuery: string = "";
 	@observable accessor isLoading: boolean = false;
 	@observable accessor isFilterOpen: boolean = false;
-	@observable accessor selectedFilter: any = 3;
+	@observable accessor selectedFilter: number = 3;
 	@observable accessor selectedOption: keyof typeof api_config = "Organisation";
 	@observable accessor selectedPage: number = 1;
 
@@ -71,7 +76,8 @@ class SearchModel {
 				this.searchQuery,
 				this.currentPage
 			);
-			this.setSearchData(Array.isArray(res) ? res : []);
+			window.console.log("res", res);
+			this.setPaginatedSearchData(res);
 		} catch (error) {
 			console.error("Search error:", error);
 			this.setSearchData([]);
@@ -81,7 +87,7 @@ class SearchModel {
 	};
 
 	@action
-	setSearchData = (searchData: any[]) => {
+	setSearchData = (searchData: ICompany[] | IOfficials[]) => {
 		this.searchData = searchData;
 	};
 
@@ -114,7 +120,7 @@ class SearchModel {
 	};
 
 	@action
-	setSelectedOption = (option: any) => {
+	setSelectedOption = (option: keyof typeof api_config) => {
 		this.selectedOption = option;
 	};
 
@@ -137,6 +143,11 @@ class SearchModel {
 	cleanInput = () => {
 		this.setSearchQuery("");
 		this.searchData = [];
+	};
+
+	@action
+	setPaginatedSearchData = (paginatedSearchData: IPaginatedSearchData) => {
+		this.paginatedSearchData = paginatedSearchData;
 	};
 }
 

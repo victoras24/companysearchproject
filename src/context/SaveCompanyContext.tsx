@@ -1,12 +1,11 @@
 import { createContext, useState, useContext, type ReactNode } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "./AuthStoreContext";
-import type { gEntities } from "@/gEntities";
+import type { IGroup } from "@/gEntities";
 import { toast } from "sonner";
 
 interface SaveCompanyContext {
 	setGroups: any;
-	groups: gEntities.IGroup[];
+	groups: IGroup[];
 	savedCompanies: any;
 	setSavedCompanies: any;
 	createGroup: any;
@@ -17,7 +16,7 @@ interface SaveCompanyContext {
 const SavedCompanyContext = createContext<SaveCompanyContext | null>(null);
 
 export function SavedCompanyProvider({ children }: { children: ReactNode }) {
-	const [groups, setGroups] = useState<gEntities.IGroup[]>([]);
+	const [groups, setGroups] = useState<IGroup[]>([]);
 	const [savedCompanies, setSavedCompanies] = useState([]);
 	const { user } = useAuth();
 
@@ -56,11 +55,17 @@ export function SavedCompanyProvider({ children }: { children: ReactNode }) {
 			})
 		);
 
+	const uniqueId = () => {
+		const dateString = Date.now().toString(36);
+		const randomness = Math.random().toString(36).substr(2);
+		return dateString + randomness;
+	};
+
 	const createGroup = (groupName: any) =>
 		setGroups((prevState: any[]) => [
 			...prevState,
 			{
-				id: `group-${uuidv4()}`,
+				id: `group-${uniqueId}`,
 				name: groupName,
 				isExtended: false,
 				companies: [],
