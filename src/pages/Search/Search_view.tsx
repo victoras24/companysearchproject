@@ -33,9 +33,7 @@ export const Search = observer(() => {
 	const [model] = useState(() => new SearchModel());
 	const { handleSaveCompany, isLoading } = useSaveCompany();
 	const [statusFilter, setStatusFilter] = useState<string>("all");
-	window.console.log("hey");
-	console.warn("WARN TEST");
-	console.error("ERROR TEST");
+
 	useEffect(() => {
 		const debounceSearch = setTimeout(() => {
 			model.handlePaginatedSearch();

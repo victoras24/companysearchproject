@@ -76,7 +76,6 @@ class SearchModel {
 				this.searchQuery,
 				this.currentPage
 			);
-			window.console.log("res", res);
 			this.setPaginatedSearchData(res);
 		} catch (error) {
 			console.error("Search error:", error);

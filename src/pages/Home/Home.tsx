@@ -18,7 +18,7 @@ import Footer from "./Footer";
 
 const Home: React.FC = () => {
 	const navigate = useNavigate();
-	console.log("what");
+
 	return (
 		<div className="home-container">
 			<div className="w-full py-12">
