@@ -9,28 +9,51 @@ import {
 } from "@/components/ui/pagination";
 import { paginationConfig } from "@/constants/pagination";
 
-export const PaginationDemo: React.FC<{ dataSize: number }> = ({
-	dataSize,
-}) => {
+export const PaginationDemo: React.FC<{
+	query: string;
+	currentPage: number;
+	dataSize: number;
+}> = ({ query, currentPage, dataSize }) => {
 	return (
 		<Pagination>
 			<PaginationContent>
 				<PaginationItem>
-					<PaginationPrevious href="#" />
+					<PaginationPrevious
+						href={`/cyprus-company-search?q=${query}&page=${currentPage - 1}`}
+					/>
 				</PaginationItem>
 				<PaginationItem>
-					<PaginationLink isActive href="/1">
-						1
+					<PaginationLink
+						isActive={currentPage === (currentPage === 1 ? 1 : currentPage - 1)}
+						href={`/cyprus-company-search?q=${query}&page=${currentPage - 1}`}
+					>
+						{currentPage === 1 ? 1 : currentPage - 1}
 					</PaginationLink>
 				</PaginationItem>
 				{dataSize > paginationConfig.defaultLimit && (
 					<PaginationItem>
-						<PaginationLink href="#">2</PaginationLink>
+						<PaginationLink
+							isActive={currentPage === (currentPage === 1 ? 2 : currentPage)}
+							href={`/cyprus-company-search?q=${query}&page=${
+								currentPage === 1 ? 2 : currentPage
+							}`}
+						>
+							{currentPage === 1 ? 2 : currentPage}
+						</PaginationLink>
 					</PaginationItem>
 				)}
 				{dataSize > paginationConfig.defaultLimit * 2 && (
 					<PaginationItem>
-						<PaginationLink href="#">3</PaginationLink>
+						<PaginationLink
+							isActive={
+								currentPage === (currentPage === 1 ? 3 : currentPage + 1)
+							}
+							href={`/cyprus-company-search?q=${query}&page=${
+								currentPage === 1 ? 3 : currentPage + 1
+							}`}
+						>
+							{currentPage === 1 ? 3 : currentPage + 1}
+						</PaginationLink>
 					</PaginationItem>
 				)}
 				{dataSize > paginationConfig.defaultLimit * 3 && (
@@ -39,7 +62,9 @@ export const PaginationDemo: React.FC<{ dataSize: number }> = ({
 					</PaginationItem>
 				)}
 				<PaginationItem>
-					<PaginationNext href="#" />
+					<PaginationNext
+						href={`/cyprus-company-search?q=${query}&page=${currentPage + 1}`}
+					/>
 				</PaginationItem>
 			</PaginationContent>
 		</Pagination>

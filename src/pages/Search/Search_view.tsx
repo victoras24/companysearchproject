@@ -30,7 +30,11 @@ export const Search = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const location = useLocation();
 	const { user } = useAuth();
-	const [model] = useState(() => new SearchModel());
+	const currentPage = searchParams.get("page") || "";
+
+	const [model] = useState(
+		() => new SearchModel(searchParams, setSearchParams, +currentPage)
+	);
 	const { handleSaveCompany, isLoading } = useSaveCompany();
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -43,28 +47,24 @@ export const Search = observer(() => {
 	}, [model, model.searchQuery, statusFilter]);
 
 	useEffect(() => {
+		const q = searchParams.get("q");
 		const filter = searchParams.get("filter") as keyof typeof api_config;
 		const status = searchParams.get("status");
-		const page = searchParams.get("page");
 
-		if (filter) {
-			model.setSelectedOption(filter);
-		}
-		if (status) {
-			setStatusFilter(status);
-		}
-		if (page) {
-			model.setPage(+page);
-		}
+		if (typeof q === "string") model.setSearchQuery(q);
+
+		if (filter) model.setSelectedOption(filter);
+
+		if (status) setStatusFilter(status);
 	}, [model, searchParams]);
 
-	useEffect(() => {
-		if (location.state?.organisationName) {
-			model.handleInputChange(location.state.organisationName);
-			model.handlePaginatedSearch();
-			console.log(model.paginatedSearchData);
-		}
-	}, [model, location]);
+	// useEffect(() => {
+	// 	if (location.state?.organisationName) {
+	// 		model.handleInputChange(location.state.organisationName);
+	// 		model.handlePaginatedSearch();
+	// 		console.log(model.paginatedSearchData);
+	// 	}
+	// }, [model, location]);
 
 	const handleSelectOption = (filter: keyof typeof api_config) => {
 		model.setSelectedOption(filter);
@@ -344,8 +344,12 @@ export const Search = observer(() => {
 									</NavLink>
 								</Card>
 							))}
-							{model.searchData.length > 5 && (
-								<PaginationDemo dataSize={model.searchData.length} />
+							{model.paginatedSearchData.totalItemsCount > 5 && (
+								<PaginationDemo
+									query={model.searchQuery}
+									currentPage={model.currentPage}
+									dataSize={model.paginatedSearchData.totalItemsCount}
+								/>
 							)}
 						</div>
 					)}

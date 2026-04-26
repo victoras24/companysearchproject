@@ -87,7 +87,7 @@ export interface ICart {
 
 export interface IPaginatedSearchData {
 	items: ICompany[];
-	itemsCount: number | undefined;
+	totalItemsCount: number;
 }
 
 export interface IOfficials {

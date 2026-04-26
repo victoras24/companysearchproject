@@ -83,7 +83,7 @@ const OrganisationDetails: React.FC = observer(() => {
 			const newModel = new OrganisationDetailsModel(companyData, "overview");
 			setModel(newModel);
 		}
-	}, [companyData.addressSeqNo, companyData.registrationNo]);
+	}, [companyData, companyData.addressSeqNo, companyData.registrationNo]);
 
 	useEffect(() => {
 		model?.onMount();

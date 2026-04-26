@@ -3,6 +3,7 @@ import CompaniesApi from "../../api/CompaniesApi";
 import OfficialsApi from "../../api/OfficialsApi";
 import { paginationConfig } from "@/constants/pagination";
 import type { ICompany, IOfficials, IPaginatedSearchData } from "@/gEntities";
+import type { SetURLSearchParams } from "react-router";
 
 export const api_config = {
 	Organisation: {
@@ -21,20 +22,29 @@ class SearchModel {
 	@observable.ref accessor searchData: ICompany[] | IOfficials[] = [];
 	@observable accessor paginatedSearchData: IPaginatedSearchData = {
 		items: [],
-		itemsCount: undefined,
+		totalItemsCount: 0,
 	};
 	@observable accessor searchQuery: string = "";
 	@observable accessor isLoading: boolean = false;
 	@observable accessor isFilterOpen: boolean = false;
 	@observable accessor selectedFilter: number = 3;
 	@observable accessor selectedOption: keyof typeof api_config = "Organisation";
-	@observable accessor selectedPage: number = 1;
 
-	@observable accessor currentPage: number = 1;
+	@observable accessor currentPage: number;
+
+	setSearchParams: SetURLSearchParams;
+	searchParams: URLSearchParams;
 
 	readonly pageLimit: number = paginationConfig.defaultLimit;
 
-	constructor() {
+	constructor(
+		searchParams: URLSearchParams,
+		setSearchParams: SetURLSearchParams,
+		currentPage: number
+	) {
+		this.searchParams = searchParams;
+		this.setSearchParams = setSearchParams;
+		this.currentPage = currentPage;
 		makeObservable(this);
 	}
 
@@ -92,6 +102,7 @@ class SearchModel {
 
 	@action
 	handleInputChange = (value: string) => {
+		this.setSearchParams({ q: value, page: "1" });
 		this.setSearchQuery(value);
 		if (value.trim()) {
 			this.setLoading(true);
@@ -124,8 +135,8 @@ class SearchModel {
 	};
 
 	@action
-	setPage = (page: number) => {
-		this.selectedPage = page;
+	setPage = async (page: number) => {
+		this.currentPage = page;
 	};
 
 	@action
