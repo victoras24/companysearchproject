@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { observer } from "mobx-react";
 import SearchModel, { api_config } from "./Search_model";
@@ -32,9 +32,11 @@ export const Search = observer(() => {
 	const { user } = useAuth();
 	const currentPage = searchParams.get("page") || "";
 
-	const [model] = useState(
-		() => new SearchModel(searchParams, setSearchParams, +currentPage)
+	const model = useMemo(
+		() => new SearchModel(searchParams, setSearchParams, +currentPage),
+		[searchParams, setSearchParams, currentPage]
 	);
+
 	const { handleSaveCompany, isLoading } = useSaveCompany();
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 
