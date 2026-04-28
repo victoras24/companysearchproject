@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { observer } from "mobx-react";
 import SearchModel, { api_config } from "./Search_model";
@@ -30,17 +30,20 @@ export const Search = observer(() => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const location = useLocation();
 	const { user } = useAuth();
-	const currentPage = searchParams.get("page") || "";
+	const pageParam = searchParams.get("page") || "";
+	const currentPage = Math.max(1, Number(pageParam) || 1);
 
-	const model = useMemo(
-		() => new SearchModel(searchParams, setSearchParams, +currentPage),
-		[searchParams, setSearchParams, currentPage]
+	const [model] = useState(
+		() => new SearchModel(setSearchParams, +currentPage)
 	);
 
 	const { handleSaveCompany, isLoading } = useSaveCompany();
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 
 	useEffect(() => {
+		if (model.searchQuery.trim() === "")
+			model.setPaginatedSearchData({ items: [], totalItemsCount: 0 });
+
 		const debounceSearch = setTimeout(() => {
 			model.handlePaginatedSearch();
 		}, 233);
@@ -53,7 +56,7 @@ export const Search = observer(() => {
 		const filter = searchParams.get("filter") as keyof typeof api_config;
 		const status = searchParams.get("status");
 
-		if (typeof q === "string") model.setSearchQuery(q);
+		if (q) model.setSearchQuery(q);
 
 		if (filter) model.setSelectedOption(filter);
 
@@ -108,6 +111,8 @@ export const Search = observer(() => {
 		return true;
 	});
 
+	console.log(filteredResults);
+
 	const getState = (
 		selectedOption: "Organisation" | "Official",
 		data: ICompany | IOfficials
@@ -136,7 +141,7 @@ export const Search = observer(() => {
 			};
 		}
 	};
-
+	window.console.log(filteredResults);
 	const getName = (
 		selectedOption: "Organisation" | "Official",
 		data: ICompany | IOfficials
@@ -147,6 +152,8 @@ export const Search = observer(() => {
 
 		return data.organisationName;
 	};
+
+	window.console.log(model.searchQuery);
 
 	return (
 		<div className="search-page-container">
@@ -231,25 +238,7 @@ export const Search = observer(() => {
 							</Tabs>
 						</div>
 					)}
-
-					{/* Results */}
-					{model.isLoading ? (
-						<div className="flex flex-col items-center justify-center py-12 text-center">
-							{model.searchQuery.length > 2 ? (
-								<>
-									<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
-									<p className="text-muted-foreground">
-										Searching for {model.searchQuery}
-									</p>
-								</>
-							) : (
-								<p className="text-muted-foreground">
-									Enter at least 3 characters.
-								</p>
-							)}
-						</div>
-					) : filteredResults.length === 0 &&
-					  model.searchQuery.trim() === "" ? (
+					{model.searchQuery.trim() === "" && (
 						<Card className="search-tips-card">
 							<CardContent className="p-6">
 								<div className="flex items-start gap-4">
@@ -268,7 +257,25 @@ export const Search = observer(() => {
 								</div>
 							</CardContent>
 						</Card>
-					) : filteredResults.length === 0 ? (
+					)}
+					{/* Results */}
+					{model.isLoading ? (
+						<div className="flex flex-col items-center justify-center py-12 text-center">
+							{model.searchQuery.length > 2 ? (
+								<>
+									<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
+									<p className="text-muted-foreground">
+										Searching for {model.searchQuery}
+									</p>
+								</>
+							) : (
+								<p className="text-muted-foreground">
+									Enter at least 3 characters.
+								</p>
+							)}
+						</div>
+					) : filteredResults.length === 0 &&
+					  model.searchQuery.trim() !== "" ? (
 						<Alert variant="default" className="bg-muted">
 							<AlertDescription className="text-center py-8">
 								No results found for "{model.searchQuery}". Try a different

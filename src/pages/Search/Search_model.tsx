@@ -33,16 +33,10 @@ class SearchModel {
 	@observable accessor currentPage: number;
 
 	setSearchParams: SetURLSearchParams;
-	searchParams: URLSearchParams;
 
 	readonly pageLimit: number = paginationConfig.defaultLimit;
 
-	constructor(
-		searchParams: URLSearchParams,
-		setSearchParams: SetURLSearchParams,
-		currentPage: number
-	) {
-		this.searchParams = searchParams;
+	constructor(setSearchParams: SetURLSearchParams, currentPage: number) {
 		this.setSearchParams = setSearchParams;
 		this.currentPage = currentPage;
 		makeObservable(this);
