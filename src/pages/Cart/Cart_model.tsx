@@ -1,5 +1,5 @@
 import type { ICartItem } from "@/gEntities";
-import { makeObservable, observable, action } from "mobx";
+import { makeObservable, observable, action, computed } from "mobx";
 import { toast } from "sonner";
 
 const CART_STORAGE_KEY = "user_cart_items";
@@ -47,10 +47,11 @@ export class CartModel {
 
 	@action
 	addItem = (item: ICartItem) => {
+		window.console.log(item);
 		const existingItem = this.cartItems.find(
-			(cartItem) => cartItem.entryId === item.entryId
+			(cartItem) => cartItem.registrationId === item.registrationId
 		);
-
+		window.console.log(existingItem);
 		if (existingItem) {
 			toast.warning(`The report for ${item.name} is already in the cart`);
 		} else {
@@ -62,8 +63,12 @@ export class CartModel {
 
 	@action
 	removeItem = (id: number | string) => {
-		const itemToRemove = this.cartItems.find((item) => item.entryId === id);
-		this.cartItems = this.cartItems.filter((item) => item.entryId !== id);
+		const itemToRemove = this.cartItems.find(
+			(item) => item.registrationId === id
+		);
+		this.cartItems = this.cartItems.filter(
+			(item) => item.registrationId !== id
+		);
 		this.saveCartToStorage(); // Save to localStorage after removing
 
 		if (itemToRemove) {
@@ -77,4 +82,9 @@ export class CartModel {
 		this.saveCartToStorage();
 		toast.success("Cart cleared");
 	};
+
+	@computed
+	get itemCount() {
+		return this.cartItems.length;
+	}
 }

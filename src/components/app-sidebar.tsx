@@ -21,9 +21,12 @@ import {
 import { useAuth } from "@/context/AuthStoreContext";
 import { NavUser } from "./sidebar-user";
 import { getAuth } from "firebase/auth";
+import { useCartStore } from "@/context/CartStore";
+import { observer } from "mobx-react";
 
-export function AppSidebar() {
+export const AppSidebar = observer(() => {
 	const { user } = useAuth();
+	const cartStore = useCartStore();
 	const auth = getAuth();
 
 	const items = [
@@ -83,6 +86,13 @@ export function AppSidebar() {
 										<SidebarMenuItem key={item.title}>
 											<SidebarMenuButton asChild>
 												<a href={item.url}>
+													{item.title === "Cart" ? (
+														<span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+															{cartStore.itemCount}
+														</span>
+													) : (
+														""
+													)}
 													<item.icon />
 													<span>{item.title}</span>
 												</a>
@@ -108,4 +118,4 @@ export function AppSidebar() {
 			)}
 		</Sidebar>
 	);
-}
+});
