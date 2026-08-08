@@ -52,6 +52,7 @@ import type {
 	ICompany,
 	ISavedCompany,
 } from "@/gEntities";
+import { Spinner } from "@/components/ui/spinner";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const location = useLocation();
@@ -64,9 +65,8 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const handleOrderReport = (company: IOrganisationDetails) => {
 		if (!company) return;
-
 		const cartItem: ICartItem = {
-			entryId: company?.entryId,
+			registrationId: company?.registrationNo,
 			name: company?.organisationName,
 			price: 39.99,
 		};
@@ -260,7 +260,7 @@ const OrganisationDetails: React.FC = observer(() => {
 								<h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
 									<MapPin className="h-4 w-4" /> Registered Address
 								</h3>
-								<p>{fullAddress}</p>
+								{model?.isLoadingAddress ? <Spinner /> : <p>{fullAddress}</p>}
 							</div>
 						</CardContent>
 					</Card>

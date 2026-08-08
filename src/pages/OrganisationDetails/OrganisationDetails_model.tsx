@@ -11,6 +11,7 @@ class OrganisationDetailsModel {
 	@observable accessor isLoading: boolean = true;
 	@observable accessor isLoadingOfficials: boolean = false;
 	@observable accessor isLoadingRelated: boolean = false;
+	@observable accessor isLoadingAddress: boolean = false;
 	@observable accessor activeTab: string;
 	companyAddressData?: ICompanyAddress;
 	@observable accessor detailedOfficialsData: any;
@@ -35,19 +36,29 @@ class OrganisationDetailsModel {
 
 	@action
 	onMount = async () => {
-		await this.getCompanyAddress();
+		// await this.getCompanyAddress();
+		this.parallelCall();
 		this.setIsLoading(false);
-		await this.backgroundLoading();
+		// await this.backgroundLoading();
+	};
+
+	parallelCall = () => {
+		Promise.all([
+			this.getCompanyAddress(),
+			this.loadKeyPeople(),
+			this.loadRelatedCompanies(),
+		]);
 	};
 
 	@action
-	backgroundLoading = () => {
-		this.loadKeyPeople();
-		this.loadRelatedCompanies();
+	backgroundLoading = async () => {
+		await this.loadKeyPeople();
+		await this.loadRelatedCompanies();
 	};
 
 	@action
 	getCompanyAddress = async () => {
+		this.setIsLoadingAddress(true);
 		try {
 			const res = await CompaniesApi.getOrganisationAddress(
 				this.companyData.addressSeqNo
@@ -58,6 +69,7 @@ class OrganisationDetailsModel {
 		} catch (error) {
 			console.error("Error fetching detail data:", error);
 		}
+		this.setIsLoadingAddress(false);
 	};
 
 	@action
@@ -143,6 +155,11 @@ class OrganisationDetailsModel {
 	@action
 	setActiveTab = (activeTab: string) => {
 		this.activeTab = activeTab;
+	};
+
+	@action
+	setIsLoadingAddress = (isLoading: boolean) => {
+		this.isLoadingAddress = isLoading;
 	};
 }
 
