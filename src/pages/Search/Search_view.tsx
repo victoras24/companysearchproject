@@ -141,7 +141,7 @@ export const Search = observer(() => {
 			};
 		}
 	};
-	window.console.log(filteredResults);
+
 	const getName = (
 		selectedOption: "Organisation" | "Official",
 		data: ICompany | IOfficials
@@ -152,8 +152,6 @@ export const Search = observer(() => {
 
 		return data.organisationName;
 	};
-
-	window.console.log(model.searchQuery);
 
 	return (
 		<div className="search-page-container">

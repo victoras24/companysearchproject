@@ -1,0 +1,10 @@
+[] Implement stripe webhooks, use them to store orders in database.
+[] Enhance company status.
+[] Automate updating database.
+[] Supabase as main database.
+  [] Migrate users from firebase to Supabase.
+  [] Make sure that auth is secure.
+[] Test to find small bugs.
+[] Fix typescript errors.
+[] Write a blog related to the VAT.
+[] Export results in excel.

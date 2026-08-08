@@ -69,13 +69,6 @@ const ReturnForm = () => {
 								<ArrowLeft className="h-4 w-4 mr-2" />
 								Return to Home
 							</button>
-
-							<button
-								onClick={() => navigate("/orders")}
-								className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200"
-							>
-								View Order History
-							</button>
 						</div>
 					</div>
 				</div>
