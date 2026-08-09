@@ -23,6 +23,8 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCartStore } from "@/context/CartStore";
+import { observer } from "mobx-react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -252,31 +254,35 @@ function Sidebar({
 	);
 }
 
-function SidebarTrigger({
-	className,
-	onClick,
-	...props
-}: React.ComponentProps<typeof Button>) {
-	const { toggleSidebar } = useSidebar();
+const SidebarTrigger = observer(
+	({ className, onClick, ...props }: React.ComponentProps<typeof Button>) => {
+		const cartStore = useCartStore();
+		const { toggleSidebar } = useSidebar();
 
-	return (
-		<Button
-			data-sidebar="trigger"
-			data-slot="sidebar-trigger"
-			variant="ghost"
-			size="icon"
-			className={cn("size-10", className)}
-			onClick={(event) => {
-				onClick?.(event);
-				toggleSidebar();
-			}}
-			{...props}
-		>
-			<PanelLeftIcon />
-			<span className="sr-only">Toggle Sidebar</span>
-		</Button>
-	);
-}
+		return (
+			<Button
+				data-sidebar="trigger"
+				data-slot="sidebar-trigger"
+				variant="ghost"
+				size="icon"
+				className={cn("size-10", className)}
+				onClick={(event) => {
+					onClick?.(event);
+					toggleSidebar();
+				}}
+				{...props}
+			>
+				<PanelLeftIcon />
+				{cartStore.itemCount > 0 && (
+					<span className=" flex h-4 w-4 items-center justify-center rounded-full bg-accent-foreground text-xs font-semibold text-secondary">
+						{cartStore.itemCount}
+					</span>
+				)}
+				<span className="sr-only">Toggle Sidebar</span>
+			</Button>
+		);
+	}
+);
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 	const { toggleSidebar } = useSidebar();

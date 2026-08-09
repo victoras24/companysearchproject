@@ -13,6 +13,7 @@
 --[X] Remove discount in Cart.
 --[] Loading state on the checkout button.
 --[] Test for security.
+[] Search, filter, bugs.
 
 # Database
 
@@ -26,6 +27,7 @@
 # SEO
 
 [] Write a blog related to the VAT.
+[] Blog related to the short term rental regulations.
 
 # Codebase
 
