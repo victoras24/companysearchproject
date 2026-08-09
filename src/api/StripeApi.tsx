@@ -1,3 +1,4 @@
+import type { ICartItem } from "@/gEntities";
 import axios from "axios";
 
 export class StripeApi {
@@ -7,10 +8,9 @@ export class StripeApi {
 	 */
 	constructor() {}
 
-	createCheckoutSession = async (totalAmount: number, quantity: number) => {
+	createCheckoutSession = async (orderItem: ICartItem[]) => {
 		const res = await axios.post(`${this.controller}/create-checkout-session`, {
-			totalAmount,
-			quantity,
+			orderItem,
 		});
 		return res.data;
 	};

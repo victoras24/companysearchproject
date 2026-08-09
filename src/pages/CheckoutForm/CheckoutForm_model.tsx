@@ -1,6 +1,7 @@
 import { action } from "mobx";
 import StripeApi, { StripeApi as IStripeApi } from "../../api/StripeApi";
 import { toast } from "sonner";
+import type { ICartItem } from "@/gEntities";
 
 export class CheckoutFormModel {
 	options: any;
@@ -13,11 +14,8 @@ export class CheckoutFormModel {
 	}
 
 	@action
-	createCheckoutSession = async (totalAmount: number, quantiy: number) => {
-		const res = await this.StripeApi.createCheckoutSession(
-			totalAmount,
-			quantiy
-		);
+	createCheckoutSession = async (orderItem: ICartItem[]) => {
+		const res = await this.StripeApi.createCheckoutSession(orderItem);
 		return res;
 	};
 

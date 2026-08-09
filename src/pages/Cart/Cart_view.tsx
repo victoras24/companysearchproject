@@ -64,7 +64,7 @@ const Cart = observer(() => {
 							<CardContent>
 								<div className="space-y-6">
 									{cartStore.cartItems.map((item) => (
-										<div key={item.registrationId}>
+										<div key={item.companyRegNo}>
 											<div className="flex items-center gap-4">
 												<div className="h-24 w-24 overflow-hidden rounded-md">
 													<FileText className="h-full w-full object-cover" />
@@ -72,10 +72,10 @@ const Cart = observer(() => {
 
 												<div className="flex-1">
 													<div className="flex justify-between">
-														<h3 className="font-medium">{item.name}</h3>
+														<h3 className="font-medium">{item.companyName}</h3>
 													</div>
 													<p className="text-sm text-gray-500 mt-1">
-														€{item.price.toFixed(2)}
+														€{item.unitPrice?.toFixed(2)}
 													</p>
 
 													<div className="flex items-center gap-4 mt-4">
@@ -84,7 +84,7 @@ const Cart = observer(() => {
 															size="sm"
 															className="text-red-500 hover:text-red-700 hover:bg-red-50"
 															onClick={() =>
-																cartStore.removeItem(item.registrationId)
+																cartStore.removeItem(item.companyRegNo)
 															}
 														>
 															<Trash2 className="h-4 w-4 mr-1" /> Remove
@@ -150,11 +150,8 @@ const Cart = observer(() => {
 									className="w-full"
 									size="lg"
 									onClick={async () => {
-										const totalAmount = total;
-										const quantity = cartStore.cartItems.length;
 										const res = await checkoutModel.createCheckoutSession(
-											totalAmount,
-											quantity
+											cartStore.cartItems
 										);
 										if (res.url) {
 											window.location.href = res.url;

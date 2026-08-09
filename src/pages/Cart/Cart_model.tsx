@@ -40,7 +40,7 @@ export class CartModel {
 	@action
 	subtotal = () => {
 		return this.cartItems.reduce(
-			(total: number, item: ICartItem) => total + item.price,
+			(total: number, item: ICartItem) => total + item.unitPrice,
 			0
 		);
 	};
@@ -49,30 +49,30 @@ export class CartModel {
 	addItem = (item: ICartItem) => {
 		window.console.log(item);
 		const existingItem = this.cartItems.find(
-			(cartItem) => cartItem.registrationId === item.registrationId
+			(cartItem) => cartItem.companyRegNo === item.companyRegNo
 		);
 		window.console.log(existingItem);
 		if (existingItem) {
-			toast.warning(`The report for ${item.name} is already in the cart`);
+			toast.warning(
+				`The report for ${item.companyName} is already in the cart`
+			);
 		} else {
 			this.cartItems.push(item);
 			this.saveCartToStorage(); // Save to localStorage after adding
-			toast.success(`Added ${item.name} to your cart`);
+			toast.success(`Added ${item.companyName} to your cart`);
 		}
 	};
 
 	@action
 	removeItem = (id: number | string) => {
 		const itemToRemove = this.cartItems.find(
-			(item) => item.registrationId === id
+			(item) => item.companyRegNo === id
 		);
-		this.cartItems = this.cartItems.filter(
-			(item) => item.registrationId !== id
-		);
+		this.cartItems = this.cartItems.filter((item) => item.companyRegNo !== id);
 		this.saveCartToStorage(); // Save to localStorage after removing
 
 		if (itemToRemove) {
-			toast.success(`Removed ${itemToRemove.name} from your cart`);
+			toast.success(`Removed ${itemToRemove.companyName} from your cart`);
 		}
 	};
 

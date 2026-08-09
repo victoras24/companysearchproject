@@ -66,9 +66,9 @@ const OrganisationDetails: React.FC = observer(() => {
 	const handleOrderReport = (company: IOrganisationDetails) => {
 		if (!company) return;
 		const cartItem: ICartItem = {
-			registrationId: company?.registrationNo,
-			name: company?.organisationName,
-			price: 39.99,
+			companyName: company.organisationName,
+			companyRegNo: company?.registrationNo,
+			unitPrice: Number(import.meta.env.VITE_COMPANY_REPORT_PRICE),
 		};
 
 		cartStore.addItem(cartItem);

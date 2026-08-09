@@ -1,10 +1,35 @@
-[] Implement stripe webhooks, use them to store orders in database.
-[] Enhance company status.
-[] Automate updating database.
-[] Supabase as main database.
-  [] Migrate users from firebase to Supabase.
-  [] Make sure that auth is secure.
-[] Test to find small bugs.
-[] Fix typescript errors.
-[] Write a blog related to the VAT.
+# Features
+
+[] Implement stripe webhooks.
+[] Add subscription packages for tracking companies.
 [] Export results in excel.
+
+# Bugs
+
+[] Test to find small bugs.
+[X] Company name is not included in the invoice from stripe.
+[] Update cart page design.
+--[] Add table for the items.
+--[] Loading state on the checkout button.
+--[] Test for security.
+
+# Database
+
+[] Supabase as main database.
+--[X] Store orders in database.
+--[] Migrate users from firebase to Supabase.
+--[] Make sure that auth is secure.
+--[] Automate updating database.
+--[] Enhance company status.
+
+# SEO
+
+[] Write a blog related to the VAT.
+
+# Codebase
+
+[] Fix typescript errors.
+
+# Other
+
+[] Remove discount in Cart.

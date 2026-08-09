@@ -74,9 +74,9 @@ export interface ISavedCompany {
 }
 
 export interface ICartItem {
-	registrationId: string | string;
-	name: string;
-	price: number;
+	companyName: string;
+	companyRegNo: string;
+	unitPrice: number;
 }
 
 export interface ICart {
