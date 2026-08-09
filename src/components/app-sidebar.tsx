@@ -87,7 +87,7 @@ export const AppSidebar = observer(() => {
 											<SidebarMenuButton asChild>
 												<a href={item.url}>
 													{item.title === "Cart" ? (
-														<span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+														<span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-foreground text-xs font-semibold text-secondary">
 															{cartStore.itemCount}
 														</span>
 													) : (
