@@ -10,6 +10,7 @@
 [X] Company name is not included in the invoice from stripe.
 [] Update cart page design.
 --[] Add table for the items.
+--[X] Remove discount in Cart.
 --[] Loading state on the checkout button.
 --[] Test for security.
 
@@ -31,5 +32,3 @@
 [] Fix typescript errors.
 
 # Other
-
-[] Remove discount in Cart.

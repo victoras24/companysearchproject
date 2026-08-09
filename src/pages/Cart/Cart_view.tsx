@@ -7,7 +7,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Trash2, ArrowRight, FileText } from "lucide-react";
@@ -18,18 +17,8 @@ import { CheckoutFormModel } from "../CheckoutForm/CheckoutForm_model";
 const Cart = observer(() => {
 	const [checkoutModel] = useState(() => new CheckoutFormModel());
 	const cartStore = useCartStore();
-	const [discountCode, setDiscountCode] = useState("");
-	const [discountApplied, setDiscountApplied] = useState(false);
 
-	const applyDiscount = () => {
-		if (discountCode.trim().toLowerCase() === "welcome20") {
-			setDiscountApplied(true);
-		}
-	};
-
-	const total = discountApplied
-		? cartStore.subtotal() * 0.8
-		: cartStore.subtotal();
+	const total = cartStore.subtotal();
 
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -115,28 +104,6 @@ const Cart = observer(() => {
 									<span>Subtotal</span>
 									<span>€{cartStore.subtotal().toFixed(2)}</span>
 								</div>
-
-								<div className="flex gap-2">
-									<Input
-										placeholder="Discount code"
-										value={discountCode}
-										onChange={(e) => setDiscountCode(e.target.value)}
-									/>
-									<Button
-										variant="outline"
-										onClick={applyDiscount}
-										disabled={discountApplied}
-									>
-										Apply
-									</Button>
-								</div>
-
-								{discountApplied && (
-									<div className="flex justify-between text-green-600">
-										<span>Discount (20%)</span>
-										<span>-€{(cartStore.subtotal() * 0.2).toFixed(2)}</span>
-									</div>
-								)}
 
 								<Separator />
 
