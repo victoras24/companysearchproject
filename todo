@@ -1,11 +1,14 @@
 # Features
 
 [] Implement stripe webhooks.
-[] Add subscription packages for tracking companies.
+[] Add subscription packages for tracking companies. (company-tracking branch)
 [] Export results in excel.
+[] Add queue system on the backend for the company tracking, add plan B if the request fails and continue with the queue that you have left.
+[] Add corporate services in home page. (corporate-services branch)
 
 # Bugs
 
+[] Searching results with pages has bugs. Consider going back to displaying all the results.
 [] Test to find small bugs.
 [X] Company name is not included in the invoice from stripe.
 [] Update cart page design.
@@ -14,6 +17,9 @@
 --[] Loading state on the checkout button.
 --[] Test for security.
 [] Search, filter, bugs.
+[] If you search for a company and immediately add a letter, it creates 2 calls to the network, the second one completed and then the first one gets completed. So the result displayed is from the first one. Find a way to just cancel the previous calls. Just a quick though maybe create an array of calls and only call the last one?
+[] Google login button background color in dark mode.
+[] Add forgot password.
 
 # Database
 
@@ -34,3 +40,5 @@
 [] Fix typescript errors.
 
 # Other
+
+[] Create business email purely mail.
