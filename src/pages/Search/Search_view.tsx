@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
-import { NavLink, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
-import SearchModel, { api_config } from "./Search_model";
+import {
+	SearchSession,
+	type EntityType,
+	type StatusFilter,
+} from "./SearchSession";
+import { search } from "@/api/searchApi";
 import { useAuth } from "../../context/AuthStoreContext";
 
 import { Input } from "@/components/ui/input";
@@ -23,71 +28,45 @@ import {
 } from "lucide-react";
 
 import "./_search.css";
-import { PaginationDemo } from "@/components/pagination-demo";
+import { SearchPager } from "@/components/SearchPager";
 import type { ICompany, IOfficials } from "@/gEntities";
 
-export const Search = observer(() => {
-	const [searchParams, setSearchParams] = useSearchParams();
-	const location = useLocation();
-	const { user } = useAuth();
-	const pageParam = searchParams.get("page") || "";
-	const currentPage = Math.max(1, Number(pageParam) || 1);
+const entityTypeLabel: Record<EntityType, string> = {
+	organisation: "Organisation",
+	official: "Official",
+};
 
-	const [model] = useState(
-		() => new SearchModel(setSearchParams, +currentPage)
+export const Search = observer(() => {
+	const location = useLocation();
+	const navigate = useNavigate();
+	const { user } = useAuth();
+
+	const navigateRef = useRef(navigate);
+	const resultsRef = useRef<HTMLDivElement>(null);
+
+	const [session] = useState(
+		() =>
+			new SearchSession({
+				search,
+				navigate: (search, { replace }) =>
+					navigateRef.current({ search }, { replace }),
+			})
 	);
 
 	const { handleSaveCompany, isLoading } = useSaveCompany();
-	const [statusFilter, setStatusFilter] = useState<string>("all");
 
-	useEffect(() => {
-		if (model.searchQuery.trim() === "")
-			model.setPaginatedSearchData({ items: [], totalItemsCount: 0 });
+	useLayoutEffect(() => {
+		navigateRef.current = navigate;
+	}, [navigate]);
 
-		const debounceSearch = setTimeout(() => {
-			model.handlePaginatedSearch();
-		}, 233);
+	useLayoutEffect(() => {
+		session.urlChanged(location.search);
+	}, [session, location.search]);
 
-		return () => clearTimeout(debounceSearch);
-	}, [model, model.searchQuery, statusFilter]);
+	useEffect(() => () => session.dispose(), [session]);
 
-	useEffect(() => {
-		const q = searchParams.get("q");
-		const filter = searchParams.get("filter") as keyof typeof api_config;
-		const status = searchParams.get("status");
-
-		if (q) model.setSearchQuery(q);
-
-		if (filter) model.setSelectedOption(filter);
-
-		if (status) setStatusFilter(status);
-	}, [model, searchParams]);
-
-	// useEffect(() => {
-	// 	if (location.state?.organisationName) {
-	// 		model.handleInputChange(location.state.organisationName);
-	// 		model.handlePaginatedSearch();
-	// 		console.log(model.paginatedSearchData);
-	// 	}
-	// }, [model, location]);
-
-	const handleSelectOption = (filter: keyof typeof api_config) => {
-		model.setSelectedOption(filter);
-		setStatusFilter("all");
-		setSearchParams({ filter: filter });
-
-		model.setSearchData([]);
-		if (model.searchQuery.trim() !== "") {
-			model.setLoading(true);
-		}
-	};
-
-	const handleStatusFilter = (value: string) => {
-		setStatusFilter(value);
-		setSearchParams({
-			filter: model.selectedOption,
-			...(value !== "all" && { status: value }),
-		});
+	const scrollToResults = () => {
+		resultsRef.current?.scrollIntoView({ block: "start" });
 	};
 
 	const isCompanySaved = (companyId: number) => {
@@ -95,62 +74,175 @@ export const Search = observer(() => {
 		return user.savedCompanies.some((saved) => saved.id === companyId);
 	};
 
-	const filteredResults = model.paginatedSearchData.items.filter((data) => {
-		if (model.selectedOption !== "Organisation" || statusFilter === "all") {
-			return true;
+	const renderOrganisation = (data: ICompany) => (
+		<Card
+			key={data.id}
+			className="search-result-card hover:shadow-md transition-shadow"
+		>
+			<NavLink
+				to={`/cyprus-company-search/${data.registrationNo}`}
+				state={{
+					organisationName: data.organisationName,
+					registrationNo: data.registrationNo,
+					registrationDate: data.registrationDate,
+					organisationStatus: data.organisationStatus,
+					addressSeqNo: data.addressSeqNo,
+					filter: location.search,
+					searchInput: session.draft,
+				}}
+				className="no-underline text-foreground"
+			>
+				<CardContent className="p-4">
+					<div className="flex justify-between items-start">
+						<div className="space-y-1">
+							<h4 className="font-medium">{data.organisationName}</h4>
+							<p className="text-sm text-muted-foreground">
+								Reg No: {data.registrationNo}
+							</p>
+						</div>
+
+						<div className="flex items-center gap-2">
+							<Badge
+								variant={
+									data.organisationStatus === "Εγγεγραμμένη"
+										? "active"
+										: "inactive"
+								}
+							>
+								{data.organisationStatus === "Εγγεγραμμένη"
+									? "Active"
+									: "Inactive"}
+							</Badge>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleSaveCompany(data);
+								}}
+								disabled={isLoading}
+							>
+								{isCompanySaved(data.id) ? (
+									<Bookmark className="h-4 w-4 text-primary" />
+								) : (
+									<BookmarkPlus className="h-4 w-4" />
+								)}
+							</Button>
+						</div>
+					</div>
+				</CardContent>
+			</NavLink>
+		</Card>
+	);
+
+	const renderOfficial = (data: IOfficials, index: number) => (
+		<Card
+			key={index}
+			className="search-result-card hover:shadow-md transition-shadow"
+		>
+			<NavLink
+				to={`/official/${data.personOrOrganisationName}`}
+				state={{
+					officialPosition: data.officialPosition,
+					organisationName: data.organisationName,
+					personOrOrganisationName: data.personOrOrganisationName,
+					registrationNo: data.registrationNo,
+					filter: location.search,
+					searchInput: session.draft,
+				}}
+				className="no-underline text-foreground"
+			>
+				<CardContent className="p-4">
+					<div className="flex justify-between items-start">
+						<div className="space-y-1">
+							<h4 className="font-medium">{data.personOrOrganisationName}</h4>
+						</div>
+					</div>
+				</CardContent>
+			</NavLink>
+		</Card>
+	);
+
+	const renderResults = () => {
+		const view = session.view;
+
+		switch (view.status) {
+			case "idle":
+				return (
+					<Card className="search-tips-card">
+						<CardContent className="p-6">
+							<div className="flex items-start gap-4">
+								<Info className="h-5 w-5 mt-1" />
+								<div>
+									<h2 className="font-semibold text-lg mb-2">Search Tips:</h2>
+									<ul className="space-y-2 list-disc list-inside text-sm text-muted-foreground">
+										<li>Enter the full or partial name of the company</li>
+										<li>Results will show company name, status, and address</li>
+										<li>Click on a result to view more details</li>
+										<li>Use the filters above to refine your search</li>
+									</ul>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				);
+			case "too-short":
+				return (
+					<div className="flex flex-col items-center justify-center py-12 text-center">
+						<p className="text-muted-foreground">
+							Enter at least 3 characters.
+						</p>
+					</div>
+				);
+			case "loading":
+				return (
+					<div className="flex flex-col items-center justify-center py-12 text-center">
+						<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
+						<p className="text-muted-foreground">
+							Searching for {session.draft}
+						</p>
+					</div>
+				);
+			case "empty":
+				return (
+					<Alert variant="default" className="bg-muted">
+						<AlertDescription className="text-center py-8">
+							No results found for "{view.query}". Try a different search term
+							or adjust your filters.
+						</AlertDescription>
+					</Alert>
+				);
+			case "error":
+				return (
+					<Alert variant="default" className="bg-muted">
+						<AlertDescription className="flex flex-col items-center gap-4 text-center py-8">
+							Something went wrong while searching. Please try again.
+							<Button variant="outline" onClick={() => session.retry()}>
+								Retry
+							</Button>
+						</AlertDescription>
+					</Alert>
+				);
+			case "results":
+				return (
+					<div className="search-results space-y-3">
+						{view.entityType === "organisation"
+							? view.items.map(renderOrganisation)
+							: view.items.map(renderOfficial)}
+						{view.entityType === "official" && view.truncated && (
+							<p className="text-sm text-muted-foreground text-center">
+								Showing the first {view.items.length} matches; refine your
+								search.
+							</p>
+						)}
+						{view.pager && (
+							<SearchPager pager={view.pager} onNavigate={scrollToResults} />
+						)}
+					</div>
+				);
 		}
-
-		if (statusFilter === "active") {
-			return data.organisationStatus === "Εγγεγραμμένη";
-		}
-
-		if (statusFilter === "inactive") {
-			return data.organisationStatus !== "Εγγεγραμμένη";
-		}
-
-		return true;
-	});
-
-	console.log(filteredResults);
-
-	const getState = (
-		selectedOption: "Organisation" | "Official",
-		data: ICompany | IOfficials
-	) => {
-		if (selectedOption === "Official" && "officialPosition" in data) {
-			return {
-				officialPosition: data.officialPosition,
-				organisationName: data.organisationName,
-				personOrOrganisationName: data.personOrOrganisationName,
-				registrationNo: data.registrationNo,
-				filter: location.search,
-				searchInput: model.searchQuery,
-			};
-		} else if (
-			selectedOption === "Organisation" &&
-			!("officialPosition" in data)
-		) {
-			return {
-				organisationName: data.organisationName,
-				registrationNo: data.registrationNo,
-				registrationDate: data.registrationDate,
-				organisationStatus: data.organisationStatus,
-				addressSeqNo: data.addressSeqNo,
-				filter: location.search,
-				searchInput: model.searchQuery,
-			};
-		}
-	};
-
-	const getName = (
-		selectedOption: "Organisation" | "Official",
-		data: ICompany | IOfficials
-	) => {
-		if (selectedOption === "Official" && "officialPosition" in data) {
-			return data.personOrOrganisationName;
-		}
-
-		return data.organisationName;
 	};
 
 	return (
@@ -165,27 +257,29 @@ export const Search = observer(() => {
 					</p>
 				</div>
 
-				<div className="search-content">
+				<div className="search-content" ref={resultsRef}>
 					{/* Search Input */}
 					<div className="search-input-container mb-4">
 						<div className="search-input-wrapper relative">
 							<Input
 								className="pl-10 pr-10"
-								placeholder={`Enter ${model.selectedOption}'s name`}
-								value={model.searchQuery}
-								onChange={(e) => model.handleInputChange(e.target.value)}
+								placeholder={`Enter ${
+									entityTypeLabel[session.entityType]
+								}'s name`}
+								value={session.draft}
+								onChange={(e) => session.typeQuery(e.target.value)}
 							/>
 							<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
 								<SearchIcon className="h-4 w-4 text-muted-foreground" />
 							</div>
 
-							{model.searchQuery && (
+							{session.draft && (
 								<div className="absolute inset-y-0 right-0 flex items-center">
 									<Button
 										variant="ghost"
 										size="icon"
 										className="h-8 w-8"
-										onClick={() => model.cleanInput()}
+										onClick={() => session.clearQuery()}
 									>
 										<X className="h-4 w-4" />
 									</Button>
@@ -197,16 +291,18 @@ export const Search = observer(() => {
 					{/* Search Type Filter */}
 					<div className="mb-4">
 						<Tabs
-							value={model.selectedOption}
-							onValueChange={handleSelectOption}
+							value={session.entityType}
+							onValueChange={(value) =>
+								session.selectEntityType(value as EntityType)
+							}
 							className="w-full"
 						>
 							<TabsList className="grid w-full grid-cols-2 h-10">
-								<TabsTrigger value="Organisation" className="text-sm">
+								<TabsTrigger value="organisation" className="text-sm">
 									<Building className="h-4 w-4 mr-2" />
 									Companies
 								</TabsTrigger>
-								<TabsTrigger value="Official" className="text-sm">
+								<TabsTrigger value="official" className="text-sm">
 									<User className="h-4 w-4 mr-2" />
 									Officials
 								</TabsTrigger>
@@ -215,11 +311,13 @@ export const Search = observer(() => {
 					</div>
 
 					{/* Status Filter - Only show for Organisation */}
-					{model.selectedOption === "Organisation" && (
+					{session.entityType === "organisation" && (
 						<div className="mb-6">
 							<Tabs
-								value={statusFilter}
-								onValueChange={handleStatusFilter}
+								value={session.statusFilter}
+								onValueChange={(value) =>
+									session.selectStatusFilter(value as StatusFilter)
+								}
 								className="w-full"
 							>
 								<TabsList className="grid w-full grid-cols-3 h-9">
@@ -236,131 +334,9 @@ export const Search = observer(() => {
 							</Tabs>
 						</div>
 					)}
-					{model.searchQuery.trim() === "" && (
-						<Card className="search-tips-card">
-							<CardContent className="p-6">
-								<div className="flex items-start gap-4">
-									<Info className="h-5 w-5 mt-1" />
-									<div>
-										<h2 className="font-semibold text-lg mb-2">Search Tips:</h2>
-										<ul className="space-y-2 list-disc list-inside text-sm text-muted-foreground">
-											<li>Enter the full or partial name of the company</li>
-											<li>
-												Results will show company name, status, and address
-											</li>
-											<li>Click on a result to view more details</li>
-											<li>Use the filters above to refine your search</li>
-										</ul>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					)}
-					{/* Results */}
-					{model.isLoading ? (
-						<div className="flex flex-col items-center justify-center py-12 text-center">
-							{model.searchQuery.length > 2 ? (
-								<>
-									<Loader2 className="h-12 w-12 animate-spin text-muted-foreground/30 mb-3" />
-									<p className="text-muted-foreground">
-										Searching for {model.searchQuery}
-									</p>
-								</>
-							) : (
-								<p className="text-muted-foreground">
-									Enter at least 3 characters.
-								</p>
-							)}
-						</div>
-					) : filteredResults.length === 0 &&
-					  model.searchQuery.trim() !== "" ? (
-						<Alert variant="default" className="bg-muted">
-							<AlertDescription className="text-center py-8">
-								No results found for "{model.searchQuery}". Try a different
-								search term or adjust your filters.
-							</AlertDescription>
-						</Alert>
-					) : (
-						<div className="search-results space-y-3">
-							{filteredResults.map((data: ICompany | IOfficials, index) => (
-								<Card
-									key={index}
-									className="search-result-card hover:shadow-md transition-shadow"
-								>
-									<NavLink
-										to={
-											model.selectedOption === "Official" &&
-											"officialPosition" in data
-												? `/official/${data.personOrOrganisationName}`
-												: `/cyprus-company-search/${data.registrationNo}`
-										}
-										state={getState(model.selectedOption, data)}
-										className="no-underline text-foreground"
-									>
-										<CardContent className="p-4">
-											<div className="flex justify-between items-start">
-												<div className="space-y-1">
-													<h4 className="font-medium">
-														{getName(model.selectedOption, data)}
-													</h4>
-													{model.selectedOption === "Organisation" && (
-														<p className="text-sm text-muted-foreground">
-															Reg No: {data.registrationNo}
-														</p>
-													)}
-												</div>
 
-												<div className="flex items-center gap-2">
-													{model.selectedOption === "Organisation" &&
-														!("officialPosition" in data) && (
-															<Badge
-																variant={
-																	data.organisationStatus === "Εγγεγραμμένη"
-																		? "active"
-																		: "inactive"
-																}
-															>
-																{data.organisationStatus === "Εγγεγραμμένη"
-																	? "Active"
-																	: "Inactive"}
-															</Badge>
-														)}
-													{model.selectedOption === "Organisation" && (
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																handleSaveCompany(data);
-															}}
-															disabled={isLoading}
-														>
-															{!("officialPosition" in data) &&
-															isCompanySaved(data.id) ? (
-																<Bookmark className="h-4 w-4 text-primary" />
-															) : (
-																<BookmarkPlus className="h-4 w-4" />
-															)}
-														</Button>
-													)}
-												</div>
-											</div>
-										</CardContent>
-									</NavLink>
-								</Card>
-							))}
-							{model.paginatedSearchData.totalItemsCount > 5 && (
-								<PaginationDemo
-									query={model.searchQuery}
-									currentPage={model.currentPage}
-									dataSize={model.paginatedSearchData.totalItemsCount}
-									pageDataSize={model.paginatedSearchData.items.length}
-								/>
-							)}
-						</div>
-					)}
+					{/* Results */}
+					{renderResults()}
 				</div>
 			</div>
 		</div>

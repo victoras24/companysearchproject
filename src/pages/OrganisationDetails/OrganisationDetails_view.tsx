@@ -177,10 +177,7 @@ const OrganisationDetails: React.FC = observer(() => {
 						Incorporated on {registrationDate}
 					</p>
 					<NavLink
-						to={`/cyprus-company-search/${location.state.filter}`}
-						state={{
-							organisationName: location.state.searchInput,
-						}}
+						to={`/cyprus-company-search${location.state?.filter ?? ""}`}
 						className="inline-flex mb-3 items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 bg-green-200 hover:bg-green-100 rounded-lg transition-colors duration-200 group border border-green-200 w-fit"
 					>
 						<ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
@@ -295,8 +292,8 @@ const OrganisationDetails: React.FC = observer(() => {
 														registrationDate: companyData.registrationDate,
 														organisationStatus: companyData.organisationStatus,
 														addressSeqNo: companyData.addressSeqNo,
-														searchInput: location.state.searchInput,
-														filter: location.state.filter,
+														searchInput: location.state?.searchInput,
+														filter: location.state?.filter,
 													}}
 													className="flex items-start space-x-4 py-4"
 													to={`/official/${person.personOrOrganisationName}`}

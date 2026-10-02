@@ -1,4 +1,3 @@
-import { paginationConfig } from "@/constants/pagination";
 import axios from "axios";
 
 export class CompaniesApi {
@@ -8,28 +7,6 @@ export class CompaniesApi {
 	 *
 	 */
 	constructor() {}
-
-	getOrganisation = async (organisationName: string, filter: number) => {
-		const req = await axios.get(
-			`${
-				this.controller
-			}/${organisationName}${this.handleSelectedFilterForTheOrganisationApiCall(
-				filter
-			)}`
-		);
-		return req.data;
-	};
-	// paginated/{currentPage}/{totalDataSize}/{name}
-	getOrganisationPaginated = async (
-		organisationName: string,
-		currentPage: number
-	) => {
-		const req = await axios.get(
-			`${this.controller}/paginated/${currentPage}/${paginationConfig.defaultLimit}/${organisationName}`
-		);
-
-		return req.data;
-	};
 
 	getOrganisationAddress = async (addressSeqNo: number) => {
 		const req = await axios.get(`${this.controller}/${addressSeqNo}/address`);
@@ -55,15 +32,6 @@ export class CompaniesApi {
 		return req.data;
 	};
 
-	handleSelectedFilterForTheOrganisationApiCall = (filter: number) => {
-		if (filter == 1) {
-			return "/active";
-		} else if (filter == 2) {
-			return "/inactive";
-		} else {
-			return "";
-		}
-	};
 }
 
 const instance = new CompaniesApi();

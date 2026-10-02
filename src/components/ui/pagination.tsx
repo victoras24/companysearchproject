@@ -5,6 +5,8 @@ import {
   MoreHorizontalIcon,
 } from "lucide-react"
 
+import { Link, type LinkProps } from "react-router-dom"
+
 import { cn } from "@/lib/utils"
 import { buttonVariants, type Button } from "@/components/ui/button"
 
@@ -39,6 +41,7 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 type PaginationLinkProps = {
   isActive?: boolean
+  to?: LinkProps["to"]
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
   React.ComponentProps<"a">
 
@@ -46,23 +49,25 @@ function PaginationLink({
   className,
   isActive,
   size = "icon",
+  to,
   ...props
 }: PaginationLinkProps) {
-  return (
-    <a
-      aria-current={isActive ? "page" : undefined}
-      data-slot="pagination-link"
-      data-active={isActive}
-      className={cn(
-        buttonVariants({
-          variant: isActive ? "outline" : "ghost",
-          size,
-        }),
-        className
-      )}
-      {...props}
-    />
-  )
+  const linkProps = {
+    "aria-current": isActive ? ("page" as const) : undefined,
+    "data-slot": "pagination-link",
+    "data-active": isActive,
+    className: cn(
+      buttonVariants({
+        variant: isActive ? "outline" : "ghost",
+        size,
+      }),
+      className
+    ),
+    ...props,
+  }
+
+  // With `to` the link navigates through the router instead of reloading.
+  return to !== undefined ? <Link to={to} {...linkProps} /> : <a {...linkProps} />
 }
 
 function PaginationPrevious({

@@ -8,8 +8,11 @@ export class OfficialsApi {
    */
   constructor() {}
 
-  getOfficial = async (officialName: string) => {
-    const req = await axios.get(`${this.controller}/${officialName}`);
+  getOfficial = async (officialName: string, signal?: AbortSignal) => {
+    const req = await axios.get(
+      `${this.controller}/${encodeURIComponent(officialName)}`,
+      { signal }
+    );
     return req.data;
   };
 
