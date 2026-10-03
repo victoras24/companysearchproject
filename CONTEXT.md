@@ -19,6 +19,17 @@ Describes an organisation whose registry status is "Εγγεγραμμένη" (r
 **Inactive**:
 Describes an organisation with any registry status other than "Εγγεγραμμένη".
 
+**Registered address**:
+The address the registry records for an organisation. An organisation has at most one.
+_Avoid_: Address (on its own)
+
+**Position**:
+The role an official holds in an organisation, such as director or secretary.
+
+**Appointment**:
+One position held by an official in one organisation. A name's appointments are the organisations in which it holds a position.
+_Avoid_: Related company, related organisation
+
 ### Search
 
 **Search session**:
