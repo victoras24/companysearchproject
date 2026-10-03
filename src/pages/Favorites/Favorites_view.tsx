@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
 import { useAuth } from "../../context/AuthStoreContext";
 import { FavoritesModel } from "./Favorites_model";
+import { OptionalLink } from "@/components/OptionalLink";
+import { detailsPath } from "@/organisation/organisation";
 import { OrganiserModel } from "../Organiser/Organiser_model";
 
 // Shadcn Components
@@ -110,18 +112,9 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium">
-				<NavLink
-					state={{
-						organisationName: company.organisationName,
-						registrationNo: company.registrationNo,
-						registrationDate: company.registrationDate,
-						organisationStatus: company.organisationStatus,
-						addressSeqNo: company.addressSeqNo,
-					}}
-					to={`/cyprus-company-search/${company.registrationNo}`}
-				>
+				<OptionalLink to={detailsPath(company)}>
 					{company.organisationName}
-				</NavLink>
+				</OptionalLink>
 			</TableCell>
 			<TableCell>
 				<DropdownMenu>

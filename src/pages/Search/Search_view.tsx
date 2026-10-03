@@ -29,6 +29,8 @@ import {
 
 import "./_search.css";
 import { SearchPager } from "@/components/SearchPager";
+import { OptionalLink } from "@/components/OptionalLink";
+import { detailsPath, isActive, statusLabel } from "@/organisation/organisation";
 import type { ICompany, IOfficials } from "@/gEntities";
 
 const entityTypeLabel: Record<EntityType, string> = {
@@ -79,17 +81,8 @@ export const Search = observer(() => {
 			key={data.id}
 			className="search-result-card hover:shadow-md transition-shadow"
 		>
-			<NavLink
-				to={`/cyprus-company-search/${data.registrationNo}`}
-				state={{
-					organisationName: data.organisationName,
-					registrationNo: data.registrationNo,
-					registrationDate: data.registrationDate,
-					organisationStatus: data.organisationStatus,
-					addressSeqNo: data.addressSeqNo,
-					filter: location.search,
-					searchInput: session.draft,
-				}}
+			<OptionalLink
+				to={detailsPath(data)}
 				className="no-underline text-foreground"
 			>
 				<CardContent className="p-4">
@@ -102,16 +95,8 @@ export const Search = observer(() => {
 						</div>
 
 						<div className="flex items-center gap-2">
-							<Badge
-								variant={
-									data.organisationStatus === "Εγγεγραμμένη"
-										? "active"
-										: "inactive"
-								}
-							>
-								{data.organisationStatus === "Εγγεγραμμένη"
-									? "Active"
-									: "Inactive"}
+							<Badge variant={isActive(data) ? "active" : "inactive"}>
+								{statusLabel(data)}
 							</Badge>
 							<Button
 								variant="ghost"
@@ -133,7 +118,7 @@ export const Search = observer(() => {
 						</div>
 					</div>
 				</CardContent>
-			</NavLink>
+			</OptionalLink>
 		</Card>
 	);
 
@@ -143,15 +128,7 @@ export const Search = observer(() => {
 			className="search-result-card hover:shadow-md transition-shadow"
 		>
 			<NavLink
-				to={`/official/${data.personOrOrganisationName}`}
-				state={{
-					officialPosition: data.officialPosition,
-					organisationName: data.organisationName,
-					personOrOrganisationName: data.personOrOrganisationName,
-					registrationNo: data.registrationNo,
-					filter: location.search,
-					searchInput: session.draft,
-				}}
+				to={`/official/${encodeURIComponent(data.personOrOrganisationName)}`}
 				className="no-underline text-foreground"
 			>
 				<CardContent className="p-4">

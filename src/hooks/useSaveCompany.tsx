@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthStoreContext";
 import { firestore } from "@/Firebase/firebase";
-import { doc, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { removeSavedCompany } from "@/Firebase/savedCompanies";
 import { toast } from "sonner";
 import type { ISavedCompany } from "@/gEntities";
 
@@ -26,11 +27,11 @@ const useSaveCompany = () => {
 
 			const currentUserRef = doc(firestore, "users", user.uid);
 
-			await updateDoc(currentUserRef, {
-				savedCompanies: isAlreadySaved
-					? arrayRemove(company)
-					: arrayUnion(company),
-			});
+			if (isAlreadySaved) {
+				await removeSavedCompany(user.uid, company.id);
+			} else {
+				await updateDoc(currentUserRef, { savedCompanies: arrayUnion(company) });
+			}
 
 			if (isAlreadySaved) {
 				const updatedSavedCompanies = user.savedCompanies.filter(

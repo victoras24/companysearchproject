@@ -5,6 +5,8 @@ import { doc } from "firebase/firestore";
 import { firestore } from "../../Firebase/firebase";
 import { useAuth } from "../../context/AuthStoreContext";
 import { OrganiserModel } from "./Organiser_model";
+import { OptionalLink } from "@/components/OptionalLink";
+import { detailsPath } from "@/organisation/organisation";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -162,18 +164,7 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium py-2">
-				{/* <NavLink
-          state={{
-            organisationName: company.organisationName,
-            registrationNo: company.registrationNo,
-            registrationDate: company.registrationDate,
-            organisationStatus: company.organisationStatus,
-            addressSeqNo: company.addressSeqNo,
-          }}
-          to={`/cyprus-company-search/${company.registrationNo}`}
-        > */}
-				{company.name}
-				{/* </NavLink> */}
+				<OptionalLink to={detailsPath(company)}>{company.name}</OptionalLink>
 			</TableCell>
 			<TableCell className="w-12 text-right">
 				<Button

@@ -1,19 +1,3 @@
-export interface IOrganisationDetails {
-	building: string;
-	entryId: string;
-	nameStatus: string;
-	officials: string;
-	organisationName: string;
-	organisationStatus: string;
-	organisationStatusDate: string;
-	organisationType: string;
-	organisationTypeCode: string;
-	registrationDate: string;
-	registrationNo: string;
-	street: string;
-	territory: string;
-}
-
 export interface ICompany {
 	id: number;
 	organisationName: string;
@@ -21,6 +5,8 @@ export interface ICompany {
 	addressSeqNo: number;
 	registrationDate: string;
 	registrationNo: string;
+	organisationTypeCode?: string | null;
+	organisationType?: string | null;
 }
 
 export interface IRelatedCompany {
@@ -28,13 +14,7 @@ export interface IRelatedCompany {
 	relatedCompany: string;
 	officialPosition: string;
 	registrationNo: string;
-}
-
-export interface ICompanyAddress {
-	addressSeqNo: number;
-	street: string;
-	territory: string;
-	building: string;
+	organisationTypeCode?: string | null;
 }
 
 export interface IUser {
@@ -58,6 +38,8 @@ export interface IGroup {
 export interface ICompanyInGroup {
 	id: number;
 	name: string;
+	registrationNo?: string;
+	organisationTypeCode?: string | null;
 }
 
 export interface ISavedCompany {
@@ -69,6 +51,7 @@ export interface ISavedCompany {
 	organisationStatusDate: string;
 	organisationSubType: string;
 	organisationType: string;
+	organisationTypeCode?: string | null;
 	registrationDate: string;
 	registrationNo: string;
 }

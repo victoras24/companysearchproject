@@ -57,7 +57,7 @@ function AppRoutes() {
 						<Route index element={<Home />} />
 						<Route path="cyprus-company-search" element={<Search />} />
 						<Route
-							path="cyprus-company-search/:companyId"
+							path="cyprus-company-search/:typeCode/:registrationNo"
 							element={<OrganisationDetails />}
 						/>
 						<Route

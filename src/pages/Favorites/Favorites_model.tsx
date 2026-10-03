@@ -1,6 +1,7 @@
-import { arrayRemove, doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { action, makeObservable, observable } from "mobx";
 import { firestore } from "../../Firebase/firebase";
+import { removeSavedCompany } from "../../Firebase/savedCompanies";
 import { toast } from "sonner";
 import type {
 	IUser,
@@ -50,11 +51,8 @@ export class FavoritesModel {
 		user: IUser,
 		updateUser: any
 	) => {
-		const userRef = doc(firestore, "users", this.user.uid);
 		try {
-			await updateDoc(userRef, {
-				savedCompanies: arrayRemove(company),
-			});
+			await removeSavedCompany(this.user.uid, company.id);
 			const updatedSavedCompanies = user.savedCompanies.filter(
 				(savedCompany: ISavedCompany) => savedCompany.id !== company.id
 			);
@@ -117,6 +115,8 @@ export class FavoritesModel {
 						name: company.organisationName,
 						id: company.id,
 						registrationNo: company.registrationNo,
+						// Firestore rejects undefined; null keeps the entry without a link.
+						organisationTypeCode: company.organisationTypeCode ?? null,
 					},
 				],
 			};

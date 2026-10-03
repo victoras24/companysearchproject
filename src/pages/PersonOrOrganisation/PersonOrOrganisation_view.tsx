@@ -6,16 +6,16 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link, Loader2, ArrowLeft } from "lucide-react";
+import { Link, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { NavLink, useLocation, useParams } from "react-router";
+import { useParams } from "react-router";
+import { BackToSearchLink } from "@/components/BackToSearchLink";
 import PersonOrOrganisationModel from "./PersonOrOrganisation_model";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { observer } from "mobx-react";
 
 const PersonOrOrganisation: React.FC = observer(() => {
 	const { personOrOrganisationName } = useParams();
-	const location = useLocation();
 
 	if (!personOrOrganisationName) {
 		return <div>No data available</div>;
@@ -46,13 +46,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 					<h1 className="text-3xl px-3 py-2 font-bold tracking-tight md:text-4xl">
 						{personOrOrganisationName}
 					</h1>
-					<NavLink
-						to={`/cyprus-company-search${location.state?.filter ?? ""}`}
-						className="inline-flex mb-3 items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 bg-green-200 hover:bg-green-100 rounded-lg transition-colors duration-200 group border border-green-200 w-fit"
-					>
-						<ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
-						<span>Back to search</span>
-					</NavLink>
+					<BackToSearchLink />
 				</div>
 			</div>
 			<Card>

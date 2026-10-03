@@ -2,8 +2,17 @@ import React, { useEffect, useState } from "react";
 import useSaveCompany from "@/hooks/useSaveCompany";
 import { useAuth } from "@/context/AuthStoreContext";
 import { observer } from "mobx-react";
-import OrganisationDetailsModel from "./OrganisationDetails_model";
-import moment from "moment";
+import { OrganisationRecordLoader } from "./OrganisationRecordLoader";
+import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisation_model";
+import { lookup } from "@/api/organisationApi";
+import {
+	detailsPath,
+	isActive,
+	registeredAddressText,
+	registrationDateText,
+	statusLabel,
+} from "@/organisation/organisation";
+import { BackToSearchLink } from "@/components/BackToSearchLink";
 
 import {
 	Card,
@@ -41,55 +50,56 @@ import {
 	FileText,
 	Link,
 	Loader2,
-	ArrowLeft,
+	RotateCw,
 } from "lucide-react";
 
 import { useCartStore } from "@/context/CartStore";
-import { NavLink, useLocation } from "react-router";
-import type {
-	IOrganisationDetails,
-	ICartItem,
-	ICompany,
-	ISavedCompany,
-} from "@/gEntities";
-import { Spinner } from "@/components/ui/spinner";
+import { NavLink, useParams } from "react-router";
+import type { ICartItem, ISavedCompany } from "@/gEntities";
+import type { OrganisationSummary } from "@/organisation/organisation";
 
 const OrganisationDetails: React.FC = observer(() => {
-	const location = useLocation();
-	const companyData = location.state;
+	const { typeCode = "", registrationNo = "" } = useParams();
 	const { user } = useAuth();
 	const { handleSaveCompany } = useSaveCompany();
-	const [model, setModel] = useState<OrganisationDetailsModel | null>(null);
+	const [loader] = useState(() => new OrganisationRecordLoader({ lookup }));
+	const [activeTab, setActiveTab] = useState("overview");
 
 	const cartStore = useCartStore();
 
-	const handleOrderReport = (company: IOrganisationDetails) => {
-		if (!company) return;
+	useEffect(() => {
+		loader.load(typeCode, registrationNo);
+	}, [loader, typeCode, registrationNo]);
+
+	useEffect(() => () => loader.dispose(), [loader]);
+
+	const view = loader.view;
+	const organisationName =
+		view.status === "loaded" ? view.record.organisation.organisationName : null;
+
+	// Appointments are found by name, so they load once the record has given the name.
+	const [appointments, setAppointments] = useState<PersonOrOrganisationModel | null>(null);
+	useEffect(() => {
+		if (!organisationName) {
+			setAppointments(null);
+			return;
+		}
+		const model = new PersonOrOrganisationModel(organisationName);
+		setAppointments(model);
+		model.onMount();
+	}, [organisationName]);
+
+	const handleOrderReport = (company: OrganisationSummary) => {
 		const cartItem: ICartItem = {
-			companyName: company.organisationName,
-			companyRegNo: company?.registrationNo,
+			companyName: company.organisationName ?? "",
+			companyRegNo: company.registrationNo,
 			unitPrice: Number(import.meta.env.VITE_COMPANY_REPORT_PRICE),
 		};
 
 		cartStore.addItem(cartItem);
 	};
 
-	const handleTabChange = (value: string) => {
-		model?.setActiveTab(value);
-	};
-
-	useEffect(() => {
-		if (companyData) {
-			const newModel = new OrganisationDetailsModel(companyData, "overview");
-			setModel(newModel);
-		}
-	}, [companyData, companyData.addressSeqNo, companyData.registrationNo]);
-
-	useEffect(() => {
-		model?.onMount();
-	}, [model]);
-
-	if (model?.isLoading) {
+	if (view.status === "loading") {
 		return (
 			<div className="container mx-auto max-w-4xl p-6 space-y-6">
 				<div className="space-y-2">
@@ -105,41 +115,45 @@ const OrganisationDetails: React.FC = observer(() => {
 		);
 	}
 
-	if (!companyData)
+	if (view.status === "not-found") {
 		return (
-			<div className="container mx-auto max-w-4xl p-6">
+			<div className="container mx-auto max-w-4xl p-6 space-y-4">
 				<Alert>
 					<Info className="h-4 w-4" />
-					<AlertDescription>No data found for this company.</AlertDescription>
+					<AlertDescription>
+						No company found for {view.typeCode} {view.registrationNo}.
+					</AlertDescription>
 				</Alert>
+				<BackToSearchLink />
 			</div>
 		);
+	}
 
-	const fullAddress =
-		model?.companyAddressData?.street ||
-		model?.companyAddressData?.territory ||
-		model?.companyAddressData?.building
-			? [
-					model?.companyAddressData?.street,
-					model?.companyAddressData?.building,
-					model?.companyAddressData?.territory,
-			  ]
-					.filter(Boolean)
-					.join(" ")
-			: "Address not available";
-
-	const isSaved = (company: ICompany) => {
-		return user?.savedCompanies.some(
-			(saved: ISavedCompany) => saved.id === company.id
+	if (view.status === "error") {
+		return (
+			<div className="container mx-auto max-w-4xl p-6 space-y-4">
+				<Alert variant="destructive">
+					<Info className="h-4 w-4" />
+					<AlertDescription>
+						Something went wrong while loading this company.
+					</AlertDescription>
+				</Alert>
+				<Button variant="outline" onClick={loader.retry}>
+					<RotateCw className="mr-2 h-4 w-4" />
+					Retry
+				</Button>
+			</div>
 		);
-	};
+	}
 
-	const officials = model?.officialsData;
-	const registrationDate = companyData?.registrationDate
-		? moment(companyData.registrationDate, "DD/MM/YYYY").format("MMMM D, YYYY")
-		: "Not available";
+	const { organisation, address, officials } = view.record;
 
-	const isActive = companyData?.organisationStatus === "Εγγεγραμμένη";
+	const isSaved = user?.savedCompanies.some(
+		(saved: ISavedCompany) => saved.id === organisation.id
+	);
+	const registrationDate = registrationDateText(organisation.registrationDate);
+	const fullAddress = registeredAddressText(address);
+	const active = isActive(organisation);
 
 	const getInitials = (name: string) => {
 		return name
@@ -170,23 +184,17 @@ const OrganisationDetails: React.FC = observer(() => {
 			<div className="flex items-start justify-between">
 				<div className="space-y-1">
 					<h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-						{companyData?.organisationName}
+						{organisation.organisationName}
 					</h1>
 					<p className="text-muted-foreground flex items-center gap-2">
 						<Calendar className="h-4 w-4" />
 						Incorporated on {registrationDate}
 					</p>
-					<NavLink
-						to={`/cyprus-company-search${location.state?.filter ?? ""}`}
-						className="inline-flex mb-3 items-center gap-2 px-3 py-2 text-sm font-semibold text-green-700 bg-green-200 hover:bg-green-100 rounded-lg transition-colors duration-200 group border border-green-200 w-fit"
-					>
-						<ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
-						<span>Back to search</span>
-					</NavLink>
+					<BackToSearchLink />
 				</div>
 				<div className="flex items-center gap-3">
-					<Badge variant={isActive ? "active" : "inactive"} className="text-md">
-						{isActive ? "Active" : "Inactive"}
+					<Badge variant={active ? "active" : "inactive"} className="text-md">
+						{statusLabel(organisation)}
 					</Badge>
 					<TooltipProvider>
 						<Tooltip>
@@ -196,10 +204,10 @@ const OrganisationDetails: React.FC = observer(() => {
 									size="icon"
 									onClick={(e) => {
 										e.preventDefault();
-										handleSaveCompany(companyData);
+										handleSaveCompany(organisation);
 									}}
 								>
-									{isSaved(companyData) ? (
+									{isSaved ? (
 										<Bookmark className="h-4 w-4" />
 									) : (
 										<BookmarkPlus className="h-4 w-4" />
@@ -207,18 +215,14 @@ const OrganisationDetails: React.FC = observer(() => {
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								{isSaved(companyData) ? "Remove from saved" : "Save company"}
+								{isSaved ? "Remove from saved" : "Save company"}
 							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
 				</div>
 			</div>
 
-			<Tabs
-				value={model?.activeTab}
-				onValueChange={handleTabChange}
-				className="w-full"
-			>
+			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 				<TabsList className="grid w-full max-w-xxl grid-cols-3">
 					<TabsTrigger value="overview">Overview</TabsTrigger>
 					<TabsTrigger value="people">Key People</TabsTrigger>
@@ -241,7 +245,7 @@ const OrganisationDetails: React.FC = observer(() => {
 									<h3 className="text-sm font-medium text-muted-foreground">
 										Registration Number
 									</h3>
-									<p>{companyData?.registrationNo || "Not available"}</p>
+									<p>{organisation.registrationNo || "Not available"}</p>
 								</div>
 								<div className="space-y-2">
 									<h3 className="text-sm font-medium text-muted-foreground">
@@ -257,7 +261,7 @@ const OrganisationDetails: React.FC = observer(() => {
 								<h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
 									<MapPin className="h-4 w-4" /> Registered Address
 								</h3>
-								{model?.isLoadingAddress ? <Spinner /> : <p>{fullAddress}</p>}
+								<p>{fullAddress}</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -268,78 +272,62 @@ const OrganisationDetails: React.FC = observer(() => {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
 								<Users className="h-5 w-5" /> Key People
-								{model?.isLoadingOfficials && (
-									<Loader2 className="h-4 w-4 animate-spin ml-2" />
-								)}
 							</CardTitle>
 							<CardDescription>
 								Officials and key individuals involved with the company.
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							{model?.isLoadingOfficials ? (
-								<TabLoadingSkeleton />
-							) : (
-								<ScrollArea className="h-[400px] pr-4">
-									{Array.isArray(officials) && officials.length > 0 ? (
-										<div className="space-y-4">
-											{officials.map((person, index) => (
-												<NavLink
-													key={index}
-													state={{
-														organisationName: companyData.organisationName,
-														registrationNo: companyData.registrationNo,
-														registrationDate: companyData.registrationDate,
-														organisationStatus: companyData.organisationStatus,
-														addressSeqNo: companyData.addressSeqNo,
-														searchInput: location.state?.searchInput,
-														filter: location.state?.filter,
-													}}
-													className="flex items-start space-x-4 py-4"
-													to={`/official/${person.personOrOrganisationName}`}
-												>
-													<Avatar className="h-10 w-10 border">
-														<AvatarFallback className="bg-primary/10">
-															{getInitials(person.personOrOrganisationName)}
-														</AvatarFallback>
-													</Avatar>
-													<div className="space-y-1">
-														<p className="font-medium leading-none">
-															{person.personOrOrganisationName}
-														</p>
-														<p className="text-sm text-muted-foreground">
-															Official position: {person.officialPosition}
-														</p>
-														<p className="text-sm text-muted-foreground flex items-center">
-															Address:
-															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-														</p>
-														<p className="text-sm text-muted-foreground flex items-center">
-															Country:
-															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-														</p>
-														<p className="text-sm text-muted-foreground flex items-center">
-															Date of Appointment:
-															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-														</p>
-														<p className="text-sm text-muted-foreground flex items-center">
-															Previous Address:
-															<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-														</p>
-													</div>
-												</NavLink>
-											))}
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center py-12 text-center">
-											<User className="h-12 w-12 text-muted-foreground/30 mb-3" />
-											<p className="text-muted-foreground">
-												No officials data available
-											</p>
-										</div>
-									)}
-								</ScrollArea>
-							)}
+							<ScrollArea className="h-[400px] pr-4">
+								{officials.length > 0 ? (
+									<div className="space-y-4">
+										{officials.map((person, index) => (
+											<NavLink
+												key={index}
+												className="flex items-start space-x-4 py-4"
+												to={`/official/${encodeURIComponent(person.personOrOrganisationName)}`}
+											>
+												<Avatar className="h-10 w-10 border">
+													<AvatarFallback className="bg-primary/10">
+														{getInitials(person.personOrOrganisationName)}
+													</AvatarFallback>
+												</Avatar>
+												<div className="space-y-1">
+													<p className="font-medium leading-none">
+														{person.personOrOrganisationName}
+													</p>
+													<p className="text-sm text-muted-foreground">
+														Official position: {person.officialPosition}
+													</p>
+													<p className="text-sm text-muted-foreground flex items-center">
+														Address:
+														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+													</p>
+													<p className="text-sm text-muted-foreground flex items-center">
+														Country:
+														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+													</p>
+													<p className="text-sm text-muted-foreground flex items-center">
+														Date of Appointment:
+														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+													</p>
+													<p className="text-sm text-muted-foreground flex items-center">
+														Previous Address:
+														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
+													</p>
+												</div>
+											</NavLink>
+										))}
+									</div>
+								) : (
+									<div className="flex flex-col items-center justify-center py-12 text-center">
+										<User className="h-12 w-12 text-muted-foreground/30 mb-3" />
+										<p className="text-muted-foreground">
+											No officials data available
+										</p>
+									</div>
+								)}
+							</ScrollArea>
 						</CardContent>
 					</Card>
 				</TabsContent>
@@ -349,43 +337,55 @@ const OrganisationDetails: React.FC = observer(() => {
 							<CardTitle className="flex items-center gap-2">
 								<Link className="h-5 w-5" />
 								Potentially Related Entities
-								{model?.isLoadingRelated && (
+								{appointments?.isLoading && (
 									<Loader2 className="h-4 w-4 animate-spin ml-2" />
 								)}
 							</CardTitle>
 							<CardDescription>
-								Related companies with {companyData?.organisationName}
+								Related companies with {organisation.organisationName}
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							{model?.isLoadingRelated ? (
+							{!appointments || appointments.isLoading ? (
 								<TabLoadingSkeleton />
 							) : (
 								<ScrollArea className="h-[400px] pr-4">
-									{Array.isArray(model?.relatedCompanies) &&
-									model?.relatedCompanies.length > 0 ? (
+									{appointments.relatedCompanies.length > 0 ? (
 										<div className="space-y-0">
-											{model?.relatedCompanies.map((relatedCompany, index) => (
-												<div
-													key={index}
-													className="flex items-start space-x-4 py-4"
-												>
-													<Avatar className="h-10 w-10 border">
-														<AvatarFallback className="bg-primary/10">
-															{getInitials(relatedCompany.organisationName)}
-														</AvatarFallback>
-													</Avatar>
-													<div className="space-y-1">
-														<p className="font-medium leading-none">
-															{relatedCompany.organisationName}
-														</p>
-														<p className="text-sm text-muted-foreground">
-															Official position:
-															{relatedCompany.officialPosition}
-														</p>
+											{appointments.relatedCompanies.map((relatedCompany, index) => {
+												const path = detailsPath(relatedCompany);
+												const content = (
+													<>
+														<Avatar className="h-10 w-10 border">
+															<AvatarFallback className="bg-primary/10">
+																{getInitials(relatedCompany.organisationName)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="space-y-1">
+															<p className="font-medium leading-none">
+																{relatedCompany.organisationName}
+															</p>
+															<p className="text-sm text-muted-foreground">
+																Official position:
+																{relatedCompany.officialPosition}
+															</p>
+														</div>
+													</>
+												);
+												return path ? (
+													<NavLink
+														key={index}
+														to={path}
+														className="flex items-start space-x-4 py-4"
+													>
+														{content}
+													</NavLink>
+												) : (
+													<div key={index} className="flex items-start space-x-4 py-4">
+														{content}
 													</div>
-												</div>
-											))}
+												);
+											})}
 										</div>
 									) : (
 										<div className="flex flex-col items-center justify-center py-12 text-center">
@@ -441,11 +441,7 @@ const OrganisationDetails: React.FC = observer(() => {
 				<CardFooter>
 					<Button
 						className="w-full"
-						onClick={() => {
-							if (companyData) {
-								handleOrderReport(companyData);
-							}
-						}}
+						onClick={() => handleOrderReport(organisation)}
 					>
 						<FileText className="mr-2 h-4 w-4" />
 						Order Full Company Report
