@@ -13,8 +13,14 @@ _Avoid_: Company (outside interface text)
 **Official**:
 A person or organisation holding a position in an organisation.
 
+**Organisation type**:
+The registry's kind of organisation: C (Εταιρεία, company), B (Εμπορική Επωνυμία, business name), P (Συνεταιρισμός, partnership), O (Αλλοδαπή Εταιρεία, overseas company) or N (Συνεταιρισμός (BN)). The registry numbers each type separately, so a registration number names one organisation only together with its type.
+
+**Organisation record**:
+An organisation together with its registered address and officials, found by organisation type and registration number.
+
 **Active**:
-Describes an organisation whose registry status is "Εγγεγραμμένη" (registered).
+Describes an organisation whose registry status is "Εγγεγραμμένη" (registered). The rule lives in `src/organisation/organisation.ts` only.
 
 **Inactive**:
 Describes an organisation with any registry status other than "Εγγεγραμμένη".
