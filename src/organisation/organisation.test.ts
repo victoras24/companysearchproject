@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
 	detailsPath,
-	isActive,
 	registeredAddressText,
 	registrationDateText,
+	statusGroupOf,
 	statusLabel,
+	statusLine,
 } from "./organisation";
 
 describe("detailsPath", () => {
@@ -39,21 +40,79 @@ describe("detailsPath", () => {
 	});
 });
 
-describe("isActive and statusLabel", () => {
-	it("treats Εγγεγραμμένη as active", () => {
-		const o = { organisationStatus: "Εγγεγραμμένη" };
-		expect(isActive(o)).toBe(true);
-		expect(statusLabel(o)).toBe("Active");
+describe("statusGroupOf and statusLabel", () => {
+	it.each([
+		["registered", "Registered"],
+		["at-risk", "At risk"],
+		["in-liquidation", "In liquidation"],
+		["dissolved", "Dissolved"],
+		["unknown", "Unknown"],
+	] as const)("labels %s as %s", (group, label) => {
+		const o = { statusGroup: group };
+		expect(statusGroupOf(o)).toBe(group);
+		expect(statusLabel(o)).toBe(label);
 	});
 
-	it.each(["Διαγραμμένη", "Στάληκε επιστολή Υπενθύμισης", "", null, undefined])(
-		"treats %o as inactive",
-		(status) => {
-			const o = { organisationStatus: status };
-			expect(isActive(o)).toBe(false);
-			expect(statusLabel(o)).toBe("Inactive");
+	// Saved favourites written before status groups have none.
+	it.each([null, undefined, "", "active", "Registered"])(
+		"treats %o as unknown",
+		(group) => {
+			const o = { statusGroup: group };
+			expect(statusGroupOf(o)).toBe("unknown");
+			expect(statusLabel(o)).toBe("Unknown");
 		}
 	);
+});
+
+describe("statusLine", () => {
+	it("gives the status text and since when", () => {
+		expect(
+			statusLine({
+				statusGroup: "dissolved",
+				statusText: "Struck off",
+				statusDate: "12/03/2019",
+			})
+		).toBe("Struck off · since March 12, 2019");
+	});
+
+	it("leaves the date out for a registered organisation", () => {
+		expect(
+			statusLine({
+				statusGroup: "registered",
+				statusText: "European company (SE)",
+				statusDate: "01/02/1994",
+			})
+		).toBe("European company (SE)");
+	});
+
+	it("gives no line when the text only repeats the badge", () => {
+		expect(
+			statusLine({
+				statusGroup: "registered",
+				statusText: "Registered",
+				statusDate: "01/02/1994",
+			})
+		).toBeNull();
+	});
+
+	it.each([null, undefined, "", "not a date"])(
+		"gives the text alone with the date %o",
+		(statusDate) => {
+			expect(
+				statusLine({
+					statusGroup: "in-liquidation",
+					statusText: "Members' voluntary liquidation",
+					statusDate,
+				})
+			).toBe("Members' voluntary liquidation");
+		}
+	);
+
+	it.each([null, undefined, ""])("gives no line with the text %o", (statusText) => {
+		expect(
+			statusLine({ statusGroup: "unknown", statusText, statusDate: "12/03/2019" })
+		).toBeNull();
+	});
 });
 
 describe("registrationDateText", () => {

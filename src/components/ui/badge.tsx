@@ -17,10 +17,17 @@ const badgeVariants = cva(
 					"border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
 				outline:
 					"text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-				active:
+				// One per organisation status group.
+				registered:
 					"border-transparent bg-green-700 text-primary-foreground [a&]:hover:bg-primary/90",
-				inactive:
+				"at-risk":
+					"border-transparent bg-amber-400 text-amber-950 [a&]:hover:bg-amber-400/90",
+				"in-liquidation":
+					"border-transparent bg-orange-600 text-white [a&]:hover:bg-orange-600/90",
+				dissolved:
 					"border-transparent text-foreground bg-red-500 text-primary-foreground [a&]:hover:bg-primary/90",
+				unknown:
+					"border-transparent bg-gray-500 text-white [a&]:hover:bg-gray-500/90",
 			},
 		},
 		defaultVariants: {

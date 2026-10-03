@@ -112,16 +112,16 @@ describe("URL to state", () => {
 
 	it("reads every parameter and searches at once", () => {
 		const { session, requests } = setup();
-		session.urlChanged("?q=alpha&status=inactive&page=3");
+		session.urlChanged("?q=alpha&status=dissolved&page=3");
 
 		expect(session.draft).toBe("alpha");
-		expect(session.statusFilter).toBe("inactive");
+		expect(session.statusFilter).toBe("dissolved");
 		expect(session.view).toEqual({ status: "loading" });
 		expect(requests).toHaveLength(1);
 		expect(requests[0].request).toMatchObject({
 			entityType: "organisation",
 			query: "alpha",
-			statusFilter: "inactive",
+			statusFilter: "dissolved",
 			page: 3,
 			pageSize: PAGE_SIZE,
 		});
@@ -153,6 +153,43 @@ describe("URL to state", () => {
 		expect(navigations).toHaveLength(0);
 	});
 
+	it.each(["registered", "at-risk", "in-liquidation", "dissolved"] as const)(
+		"reads and writes the %s status group",
+		(group) => {
+			const { session, requests, navigations } = setup();
+			session.urlChanged(`?q=alpha&status=${group}`);
+
+			expect(session.statusFilter).toBe(group);
+			expect(requests[0].request).toMatchObject({ statusFilter: group });
+
+			session.selectStatusFilter("all");
+			session.selectStatusFilter(group);
+			expect(navigations.at(-1)).toEqual({
+				search: `?q=alpha&status=${group}`,
+				replace: false,
+			});
+		}
+	);
+
+	it("opens an old active link as registered", () => {
+		const { session, requests } = setup();
+		session.urlChanged("?q=alpha&status=active");
+
+		expect(session.statusFilter).toBe("registered");
+		expect(requests[0].request).toMatchObject({ statusFilter: "registered" });
+	});
+
+	it.each(["inactive", "unknown"])(
+		"opens an old or unfilterable %s link as all",
+		(status) => {
+			const { session, requests } = setup();
+			session.urlChanged(`?q=alpha&status=${status}`);
+
+			expect(session.statusFilter).toBe("all");
+			expect(requests[0].request).toMatchObject({ statusFilter: "all" });
+		}
+	);
+
 	it("does not read the old filter parameter", () => {
 		const { session } = setup();
 		session.urlChanged("?q=alpha&filter=Official");
@@ -162,7 +199,7 @@ describe("URL to state", () => {
 
 	it("ignores status filter and page for officials", () => {
 		const { session, requests } = setup();
-		session.urlChanged("?q=alpha&type=official&status=active&page=4");
+		session.urlChanged("?q=alpha&type=official&status=registered&page=4");
 
 		expect(session.entityType).toBe("official");
 		expect(session.statusFilter).toBe("all");
@@ -216,7 +253,7 @@ describe("status", () => {
 		const { session, respond, fail } = setup();
 		session.urlChanged("?q=alpha");
 		await respond(0, { items: companies(3), total: 3 });
-		session.urlChanged("?q=alpha&status=active");
+		session.urlChanged("?q=alpha&status=registered");
 		await fail(1);
 
 		expect(session.view).toEqual({ status: "error" });
@@ -224,7 +261,7 @@ describe("status", () => {
 
 	it("retries the same request after an error", async () => {
 		const { session, requests, respond, fail } = setup();
-		session.urlChanged("?q=alpha&status=active&page=2");
+		session.urlChanged("?q=alpha&status=registered&page=2");
 		await fail(0);
 		session.retry();
 
@@ -232,7 +269,7 @@ describe("status", () => {
 		expect(requests).toHaveLength(2);
 		expect(requests[1].request).toMatchObject({
 			query: "alpha",
-			statusFilter: "active",
+			statusFilter: "registered",
 			page: 2,
 		});
 
@@ -339,7 +376,7 @@ describe("typing and debounce", () => {
 
 	it("clears the query at once", async () => {
 		const { session, navigations, requests, respond } = setup();
-		session.urlChanged("?q=alpha&status=active&page=2");
+		session.urlChanged("?q=alpha&status=registered&page=2");
 		await respond(0, { items: companies(2), total: 12 });
 
 		session.clearQuery();
@@ -347,7 +384,7 @@ describe("typing and debounce", () => {
 		expect(session.draft).toBe("");
 		expect(session.view).toEqual({ status: "idle" });
 		expect(navigations).toEqual([
-			{ search: "?status=active", replace: true },
+			{ search: "?status=registered", replace: true },
 		]);
 		expect(requests).toHaveLength(1);
 	});
@@ -409,28 +446,28 @@ describe("latest request wins", () => {
 describe("reset rules", () => {
 	it("resets the page for a new query and keeps the rest", () => {
 		const { session, navigations, type } = setup();
-		session.urlChanged("?q=alpha&status=active&page=3");
+		session.urlChanged("?q=alpha&status=registered&page=3");
 		type("beta");
 
 		expect(navigations).toEqual([
-			{ search: "?q=beta&status=active", replace: true },
+			{ search: "?q=beta&status=registered", replace: true },
 		]);
 	});
 
 	it("resets the page when the status filter changes", () => {
 		const { session, navigations } = setup();
 		session.urlChanged("?q=alpha&page=3");
-		session.selectStatusFilter("inactive");
+		session.selectStatusFilter("dissolved");
 
 		expect(navigations).toEqual([
-			{ search: "?q=alpha&status=inactive", replace: false },
+			{ search: "?q=alpha&status=dissolved", replace: false },
 		]);
-		expect(session.statusFilter).toBe("inactive");
+		expect(session.statusFilter).toBe("dissolved");
 	});
 
 	it("omits the status filter when it returns to all", () => {
 		const { session, navigations } = setup();
-		session.urlChanged("?q=alpha&status=inactive&page=2");
+		session.urlChanged("?q=alpha&status=dissolved&page=2");
 		session.selectStatusFilter("all");
 
 		expect(navigations).toEqual([{ search: "?q=alpha", replace: false }]);
@@ -438,7 +475,7 @@ describe("reset rules", () => {
 
 	it("resets page and status filter when the entity type changes", () => {
 		const { session, navigations } = setup();
-		session.urlChanged("?q=alpha&status=active&page=3");
+		session.urlChanged("?q=alpha&status=registered&page=3");
 		session.selectEntityType("official");
 
 		expect(navigations).toEqual([
@@ -453,15 +490,15 @@ describe("reset rules", () => {
 		session.urlChanged("?q=alpha");
 
 		session.typeQuery("beta");
-		session.selectStatusFilter("active");
+		session.selectStatusFilter("registered");
 		vi.advanceTimersByTime(DEBOUNCE_MS);
 
 		expect(navigations).toEqual([
-			{ search: "?q=beta&status=active", replace: false },
+			{ search: "?q=beta&status=registered", replace: false },
 		]);
 		expect(requests.at(-1)?.request).toMatchObject({
 			query: "beta",
-			statusFilter: "active",
+			statusFilter: "registered",
 		});
 	});
 
@@ -469,16 +506,16 @@ describe("reset rules", () => {
 		const { session, navigations } = setup({ router: false });
 		session.urlChanged("?q=alpha&page=3");
 
-		session.selectStatusFilter("inactive");
-		session.selectStatusFilter("inactive");
+		session.selectStatusFilter("dissolved");
+		session.selectStatusFilter("dissolved");
 
 		expect(navigations).toHaveLength(1);
 	});
 
 	it("does nothing when the current tab is chosen again", () => {
 		const { session, navigations } = setup();
-		session.urlChanged("?q=alpha&status=active");
-		session.selectStatusFilter("active");
+		session.urlChanged("?q=alpha&status=registered");
+		session.selectStatusFilter("registered");
 		session.selectEntityType("organisation");
 
 		expect(navigations).toHaveLength(0);
@@ -548,19 +585,19 @@ describe("pager", () => {
 
 	it("keeps and encodes every parameter in its links", async () => {
 		const query = "A&B #1 Λτδ";
-		const search = `?${new URLSearchParams({ q: query, status: "inactive" })}`;
+		const search = `?${new URLSearchParams({ q: query, status: "dissolved" })}`;
 		const first = await load(search, 30);
 		const next = pagerOf(first.session)?.next ?? "";
 
 		expect(new URLSearchParams(next).get("q")).toBe(query);
-		expect(new URLSearchParams(next).get("status")).toBe("inactive");
+		expect(new URLSearchParams(next).get("status")).toBe("dissolved");
 		expect(new URLSearchParams(next).get("page")).toBe("2");
 
 		const second = setup();
 		second.session.urlChanged(next);
 		expect(second.requests[0].request).toMatchObject({
 			query,
-			statusFilter: "inactive",
+			statusFilter: "dissolved",
 			page: 2,
 		});
 	});
@@ -569,11 +606,11 @@ describe("pager", () => {
 describe("page past the end", () => {
 	it("redirects to the last page", async () => {
 		const { session, navigations, requests, respond } = setup();
-		session.urlChanged("?q=alpha&status=active&page=99");
+		session.urlChanged("?q=alpha&status=registered&page=99");
 		await respond(0, { items: [], total: 25 });
 
 		expect(navigations).toEqual([
-			{ search: "?q=alpha&status=active&page=3", replace: true },
+			{ search: "?q=alpha&status=registered&page=3", replace: true },
 		]);
 		expect(session.view).toEqual({ status: "loading" });
 		expect(requests[1].request.page).toBe(3);

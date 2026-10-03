@@ -7,6 +7,10 @@ export interface ICompany {
 	registrationNo: string;
 	organisationTypeCode?: string | null;
 	organisationType?: string | null;
+	// From the API; saved favourites written before status groups have none.
+	statusGroup?: string | null;
+	statusText?: string | null;
+	statusDate?: string | null;
 }
 
 export interface IRelatedCompany {

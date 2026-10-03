@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
 import {
 	SearchSession,
+	STATUS_FILTERS,
 	type EntityType,
 	type StatusFilter,
 } from "./SearchSession";
@@ -30,7 +31,11 @@ import {
 import "./_search.css";
 import { SearchPager } from "@/components/SearchPager";
 import { OptionalLink } from "@/components/OptionalLink";
-import { detailsPath, isActive, statusLabel } from "@/organisation/organisation";
+import {
+	detailsPath,
+	statusGroupOf,
+	statusLabel,
+} from "@/organisation/organisation";
 import type { ICompany, IOfficials } from "@/gEntities";
 
 const entityTypeLabel: Record<EntityType, string> = {
@@ -95,7 +100,7 @@ export const Search = observer(() => {
 						</div>
 
 						<div className="flex items-center gap-2">
-							<Badge variant={isActive(data) ? "active" : "inactive"}>
+							<Badge variant={statusGroupOf(data)}>
 								{statusLabel(data)}
 							</Badge>
 							<Button
@@ -297,16 +302,19 @@ export const Search = observer(() => {
 								}
 								className="w-full"
 							>
-								<TabsList className="grid w-full grid-cols-3 h-9">
-									<TabsTrigger value="all" className="text-sm">
-										All Companies
+								<TabsList className="grid w-full grid-cols-5 h-auto min-h-9">
+									<TabsTrigger value="all" className="text-xs sm:text-sm">
+										All
 									</TabsTrigger>
-									<TabsTrigger value="active" className="text-sm">
-										Active
-									</TabsTrigger>
-									<TabsTrigger value="inactive" className="text-sm">
-										Inactive
-									</TabsTrigger>
+									{STATUS_FILTERS.map((group) => (
+										<TabsTrigger
+											key={group}
+											value={group}
+											className="text-xs sm:text-sm whitespace-normal leading-tight"
+										>
+											{statusLabel({ statusGroup: group })}
+										</TabsTrigger>
+									))}
 								</TabsList>
 							</Tabs>
 						</div>

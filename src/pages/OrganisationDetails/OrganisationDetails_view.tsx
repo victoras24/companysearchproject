@@ -7,10 +7,11 @@ import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisat
 import { lookup } from "@/api/organisationApi";
 import {
 	detailsPath,
-	isActive,
 	registeredAddressText,
 	registrationDateText,
+	statusGroupOf,
 	statusLabel,
+	statusLine,
 } from "@/organisation/organisation";
 import { BackToSearchLink } from "@/components/BackToSearchLink";
 
@@ -153,7 +154,7 @@ const OrganisationDetails: React.FC = observer(() => {
 	);
 	const registrationDate = registrationDateText(organisation.registrationDate);
 	const fullAddress = registeredAddressText(address);
-	const active = isActive(organisation);
+	const status = statusLine(organisation);
 
 	const getInitials = (name: string) => {
 		return name
@@ -190,10 +191,11 @@ const OrganisationDetails: React.FC = observer(() => {
 						<Calendar className="h-4 w-4" />
 						Incorporated on {registrationDate}
 					</p>
+					{status && <p className="text-muted-foreground">{status}</p>}
 					<BackToSearchLink />
 				</div>
 				<div className="flex items-center gap-3">
-					<Badge variant={active ? "active" : "inactive"} className="text-md">
+					<Badge variant={statusGroupOf(organisation)} className="text-md">
 						{statusLabel(organisation)}
 					</Badge>
 					<TooltipProvider>

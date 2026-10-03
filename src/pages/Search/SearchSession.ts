@@ -1,8 +1,13 @@
 import { action, computed, makeObservable, observable } from "mobx";
 import type { ICompany, IOfficials } from "@/gEntities";
+import { STATUS_GROUPS, type StatusGroup } from "@/organisation/organisation";
 
 export type EntityType = "organisation" | "official";
-export type StatusFilter = "all" | "active" | "inactive";
+// Every status group but unknown, whose organisations appear only under "all".
+export const STATUS_FILTERS = STATUS_GROUPS.filter(
+	(group): group is Exclude<StatusGroup, "unknown"> => group !== "unknown"
+);
+export type StatusFilter = "all" | (typeof STATUS_FILTERS)[number];
 
 export const PAGE_SIZE = 10;
 export const DEBOUNCE_MS = 233;
@@ -82,9 +87,15 @@ const parse = (search: string): Criteria => {
 	return {
 		query: (params.get("q") ?? "").trim(),
 		entityType,
-		statusFilter: status === "active" || status === "inactive" ? status : "all",
+		statusFilter: statusFilterOf(status),
 		page: Number.isInteger(page) && page >= 1 ? page : 1,
 	};
+};
+
+const statusFilterOf = (status: string | null): StatusFilter => {
+	// Links from before status groups: "active" meant registered; "inactive" has no one group.
+	if (status === "active") return "registered";
+	return STATUS_FILTERS.find((filter) => filter === status) ?? "all";
 };
 
 const serialize = (criteria: Criteria): string => {
