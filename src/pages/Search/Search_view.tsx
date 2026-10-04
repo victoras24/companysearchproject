@@ -35,6 +35,7 @@ import {
 	detailsPath,
 	statusGroupOf,
 	statusLabel,
+	statusLine,
 } from "@/organisation/organisation";
 import type { ICompany, IOfficials } from "@/gEntities";
 
@@ -42,6 +43,17 @@ const entityTypeLabel: Record<EntityType, string> = {
 	organisation: "Organisation",
 	official: "Official",
 };
+
+// The same colours as the status badges in components/ui/badge.tsx.
+const statusDotClass: Record<(typeof STATUS_FILTERS)[number], string> = {
+	registered: "bg-green-700",
+	"at-risk": "bg-amber-400",
+	"in-liquidation": "bg-orange-600",
+	dissolved: "bg-red-500",
+};
+
+const statusChipClass =
+	"h-8 flex-none rounded-full border-border px-3 font-normal text-muted-foreground hover:bg-muted data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground";
 
 export const Search = observer(() => {
 	const location = useLocation();
@@ -76,56 +88,72 @@ export const Search = observer(() => {
 		resultsRef.current?.scrollIntoView({ block: "start" });
 	};
 
-	const isCompanySaved = (companyId: number) => {
+	const isOfficial = session.entityType === "official";
+
+	// On a phone the chips scroll sideways; keep the selected one in sight, e.g. after a link.
+	const statusChipsRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		statusChipsRef.current
+			?.querySelector('[data-state="active"]')
+			?.scrollIntoView({ block: "nearest", inline: "nearest" });
+	}, [session.statusFilter]);
+
+	const isCompanySaved =(companyId: number) => {
 		if (!user || !user.savedCompanies) return false;
 		return user.savedCompanies.some((saved) => saved.id === companyId);
 	};
 
-	const renderOrganisation = (data: ICompany) => (
-		<Card
-			key={data.id}
-			className="search-result-card hover:shadow-md transition-shadow"
-		>
-			<OptionalLink
-				to={detailsPath(data)}
-				className="no-underline text-foreground"
+	const renderOrganisation = (data: ICompany) => {
+		const status = statusLine(data);
+		return (
+			<Card
+				key={data.id}
+				className="search-result-card hover:shadow-md transition-shadow"
 			>
-				<CardContent className="p-4">
-					<div className="flex justify-between items-start">
-						<div className="space-y-1">
-							<h4 className="font-medium">{data.organisationName}</h4>
-							<p className="text-sm text-muted-foreground">
-								Reg No: {data.registrationNo}
-							</p>
-						</div>
-
-						<div className="flex items-center gap-2">
-							<Badge variant={statusGroupOf(data)}>
-								{statusLabel(data)}
-							</Badge>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									handleSaveCompany(data);
-								}}
-								disabled={isLoading}
-							>
-								{isCompanySaved(data.id) ? (
-									<Bookmark className="h-4 w-4 text-primary" />
-								) : (
-									<BookmarkPlus className="h-4 w-4" />
+				<OptionalLink
+					to={detailsPath(data)}
+					className="no-underline text-foreground"
+				>
+					<CardContent className="p-4">
+						<div className="flex justify-between items-start">
+							<div className="space-y-1">
+								<h4 className="font-medium">{data.organisationName}</h4>
+								<p className="text-sm text-muted-foreground">
+									Reg No: {data.registrationNo}
+								</p>
+								{status && (
+									<p className="text-sm text-muted-foreground">{status}</p>
 								)}
-							</Button>
+							</div>
+
+							<div className="flex items-center gap-2">
+								<Badge variant={statusGroupOf(data)}>
+									{statusLabel(data)}
+								</Badge>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="h-8 w-8"
+									onClick={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleSaveCompany(data);
+									}}
+									disabled={isLoading}
+								>
+									{isCompanySaved(data.id) ? (
+										<Bookmark className="h-4 w-4 text-primary" />
+									) : (
+										<BookmarkPlus className="h-4 w-4" />
+									)}
+								</Button>
+							</div>
 						</div>
-					</div>
-				</CardContent>
-			</OptionalLink>
-		</Card>
-	);
+					</CardContent>
+				</OptionalLink>
+			</Card>
+		);
+	};
 
 	const renderOfficial = (data: IOfficials, index: number) => (
 		<Card
@@ -292,33 +320,45 @@ export const Search = observer(() => {
 						</Tabs>
 					</div>
 
-					{/* Status Filter - Only show for Organisation */}
-					{session.entityType === "organisation" && (
-						<div className="mb-6">
-							<Tabs
-								value={session.statusFilter}
-								onValueChange={(value) =>
-									session.selectStatusFilter(value as StatusFilter)
-								}
-								className="w-full"
-							>
-								<TabsList className="grid w-full grid-cols-5 h-auto min-h-9">
-									<TabsTrigger value="all" className="text-xs sm:text-sm">
-										All
+					{/* Status Filter - officials have no status, so it stays in place but disabled */}
+					<div className="mb-6 flex items-center gap-3">
+						<span className="text-sm text-muted-foreground shrink-0">
+							Status
+						</span>
+						<Tabs
+							value={session.statusFilter}
+							onValueChange={(value) =>
+								session.selectStatusFilter(value as StatusFilter)
+							}
+							className="min-w-0 flex-1"
+						>
+							<TabsList
+								ref={statusChipsRef}
+								className="h-auto w-full justify-start gap-2 overflow-x-auto bg-transparent p-0.5 [scrollbar-width:none]">
+								<TabsTrigger
+									value="all"
+									disabled={isOfficial}
+									className={statusChipClass}
+								>
+									All
+								</TabsTrigger>
+								{STATUS_FILTERS.map((group) => (
+									<TabsTrigger
+										key={group}
+										value={group}
+										disabled={isOfficial}
+										className={statusChipClass}
+									>
+										<span
+											aria-hidden
+											className={`size-2 rounded-full ${statusDotClass[group]}`}
+										/>
+										{statusLabel({ statusGroup: group })}
 									</TabsTrigger>
-									{STATUS_FILTERS.map((group) => (
-										<TabsTrigger
-											key={group}
-											value={group}
-											className="text-xs sm:text-sm whitespace-normal leading-tight"
-										>
-											{statusLabel({ statusGroup: group })}
-										</TabsTrigger>
-									))}
-								</TabsList>
-							</Tabs>
-						</div>
-					)}
+								))}
+							</TabsList>
+						</Tabs>
+					</div>
 
 					{/* Results */}
 					{renderResults()}
