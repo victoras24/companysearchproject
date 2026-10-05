@@ -1,16 +1,17 @@
 import { useState } from "react";
 import Login from "@/components/AuthForm/Login";
 import Register from "@/components/AuthForm/Register";
+import ForgotPassword from "@/components/AuthForm/ForgotPassword";
+
+export type AccountForm = "login" | "register" | "forgot-password";
 
 export default function Account() {
-	const [isRegister, setIsRegister] = useState(false);
+	const [form, setForm] = useState<AccountForm>("login");
 	return (
 		<div className="account-page-container">
-			{isRegister ? (
-				<Register isRegister={setIsRegister} />
-			) : (
-				<Login isRegister={setIsRegister} />
-			)}
+			{form === "register" && <Register show={setForm} />}
+			{form === "login" && <Login show={setForm} />}
+			{form === "forgot-password" && <ForgotPassword show={setForm} />}
 		</div>
 	);
 }

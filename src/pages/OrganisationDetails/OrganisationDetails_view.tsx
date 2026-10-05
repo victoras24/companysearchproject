@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import useSaveCompany from "@/hooks/useSaveCompany";
-import { useAuth } from "@/context/AuthStoreContext";
+import { library } from "@/library";
+import { toggleSaved } from "@/library/saveCompany";
 import { observer } from "mobx-react";
 import { OrganisationRecordLoader } from "./OrganisationRecordLoader";
 import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisation_model";
@@ -56,13 +56,11 @@ import {
 
 import { useCartStore } from "@/context/CartStore";
 import { NavLink, useParams } from "react-router";
-import type { ICartItem, ISavedCompany } from "@/gEntities";
+import type { ICartItem } from "@/gEntities";
 import type { OrganisationSummary } from "@/organisation/organisation";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const { typeCode = "", registrationNo = "" } = useParams();
-	const { user } = useAuth();
-	const { handleSaveCompany } = useSaveCompany();
 	const [loader] = useState(() => new OrganisationRecordLoader({ lookup }));
 	const [activeTab, setActiveTab] = useState("overview");
 
@@ -149,9 +147,7 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const { organisation, address, officials } = view.record;
 
-	const isSaved = user?.savedCompanies.some(
-		(saved: ISavedCompany) => saved.id === organisation.id
-	);
+	const isSaved = library.isSaved(organisation);
 	const registrationDate = registrationDateText(organisation.registrationDate);
 	const fullAddress = registeredAddressText(address);
 	const status = statusLine(organisation);
@@ -204,9 +200,10 @@ const OrganisationDetails: React.FC = observer(() => {
 								<Button
 									variant="outline"
 									size="icon"
+									disabled={library.isBusy(organisation)}
 									onClick={(e) => {
 										e.preventDefault();
-										handleSaveCompany(organisation);
+										toggleSaved(organisation);
 									}}
 								>
 									{isSaved ? (

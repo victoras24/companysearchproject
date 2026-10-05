@@ -8,7 +8,8 @@ import {
 	type StatusFilter,
 } from "./SearchSession";
 import { search } from "@/api/searchApi";
-import { useAuth } from "../../context/AuthStoreContext";
+import { library } from "@/library";
+import { toggleSaved } from "@/library/saveCompany";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import useSaveCompany from "@/hooks/useSaveCompany";
 import {
 	Search as SearchIcon,
 	X,
@@ -58,7 +58,6 @@ const statusChipClass =
 export const Search = observer(() => {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const { user } = useAuth();
 
 	const navigateRef = useRef(navigate);
 	const resultsRef = useRef<HTMLDivElement>(null);
@@ -71,8 +70,6 @@ export const Search = observer(() => {
 					navigateRef.current({ search }, { replace }),
 			})
 	);
-
-	const { handleSaveCompany, isLoading } = useSaveCompany();
 
 	useLayoutEffect(() => {
 		navigateRef.current = navigate;
@@ -97,11 +94,6 @@ export const Search = observer(() => {
 			?.querySelector('[data-state="active"]')
 			?.scrollIntoView({ block: "nearest", inline: "nearest" });
 	}, [session.statusFilter]);
-
-	const isCompanySaved =(companyId: number) => {
-		if (!user || !user.savedCompanies) return false;
-		return user.savedCompanies.some((saved) => saved.id === companyId);
-	};
 
 	const renderOrganisation = (data: ICompany) => {
 		const status = statusLine(data);
@@ -137,11 +129,11 @@ export const Search = observer(() => {
 									onClick={(e) => {
 										e.preventDefault();
 										e.stopPropagation();
-										handleSaveCompany(data);
+										toggleSaved(data);
 									}}
-									disabled={isLoading}
+									disabled={library.isBusy(data)}
 								>
-									{isCompanySaved(data.id) ? (
+									{library.isSaved(data) ? (
 										<Bookmark className="h-4 w-4 text-primary" />
 									) : (
 										<BookmarkPlus className="h-4 w-4" />

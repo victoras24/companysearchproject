@@ -1,50 +1,18 @@
-import { useSignInWithGoogle } from "react-firebase-hooks/auth";
-import { auth, firestore } from "../../Firebase/firebase";
-import { useAuth } from "../../context/AuthStoreContext";
-import { setDoc, doc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
+import { auth } from "@/auth";
 
-const GoogleAuth = ({ prefix }: { prefix: any }) => {
-	const [signInWithGoogle, isLoading] = useSignInWithGoogle(auth);
-	const { userLogin } = useAuth();
-	const navigate = useNavigate();
+const GoogleAuth = ({ prefix }: { prefix: string }) => {
+	const [loading, setLoading] = useState(false);
 
+	// On success the browser leaves for Google and comes back to /auth/callback.
 	const handleGoogleAuth = async () => {
-		try {
-			const newUser = await signInWithGoogle();
-			if (!newUser) {
-				toast.error("Google sign-in failed");
-				return;
-			}
-
-			const userRef = doc(firestore, "users", newUser.user.uid);
-			const userSnap = await getDoc(userRef);
-
-			if (userSnap.exists()) {
-				const userDoc = userSnap.data();
-				localStorage.setItem("user-info", JSON.stringify(userDoc));
-				userLogin(userDoc);
-				navigate("/");
-				toast.success(`Welcome ${userDoc.username}!`);
-			} else {
-				const userDoc = {
-					uid: newUser.user.uid,
-					email: newUser.user.email,
-					username: newUser.user.email?.split("@")[0] || "unknown",
-					fullName: newUser.user.displayName || "",
-					savedCompanies: [],
-					groups: [],
-				};
-				await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
-				localStorage.setItem("user-info", JSON.stringify(userDoc));
-				userLogin(userDoc);
-				toast.success(`User ${userDoc.username} is created`);
-				navigate("/");
-			}
-		} catch (error: any) {
-			toast.error(error.message);
+		setLoading(true);
+		const result = await auth.signInWithGoogle();
+		if (!result.ok) {
+			toast.error(result.message);
+			setLoading(false);
 		}
 	};
 
@@ -53,8 +21,9 @@ const GoogleAuth = ({ prefix }: { prefix: any }) => {
 			variant="outline"
 			className="w-full flex items-center justify-center gap-2 py-5 border border-gray-300 hover:bg-gray-50 transition-colors"
 			onClick={handleGoogleAuth}
+			disabled={loading}
 		>
-			{isLoading ? (
+			{loading ? (
 				<span className="animate-spin mr-2">⏳</span>
 			) : (
 				<svg

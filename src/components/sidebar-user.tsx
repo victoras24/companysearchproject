@@ -19,7 +19,8 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { ModeToggle } from "./mode-toggle";
-import useLogout from "@/hooks/useLogout";
+import { toast } from "sonner";
+import { auth } from "@/auth";
 import { useNavigate } from "react-router";
 
 export function NavUser({
@@ -32,7 +33,10 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
-	const { handleLogOut } = useLogout();
+	const handleLogOut = async () => {
+		await auth.signOut();
+		toast.success("User logged out successfully");
+	};
 	const navigate = useNavigate();
 
 	return (

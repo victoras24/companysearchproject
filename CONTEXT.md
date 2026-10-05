@@ -57,3 +57,25 @@ _Avoid_: Filter (on its own)
 
 **Page**:
 One fixed-size slice of a search session's results, numbered from 1.
+
+### Users
+
+**Auth session**:
+Who is using the app right now: checking, signed out, or signed in with a profile. It follows the identity provider's session and keeps no copy of it.
+_Avoid_: Auth store, user info, logged-in user
+
+**Profile**:
+What the app keeps about a signed-in user: full name, email and phone number.
+_Avoid_: User document, account (for the data)
+
+**Library**:
+A signed-in user's favourites and groups together.
+_Avoid_: Saved companies (for the whole), user data
+
+**Favourite**:
+An organisation a user has saved. It is identified by organisation type code and registration number.
+_Avoid_: Saved company, bookmark
+
+**Group**:
+A named list of organisations a user has made. It is independent of favourites: an organisation can be in any number of groups whether or not it is a favourite.
+_Avoid_: Folder, category

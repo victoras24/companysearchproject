@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/context/AuthStoreContext";
+import { auth } from "@/auth";
+import { observer } from "mobx-react";
 
 interface BlogPost {
 	id: string;
@@ -20,9 +21,9 @@ interface BlogPost {
 	featured?: boolean;
 }
 
-const Blog: React.FC = () => {
+const Blog: React.FC = observer(() => {
 	const navigate = useNavigate();
-	const { user } = useAuth();
+	const user = auth.state.status === "signed-in";
 
 	const blogPosts: BlogPost[] = [
 		{
@@ -176,6 +177,6 @@ const Blog: React.FC = () => {
 			</div>
 		</div>
 	);
-};
+});
 
 export default Blog;

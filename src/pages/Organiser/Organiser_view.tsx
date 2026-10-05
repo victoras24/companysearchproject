@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc } from "firebase/firestore";
-import { firestore } from "../../Firebase/firebase";
-import { useAuth } from "../../context/AuthStoreContext";
-import { OrganiserModel } from "./Organiser_model";
+import { toast } from "sonner";
 import { OptionalLink } from "@/components/OptionalLink";
 import { detailsPath } from "@/organisation/organisation";
+import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
+import { RegistryNote } from "@/library/RegistryNote";
+import { useLocalOrder } from "@/library/useLocalOrder";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
 	PlusCircle,
 	FolderOpen,
 	X,
+	RotateCw,
 } from "lucide-react";
 
 // Drag and Drop
@@ -47,9 +48,10 @@ import {
 	useSensor,
 	useSensors,
 	DragOverlay,
+	type DragEndEvent,
+	type DragStartEvent,
 } from "@dnd-kit/core";
 import {
-	arrayMove,
 	SortableContext,
 	sortableKeyboardCoordinates,
 	useSortable,
@@ -57,100 +59,22 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import type { IUser } from "@/gEntities";
 
-interface SortableGroupTableRowProps {
-	group: any;
-	model: any;
-	docRef: any;
-	children: any;
-}
+const groupId = (group: LibraryGroup) => group.id;
 
-interface ICompany {
-	id: string;
-	organisationName: string;
-	registrationNo: string;
-	entryId: string;
-	[key: string]: any;
-}
-
-interface SortableCompanyProps {
-	company: ICompany;
-	groupId: number;
-	model: any;
-	user: IUser;
-}
-
-// Sortable Group Component
-const SortableGroup: React.FC<SortableGroupTableRowProps> = ({
-	group,
-	model,
-	docRef,
-	children,
-}) => {
-	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: group.id });
-
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
-
-	return (
-		<Card
-			ref={setNodeRef}
-			style={style}
-			className="mb-4 border shadow-sm hover:shadow"
-		>
-			<CardHeader className="pb-2">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
-						<div {...attributes} {...listeners} className="cursor-grab">
-							<GripVertical className="h-5 w-5 text-muted-foreground" />
-						</div>
-						<CardTitle className="text-lg font-medium">{group.name}</CardTitle>
-						<Badge variant="outline" className="ml-2">
-							{group.companies?.length || 0} companies
-						</Badge>
-					</div>
-					<div className="flex items-center gap-1">
-						<CollapsibleTrigger className="group">
-							<Button variant="ghost" size="icon" className="h-8 w-8">
-								{model.expandedGroups[group.id] ? (
-									<ChevronUp className="h-4 w-4" />
-								) : (
-									<ChevronDown className="h-4 w-4" />
-								)}
-							</Button>
-						</CollapsibleTrigger>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-							onClick={() => model.deleteGroup(docRef, group)}
-						>
-							<Trash2 className="h-4 w-4" />
-						</Button>
-					</div>
-				</div>
-			</CardHeader>
-			<CollapsibleContent>
-				<CardContent className="pt-0">{children}</CardContent>
-			</CollapsibleContent>
-		</Card>
-	);
+const report = (result: { ok: boolean }, failure: string) => {
+	if (!result.ok) toast.error(failure);
 };
 
-// Sortable Company Component
-const SortableCompany: React.FC<SortableCompanyProps> = ({
+const dragSensorOptions = { activationConstraint: { distance: 5 } };
+
+// A company in a group: a row that can be dragged within its group.
+const SortableCompany: React.FC<{ company: LibraryCompany; group: LibraryGroup }> = ({
 	company,
-	groupId,
-	model,
-	user,
+	group,
 }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: company.id });
-	console.log(company);
+		useSortable({ id: companyId(company) });
 	const style = {
 		transform: CSS.Transform.toString(transform),
 		transition,
@@ -164,15 +88,21 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium py-2">
-				<OptionalLink to={detailsPath(company)}>{company.name}</OptionalLink>
+				<OptionalLink to={company.inRegistry ? detailsPath(company) : null}>
+					{company.organisationName}
+					<RegistryNote company={company} />
+				</OptionalLink>
 			</TableCell>
 			<TableCell className="w-12 text-right">
 				<Button
 					variant="ghost"
 					size="icon"
 					className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-					onClick={() =>
-						model.deleteCompanyAssignedInGroup(user.uid, company, groupId)
+					onClick={async () =>
+						report(
+							await library.removeFromGroup(group.id, company),
+							"Failed to remove the company from the group"
+						)
 					}
 				>
 					<X className="h-4 w-4" />
@@ -182,78 +112,134 @@ const SortableCompany: React.FC<SortableCompanyProps> = ({
 	);
 };
 
-const Organiser: React.FC = observer(() => {
-	const { user } = useAuth();
-	const [model] = useState(() => new OrganiserModel(user));
-	console.log(model.groups);
-	const docRef = doc(firestore, "users", user.uid);
-	const [activeGroupId, setActiveGroupId] = useState(null);
-	const [, setActiveCompanyId] = useState(null);
+// A group: a card that can be dragged among the groups, with its companies inside.
+const SortableGroup: React.FC<{ group: LibraryGroup }> = ({ group }) => {
+	const [expanded, setExpanded] = useState(false);
+	// Dragging reorders the companies for this visit only.
+	const [companies, moveCompany] = useLocalOrder(group.companies, companyId);
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: group.id });
 
 	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: {
-				distance: 5,
-			},
-		}),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		useSensor(PointerSensor, dragSensorOptions),
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
 	);
 
-	useEffect(() => {
-		model.onMount();
-	}, []);
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
 
-	const handleGroupDragEnd = (event: any) => {
-		const { active, over } = event;
+	return (
+		<Collapsible open={expanded} onOpenChange={setExpanded} className="w-full">
+			<Card
+				ref={setNodeRef}
+				style={style}
+				className="mb-4 border shadow-sm hover:shadow"
+			>
+				<CardHeader className="pb-2">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<div {...attributes} {...listeners} className="cursor-grab">
+								<GripVertical className="h-5 w-5 text-muted-foreground" />
+							</div>
+							<CardTitle className="text-lg font-medium">{group.name}</CardTitle>
+							<Badge variant="outline" className="ml-2">
+								{group.companies.length} companies
+							</Badge>
+						</div>
+						<div className="flex items-center gap-1">
+							<CollapsibleTrigger asChild>
+								<Button variant="ghost" size="icon" className="h-8 w-8">
+									{expanded ? (
+										<ChevronUp className="h-4 w-4" />
+									) : (
+										<ChevronDown className="h-4 w-4" />
+									)}
+								</Button>
+							</CollapsibleTrigger>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+								onClick={async () =>
+									report(await library.deleteGroup(group.id), "Failed to delete the group")
+								}
+							>
+								<Trash2 className="h-4 w-4" />
+							</Button>
+						</div>
+					</div>
+				</CardHeader>
+				<CollapsibleContent>
+					<CardContent className="pt-0">
+						{companies.length > 0 ? (
+							<DndContext
+								sensors={sensors}
+								collisionDetection={closestCenter}
+								onDragEnd={({ active, over }: DragEndEvent) => {
+									if (over) moveCompany(String(active.id), String(over.id));
+								}}
+								modifiers={[restrictToVerticalAxis]}
+							>
+								<Table>
+									<TableBody>
+										<SortableContext
+											items={companies.map(companyId)}
+											strategy={verticalListSortingStrategy}
+										>
+											{companies.map((company) => (
+												<SortableCompany
+													key={companyId(company)}
+													company={company}
+													group={group}
+												/>
+											))}
+										</SortableContext>
+									</TableBody>
+								</Table>
+							</DndContext>
+						) : (
+							<div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+								<FolderOpen className="h-8 w-8 mb-2" />
+								<p>No companies in this group yet.</p>
+								<p className="text-sm">Add companies from your favorites page.</p>
+							</div>
+						)}
+					</CardContent>
+				</CollapsibleContent>
+			</Card>
+		</Collapsible>
+	);
+};
+
+const Organiser: React.FC = observer(() => {
+	const [groupName, setGroupName] = useState("");
+	const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+	// Dragging reorders the groups for this visit only.
+	const [groups, moveGroup] = useLocalOrder(library.groups, groupId);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor, dragSensorOptions),
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+	);
+
+	const createGroup = async () => {
+		const result = await library.createGroup(groupName);
+		if (result.ok) setGroupName("");
+		else toast.error("Failed to create the group");
+	};
+
+	const handleGroupDragStart = (event: DragStartEvent) => {
+		setActiveGroupId(String(event.active.id));
+	};
+
+	const handleGroupDragEnd = ({ active, over }: DragEndEvent) => {
 		setActiveGroupId(null);
-
-		if (active.id !== over.id) {
-			const oldIndex = model.groups.findIndex(
-				(group) => group.id === active.id
-			);
-			const newIndex = model.groups.findIndex((group) => group.id === over.id);
-
-			const updatedGroups = arrayMove(model.groups, oldIndex, newIndex);
-			model.setGroups(updatedGroups);
-		}
+		if (over) moveGroup(String(active.id), String(over.id));
 	};
 
-	const handleGroupDragStart = (event: any) => {
-		setActiveGroupId(event.active.id);
-	};
-
-	const handleCompanyDragEnd = (event: any, groupId: string) => {
-		const { active, over } = event;
-		setActiveCompanyId(null);
-
-		if (!over) return;
-
-		if (active.id !== over.id) {
-			const group = model.groups.find((g) => g.id === groupId);
-			if (!group) return;
-
-			const oldIndex = group.companies.findIndex(
-				(company: ICompany) => company.id === active.id
-			);
-			const newIndex = group.companies.findIndex(
-				(company: ICompany) => company.id === over.id
-			);
-
-			const updatedCompanies = arrayMove(group.companies, oldIndex, newIndex);
-
-			const updatedGroups = model.groups.map((g) =>
-				g.id === groupId ? { ...g, companies: updatedCompanies } : g
-			);
-
-			model.setGroups(updatedGroups);
-		}
-	};
-
-	const handleCompanyDragStart = (event: any) => {
-		setActiveCompanyId(event.active.id);
-	};
+	const isLoading = library.status === "idle" || library.status === "loading";
 
 	return (
 		<Card className="w-full max-w-4xl mx-auto mt-8">
@@ -281,14 +267,12 @@ const Organiser: React.FC = observer(() => {
 								<div className="flex gap-4">
 									<Input
 										placeholder="Enter group name"
-										value={model.groupName}
-										onChange={model.handleInputChange}
+										value={groupName}
+										maxLength={100}
+										onChange={(e) => setGroupName(e.target.value)}
 										className="flex-1"
 									/>
-									<Button
-										onClick={() => model.createGroup(docRef)}
-										disabled={!model.groupName.trim()}
-									>
+									<Button onClick={createGroup} disabled={!groupName.trim()}>
 										<PlusCircle className="h-4 w-4 mr-2" />
 										Create Group
 									</Button>
@@ -298,13 +282,23 @@ const Organiser: React.FC = observer(() => {
 					</motion.div>
 				</AnimatePresence>
 
-				{model.isLoading ? (
+				{isLoading ? (
 					<div className="space-y-3">
 						<Skeleton className="h-20 w-full" />
 						<Skeleton className="h-20 w-full" />
 						<Skeleton className="h-20 w-full" />
 					</div>
-				) : model.groups && model.groups.length > 0 ? (
+				) : library.status === "error" ? (
+					<div className="flex flex-col items-center justify-center py-12 text-center">
+						<p className="text-sm text-muted-foreground mb-4">
+							Something went wrong while loading your groups.
+						</p>
+						<Button variant="outline" onClick={library.reload}>
+							<RotateCw className="mr-2 h-4 w-4" />
+							Retry
+						</Button>
+					</div>
+				) : groups.length > 0 ? (
 					<DndContext
 						sensors={sensors}
 						collisionDetection={closestCenter}
@@ -313,59 +307,11 @@ const Organiser: React.FC = observer(() => {
 						modifiers={[restrictToVerticalAxis]}
 					>
 						<SortableContext
-							items={model.groups.map((group) => group.id)}
+							items={groups.map(groupId)}
 							strategy={verticalListSortingStrategy}
 						>
-							{model.groups.map((group) => (
-								<Collapsible
-									key={group.id}
-									open={model.expandedGroups[group.id]}
-									onOpenChange={() => model.extendGroup(group.id)}
-									className="w-full"
-								>
-									<SortableGroup group={group} model={model} docRef={docRef}>
-										{group.companies && group.companies.length > 0 ? (
-											<DndContext
-												sensors={sensors}
-												collisionDetection={closestCenter}
-												onDragStart={handleCompanyDragStart}
-												onDragEnd={(event) =>
-													handleCompanyDragEnd(event, group.id)
-												}
-												modifiers={[restrictToVerticalAxis]}
-											>
-												<Table>
-													<TableBody>
-														<SortableContext
-															items={group.companies.map(
-																(company: any) => company.id
-															)}
-															strategy={verticalListSortingStrategy}
-														>
-															{group.companies.map((company: any) => (
-																<SortableCompany
-																	key={company.id}
-																	company={company}
-																	groupId={group.id}
-																	model={model}
-																	user={user}
-																/>
-															))}
-														</SortableContext>
-													</TableBody>
-												</Table>
-											</DndContext>
-										) : (
-											<div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-												<FolderOpen className="h-8 w-8 mb-2" />
-												<p>No companies in this group yet.</p>
-												<p className="text-sm">
-													Add companies from your favorites page.
-												</p>
-											</div>
-										)}
-									</SortableGroup>
-								</Collapsible>
+							{groups.map((group) => (
+								<SortableGroup key={group.id} group={group} />
 							))}
 						</SortableContext>
 
@@ -374,7 +320,7 @@ const Organiser: React.FC = observer(() => {
 								<Card className="shadow-md w-full opacity-80 border-2 border-primary">
 									<CardHeader>
 										<CardTitle className="text-lg font-medium">
-											{model.groups.find((g) => g.id === activeGroupId)?.name}
+											{groups.find((g) => g.id === activeGroupId)?.name}
 										</CardTitle>
 									</CardHeader>
 								</Card>

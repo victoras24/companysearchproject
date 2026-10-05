@@ -2,12 +2,12 @@ import Layout from "./layout";
 import "../global.css";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Search } from "./pages/Search/Search_view";
-import { AuthProvider, useAuth } from "./context/AuthStoreContext";
-import { SavedCompanyProvider } from "./context/SaveCompanyContext";
+import { RequireUser } from "./auth/RequireUser";
 import OrganisationDetails from "./pages/OrganisationDetails/OrganisationDetails_view";
 import Favorites from "./pages/Favorites/Favorites_view";
 import Organiser from "./pages/Organiser/Organiser_view";
-import Account from "./pages/Account/Account";
+import AuthCallback from "./pages/Account/AuthCallback";
+import ResetPassword from "./pages/Account/ResetPassword";
 import SonnerToastProvider from "./context/SonnerToastProvider";
 import AccountDetails from "./pages/AccountDeatails/AccountDetails_view";
 import { ThemeProvider } from "./components/theme-provider";
@@ -33,22 +33,16 @@ function App() {
 	console.log("App rendered");
 
 	return (
-		<AuthProvider>
-			<SavedCompanyProvider>
-				<CartStoreProvider>
-					<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-						<SonnerToastProvider />
-						<AppRoutes />
-					</ThemeProvider>
-				</CartStoreProvider>
-			</SavedCompanyProvider>
-		</AuthProvider>
+		<CartStoreProvider>
+			<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+				<SonnerToastProvider />
+				<AppRoutes />
+			</ThemeProvider>
+		</CartStoreProvider>
 	);
 }
 
 function AppRoutes() {
-	console.log("routes");
-	const { user } = useAuth();
 	return (
 		<BrowserRouter>
 			<Suspense fallback={<PageLoader />}>
@@ -62,7 +56,7 @@ function AppRoutes() {
 						/>
 						<Route
 							path="favorites"
-							element={user ? <Favorites /> : <Account />}
+							element={<RequireUser><Favorites /></RequireUser>}
 						/>
 						<Route
 							path="official/:personOrOrganisationName"
@@ -71,12 +65,14 @@ function AppRoutes() {
 
 						<Route
 							path="organiser"
-							element={user ? <Organiser /> : <Account />}
+							element={<RequireUser><Organiser /></RequireUser>}
 						/>
 						<Route
 							path="account"
-							element={user ? <AccountDetails /> : <Account />}
+							element={<RequireUser><AccountDetails /></RequireUser>}
 						/>
+						<Route path="auth/callback" element={<AuthCallback />} />
+						<Route path="reset-password" element={<ResetPassword />} />
 						<Route path="cart" element={<Cart />} />
 						<Route path="blog" element={<Blog />} />
 						<Route path="/blog/:slug" element={<BlogPost />} />

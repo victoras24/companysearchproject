@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import useLogin from "../../hooks/useLogin";
+import { auth } from "@/auth";
+import { checkSignIn, normaliseEmail } from "@/auth/credentials";
+import type { AccountForm } from "@/pages/Account/Account";
 import GoogleAuth from "./GoogleAuth";
 
 // Shadcn Components
@@ -21,22 +23,32 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 
 interface LoginProps {
-	isRegister: (value: boolean) => void;
+	show: (form: AccountForm) => void;
 }
 
-export default function Login({ isRegister }: LoginProps) {
+export default function Login({ show }: LoginProps) {
 	const [inputs, setInputs] = useState({
 		email: "",
 		password: "",
 	});
 
-	const { loading, login } = useLogin();
+	const [loading, setLoading] = useState(false);
 
 	const handleLogin = async () => {
-		try {
-			await login(inputs);
-		} catch (error: any) {
-			toast.error(error.message);
+		const problem = checkSignIn(inputs);
+		if (problem) {
+			toast.error(problem);
+			return;
+		}
+
+		setLoading(true);
+		const result = await auth.signInWithPassword(normaliseEmail(inputs.email), inputs.password);
+		setLoading(false);
+
+		if (!result.ok) {
+			toast.error(result.message);
+		} else if (auth.state.status === "signed-in") {
+			toast.success(`Welcome back ${auth.state.profile.fullName || auth.state.profile.email}!`);
 		}
 	};
 
@@ -52,7 +64,6 @@ export default function Login({ isRegister }: LoginProps) {
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
 					<GoogleAuth prefix="Login" />
-					{/* <MicrosoftAuth prefix={"Login"} /> */}
 				</div>
 
 				<div className="relative">
@@ -84,7 +95,16 @@ export default function Login({ isRegister }: LoginProps) {
 						</div>
 					</div>
 					<div className="space-y-1">
-						<Label htmlFor="password">Password</Label>
+						<div className="flex items-center justify-between">
+							<Label htmlFor="password">Password</Label>
+							<Button
+								variant="link"
+								className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
+								onClick={() => show("forgot-password")}
+							>
+								Forgot password?
+							</Button>
+						</div>
 						<div className="relative">
 							<Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
 							<Input
@@ -102,14 +122,14 @@ export default function Login({ isRegister }: LoginProps) {
 				</div>
 			</CardContent>
 			<CardFooter className="flex flex-col space-y-4">
-				<Button className="w-full" onClick={handleLogin}>
+				<Button className="w-full" onClick={handleLogin} disabled={loading}>
 					{loading ? "Signing in..." : "Sign in"}
 					{!loading && <ArrowRight className="ml-2 h-4 w-4" />}
 				</Button>
 				<Button
 					variant="link"
 					className="text-sm text-muted-foreground hover:text-primary w-full"
-					onClick={() => isRegister(true)}
+					onClick={() => show("register")}
 				>
 					Don't have an account? Create one now!
 				</Button>

@@ -7,7 +7,6 @@ export interface ICompany {
 	registrationNo: string;
 	organisationTypeCode?: string | null;
 	organisationType?: string | null;
-	// From the API; saved favourites written before status groups have none.
 	statusGroup?: string | null;
 	statusText?: string | null;
 	statusDate?: string | null;
@@ -19,45 +18,6 @@ export interface IRelatedCompany {
 	officialPosition: string;
 	registrationNo: string;
 	organisationTypeCode?: string | null;
-}
-
-export interface IUser {
-	uid: string;
-	email: string;
-	favorites: any[];
-	fullName: string;
-	groups: any[];
-	savedCompanies: ISavedCompany[];
-	username: string;
-	phoneNumber: number;
-}
-
-export interface IGroup {
-	id: string;
-	name: string;
-	isExtended: boolean;
-	companies: ICompanyInGroup[];
-}
-
-export interface ICompanyInGroup {
-	id: number;
-	name: string;
-	registrationNo?: string;
-	organisationTypeCode?: string | null;
-}
-
-export interface ISavedCompany {
-	id: number;
-	addressSeqNo: number;
-	nameStatus: string;
-	organisationName: string;
-	organisationStatus: string;
-	organisationStatusDate: string;
-	organisationSubType: string;
-	organisationType: string;
-	organisationTypeCode?: string | null;
-	registrationDate: string;
-	registrationNo: string;
 }
 
 export interface ICartItem {

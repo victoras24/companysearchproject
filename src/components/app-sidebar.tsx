@@ -18,16 +18,15 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/context/AuthStoreContext";
+import { auth } from "@/auth";
 import { NavUser } from "./sidebar-user";
-import { getAuth } from "firebase/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCartStore } from "@/context/CartStore";
 import { observer } from "mobx-react";
 
 export const AppSidebar = observer(() => {
-	const { user } = useAuth();
+	const state = auth.state;
 	const cartStore = useCartStore();
-	const auth = getAuth();
 
 	const items = [
 		{
@@ -51,7 +50,7 @@ export const AppSidebar = observer(() => {
 			icon: Group,
 		},
 		{
-			title: `${user ? "Account" : "Login"}`,
+			title: state.status === "signed-out" ? "Login" : "Account",
 			url: "/account",
 			icon: ScanFace,
 		},
@@ -105,17 +104,16 @@ export const AppSidebar = observer(() => {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			{user ? (
+			{state.status === "signed-in" && (
 				<NavUser
 					user={{
-						name: user.username,
-						email: user.email,
-						avatar: auth.currentUser?.photoURL ?? "",
+						name: state.profile.fullName || state.profile.email,
+						email: state.profile.email,
+						avatar: "",
 					}}
 				/>
-			) : (
-				""
 			)}
+			{state.status === "checking" && <Skeleton className="h-12 mx-2 mb-3" />}
 		</Sidebar>
 	);
 });

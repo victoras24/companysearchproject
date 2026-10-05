@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
+import { auth } from "@/auth";
+import { checkSignUp, normaliseEmail } from "@/auth/credentials";
+import type { AccountForm } from "@/pages/Account/Account";
 import GoogleAuth from "./GoogleAuth";
 
 import { Button } from "@/components/ui/button";
@@ -16,29 +18,64 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 
-import { Mail, Lock, User, ArrowRight, UserCircle } from "lucide-react";
+import { Mail, Lock, ArrowRight, UserCircle, MailCheck } from "lucide-react";
 
 interface RegisterProps {
-	isRegister: (value: boolean) => void;
+	show: (form: AccountForm) => void;
 }
 
-export default function Register({ isRegister }: RegisterProps) {
+export default function Register({ show }: RegisterProps) {
 	const [inputs, setInputs] = useState({
 		fullName: "",
-		username: "",
 		email: "",
 		password: "",
 	});
 
-	const { loading, signup } = useSignUpWithEmailAndPassword();
+	const [loading, setLoading] = useState(false);
+	const [confirmationSentTo, setConfirmationSentTo] = useState<string | null>(null);
 
 	const handleSignup = async () => {
-		try {
-			await signup(inputs);
-		} catch (error) {
-			toast.error("An unexpected error occurred. Please try again.");
+		const problem = checkSignUp(inputs);
+		if (problem) {
+			toast.error(problem);
+			return;
+		}
+
+		const email = normaliseEmail(inputs.email);
+		setLoading(true);
+		const result = await auth.signUp({
+			email,
+			password: inputs.password,
+			fullName: inputs.fullName.trim(),
+		});
+		setLoading(false);
+
+		if (!result.ok) {
+			toast.error(`Signup failed: ${result.message}`);
+		} else if (result.confirmationNeeded) {
+			setConfirmationSentTo(email);
 		}
 	};
+
+	if (confirmationSentTo) {
+		return (
+			<Card className="w-full max-w-md mx-auto shadow-lg">
+				<CardHeader className="space-y-3">
+					<MailCheck className="h-10 w-10 mx-auto text-primary" />
+					<CardTitle className="text-2xl font-bold text-center">Check your email</CardTitle>
+					<CardDescription className="text-center">
+						We sent a link to {confirmationSentTo}. Open it to confirm your account, then
+						log in.
+					</CardDescription>
+				</CardHeader>
+				<CardFooter>
+					<Button className="w-full" onClick={() => show("login")}>
+						Back to login
+					</Button>
+				</CardFooter>
+			</Card>
+		);
+	}
 
 	return (
 		<Card className="w-full max-w-md mx-auto shadow-lg">
@@ -54,7 +91,6 @@ export default function Register({ isRegister }: RegisterProps) {
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
 					<GoogleAuth prefix="Register" />
-					{/* <MicrosoftAuth prefix={"Register"} /> */}
 				</div>
 
 				<div className="relative">
@@ -81,23 +117,6 @@ export default function Register({ isRegister }: RegisterProps) {
 								value={inputs.fullName}
 								onChange={(e) =>
 									setInputs({ ...inputs, fullName: e.target.value })
-								}
-							/>
-						</div>
-					</div>
-
-					<div className="space-y-1">
-						<Label htmlFor="username">Username</Label>
-						<div className="relative">
-							<User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-							<Input
-								id="username"
-								type="text"
-								placeholder="Username"
-								className="pl-10"
-								value={inputs.username}
-								onChange={(e) =>
-									setInputs({ ...inputs, username: e.target.value })
 								}
 							/>
 						</div>
@@ -146,10 +165,7 @@ export default function Register({ isRegister }: RegisterProps) {
 						loading ||
 						!inputs.email ||
 						!inputs.password ||
-						!inputs.fullName ||
-						!inputs.username
-							? true
-							: false
+						!inputs.fullName
 					}
 				>
 					{loading ? "Creating account..." : "Create account"}
@@ -158,7 +174,7 @@ export default function Register({ isRegister }: RegisterProps) {
 				<Button
 					variant="link"
 					className="text-sm text-muted-foreground hover:text-primary w-full"
-					onClick={() => isRegister(false)}
+					onClick={() => show("login")}
 				>
 					Already have an account? Login
 				</Button>

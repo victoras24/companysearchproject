@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react";
-import { useAuth } from "../../context/AuthStoreContext";
-import { FavoritesModel } from "./Favorites_model";
+import { toast } from "sonner";
 import { OptionalLink } from "@/components/OptionalLink";
 import { detailsPath } from "@/organisation/organisation";
-import { OrganiserModel } from "../Organiser/Organiser_model";
+import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
+import { RegistryNote } from "@/library/RegistryNote";
+import { useLocalOrder } from "@/library/useLocalOrder";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Icons
-import { Plus, X, GripVertical, FolderPlus, Trash2 } from "lucide-react";
+import { Plus, X, GripVertical, FolderPlus, Trash2, RotateCw } from "lucide-react";
 
 // Drag and Drop Library
 import {
@@ -46,9 +47,9 @@ import {
 	PointerSensor,
 	useSensor,
 	useSensors,
+	type DragEndEvent,
 } from "@dnd-kit/core";
 import {
-	arrayMove,
 	SortableContext,
 	sortableKeyboardCoordinates,
 	useSortable,
@@ -57,52 +58,37 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
-interface IGroup {
-	id: string;
-	name: string;
-}
-
-interface ICompany {
-	organisationName: string;
-	registrationNo: string;
-	entryId: string;
-	[key: string]: any;
-}
-
 interface SortableTableRowProps {
-	company: ICompany;
-	groupModel: {
-		groups: IGroup[];
-		[key: string]: any;
-	};
-	model: any;
-	user: {
-		uid: string;
-		[key: string]: any;
-	};
+	company: LibraryCompany;
+	groups: LibraryGroup[];
 	id: string;
-	updateUser: any;
 }
 
-const SortableTableRow: React.FC<SortableTableRowProps> = ({
-	company,
-	groupModel,
-	model,
-	id,
-	user,
-	updateUser,
-}) => {
+const addToGroup = async (company: LibraryCompany, group: LibraryGroup) => {
+	const result = await library.addToGroup(group.id, company);
+	if (!result.ok) {
+		toast.error("Failed to add company to group");
+	} else if (result.added) {
+		toast.success(`${company.organisationName} added to group "${group.name}"`);
+	} else {
+		toast.error(`${company.organisationName} is already in group "${group.name}"`);
+	}
+};
+
+const removeFavourite = async (company: LibraryCompany) => {
+	const result = await library.removeFavourite(company);
+	if (!result.ok) toast.error("Failed to update saved companies");
+};
+
+const SortableTableRow: React.FC<SortableTableRowProps> = ({ company, groups, id }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
-	console.log(company);
 	const style = {
 		transform: CSS.Transform.toString(transform),
 		transition,
 	};
 
 	const navigate = useNavigate();
-
-	const groups = groupModel?.groups || [];
 
 	return (
 		<TableRow ref={setNodeRef} style={style} className="hover:bg-accent">
@@ -112,8 +98,9 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 				</div>
 			</TableCell>
 			<TableCell className="font-medium">
-				<OptionalLink to={detailsPath(company)}>
+				<OptionalLink to={company.inRegistry ? detailsPath(company) : null}>
 					{company.organisationName}
+					<RegistryNote company={company} />
 				</OptionalLink>
 			</TableCell>
 			<TableCell>
@@ -131,7 +118,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 							groups.map((group) => (
 								<DropdownMenuItem
 									key={group.id}
-									onClick={() => model.addCompanyInGroup(company, group)}
+									onClick={() => addToGroup(company, group)}
 								>
 									{group.name}
 								</DropdownMenuItem>
@@ -151,9 +138,7 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 				<Button
 					variant="ghost"
 					size="icon"
-					onClick={() =>
-						model.deleteCompanyFromFavorites(company, user, updateUser)
-					}
+					onClick={() => removeFavourite(company)}
 					className="text-red-500 hover:text-red-700 hover:bg-red-50"
 				>
 					<Trash2 className="h-4 w-4" />
@@ -164,12 +149,9 @@ const SortableTableRow: React.FC<SortableTableRowProps> = ({
 };
 
 const Favorites = observer(() => {
-	const { user, updateUser } = useAuth();
-	const [model] = useState(() => new FavoritesModel(user));
-	const [groupModel] = useState(() => new OrganiserModel(user));
 	const navigate = useNavigate();
-	const [items, setItems] = useState<ICompany[]>([]);
-	const [isGroupModelLoaded, setIsGroupModelLoaded] = useState(false);
+	// Dragging reorders the list for this visit only.
+	const [items, moveItem] = useLocalOrder(library.favourites, companyId);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -182,44 +164,11 @@ const Favorites = observer(() => {
 		})
 	);
 
-	useEffect(() => {
-		const loadData = async () => {
-			try {
-				// Load models sequentially to ensure groups are loaded before rendering table rows
-				await model.onMount();
-				await groupModel.onMount();
-				setIsGroupModelLoaded(true);
-			} catch (error) {
-				console.error("Error loading data:", error);
-			}
-		};
-
-		loadData();
-	}, []);
-
-	useEffect(() => {
-		if (model.favorites) {
-			setItems(model.favorites);
-		}
-	}, [model.favorites]);
-
-	const handleDragEnd = (event: any) => {
-		const { active, over } = event;
-		if (active.id !== over.id) {
-			setItems((items) => {
-				const oldIndex = items.findIndex((item) => item.entryId === active.id);
-				const newIndex = items.findIndex((item) => item.entryId === over.id);
-
-				// Here you would also update the order in your database
-				const newItems = arrayMove(items, oldIndex, newIndex);
-				// model.updateFavoritesOrder(newItems, user.uid); // Example function to update order
-
-				return newItems;
-			});
-		}
+	const handleDragEnd = ({ active, over }: DragEndEvent) => {
+		if (over) moveItem(String(active.id), String(over.id));
 	};
 
-	if (model.isLoading || !isGroupModelLoaded) {
+	if (library.status === "idle" || library.status === "loading") {
 		return (
 			<Card className="w-full max-w-4xl mx-auto mt-8">
 				<CardHeader>
@@ -232,6 +181,25 @@ const Favorites = observer(() => {
 						<Skeleton className="h-12 w-full" />
 						<Skeleton className="h-12 w-full" />
 					</div>
+				</CardContent>
+			</Card>
+		);
+	}
+
+	if (library.status === "error") {
+		return (
+			<Card className="w-full max-w-4xl mx-auto mt-8">
+				<CardHeader>
+					<CardTitle>Favorites</CardTitle>
+					<CardDescription>
+						Something went wrong while loading your favorite companies.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Button variant="outline" onClick={library.reload}>
+						<RotateCw className="mr-2 h-4 w-4" />
+						Retry
+					</Button>
 				</CardContent>
 			</Card>
 		);
@@ -265,18 +233,15 @@ const Favorites = observer(() => {
 							</TableHeader>
 							<TableBody>
 								<SortableContext
-									items={items.map((item) => item.entryId)}
+									items={items.map(companyId)}
 									strategy={verticalListSortingStrategy}
 								>
 									{items.map((company) => (
 										<SortableTableRow
-											key={company.entryId}
-											id={company.entryId}
+											key={companyId(company)}
+											id={companyId(company)}
 											company={company}
-											groupModel={groupModel}
-											model={model}
-											user={user}
-											updateUser={updateUser}
+											groups={library.groups}
 										/>
 									))}
 								</SortableContext>
