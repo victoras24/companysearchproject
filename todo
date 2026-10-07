@@ -1,6 +1,6 @@
 # Features
 
-[] Implement stripe webhooks.
+[X] Implement stripe webhooks.
 [] Add subscription packages for tracking companies.
 [] Export results in excel.
 
@@ -11,7 +11,7 @@
 [] Update cart page design.
 --[] Add table for the items.
 --[X] Remove discount in Cart.
---[] Loading state on the checkout button.
+--[X] Loading state on the checkout button.
 --[] Test for security.
 [] Search, filter, bugs.
 
