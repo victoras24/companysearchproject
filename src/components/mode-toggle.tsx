@@ -7,12 +7,12 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme, type Theme } from "@/components/theme-provider";
 
 export function ModeToggle() {
 	const { setTheme } = useTheme();
 
-	const handleThemeChange = (themeName: any, event: React.MouseEvent) => {
+	const handleThemeChange = (themeName: Theme, event: React.MouseEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
 		setTheme(themeName);
