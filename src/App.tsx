@@ -56,7 +56,11 @@ function AppRoutes() {
 						/>
 						<Route
 							path="favorites"
-							element={<RequireUser><Favorites /></RequireUser>}
+							element={
+								<RequireUser>
+									<Favorites />
+								</RequireUser>
+							}
 						/>
 						<Route
 							path="official/:personOrOrganisationName"
@@ -65,11 +69,19 @@ function AppRoutes() {
 
 						<Route
 							path="organiser"
-							element={<RequireUser><Organiser /></RequireUser>}
+							element={
+								<RequireUser>
+									<Organiser />
+								</RequireUser>
+							}
 						/>
 						<Route
 							path="account"
-							element={<RequireUser><AccountDetails /></RequireUser>}
+							element={
+								<RequireUser>
+									<AccountDetails />
+								</RequireUser>
+							}
 						/>
 						<Route path="auth/callback" element={<AuthCallback />} />
 						<Route path="reset-password" element={<ResetPassword />} />
