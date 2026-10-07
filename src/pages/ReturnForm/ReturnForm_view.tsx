@@ -1,35 +1,55 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, ArrowLeft, RefreshCw, Mail } from "lucide-react";
+import { observer } from "mobx-react";
+import { CheckCircle, XCircle, ArrowLeft, RefreshCw, Mail, FileText } from "lucide-react";
+import { returningSession } from "@/checkout";
+import { useCartStore } from "@/context/CartStore";
 
-const ReturnForm = () => {
-	const [loading, setLoading] = useState(true);
+const ReturnForm = observer(() => {
+	const cartStore = useCartStore();
+	const [session] = useState(() => returningSession(cartStore.clearCart));
 
-	const urlParams = new URLSearchParams(window.location.search);
-	const isSuccess = urlParams.get("success") === "true";
-	const isCanceled = urlParams.get("canceled") === "true";
-	const sessionId = urlParams.get("session_id");
+	useEffect(() => {
+		session.resolve(window.location.search);
+		return () => session.dispose();
+	}, [session]);
 
 	const navigate = (path: string) => {
 		window.location.href = path;
 	};
 
-	useEffect(() => {
-		const timer = setTimeout(() => setLoading(false), 1000);
-		return () => clearTimeout(timer);
-	}, []);
+	const state = session.state;
 
-	if (loading) {
+	if (state.status === "confirming") {
 		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-center">
-					<RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-					<p className="text-slate-600">Processing your payment...</p>
+			<div className="min-h-screen flex items-center justify-center p-4">
+				<div className="text-center max-w-md">
+					{state.takingLong ? (
+						<>
+							<Mail className="h-8 w-8 text-blue-600 mx-auto mb-4" />
+							<p className="text-slate-600 mb-6">
+								Your payment is still being confirmed. Your invoice will follow
+								by email.
+							</p>
+							<button
+								onClick={() => navigate("/")}
+								className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+							>
+								<ArrowLeft className="h-4 w-4 mr-2" />
+								Return to Home
+							</button>
+						</>
+					) : (
+						<>
+							<RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+							<p className="text-slate-600">Confirming your payment...</p>
+						</>
+					)}
 				</div>
 			</div>
 		);
 	}
 
-	if (isSuccess) {
+	if (state.status === "paid") {
 		return (
 			<div className="min-h-screen flex items-center justify-center p-4">
 				<div className="max-w-md w-full">
@@ -39,27 +59,29 @@ const ReturnForm = () => {
 								<CheckCircle className="h-8 w-8 text-green-600" />
 							</div>
 							<h1 className="text-2xl font-bold text-slate-900 mb-2">
-								Payment Successful!
+								Payment successful
 							</h1>
-							<p className="text-slate-600">
-								Thank you for your purchase. Your payment has been processed
-								successfully.
-							</p>
+							<p className="text-slate-600">We've received your order.</p>
 						</div>
 
-						{sessionId && (
-							<div className="bg-slate-50 rounded-lg p-4 mb-6">
-								<p className="text-sm text-slate-500 mb-1">Session ID</p>
-								<p className="text-xs font-mono text-slate-700 break-all">
-									{sessionId}
-								</p>
-							</div>
+						{state.items.length > 0 && (
+							<ul className="bg-slate-50 rounded-lg p-4 mb-6 space-y-2 text-left">
+								{state.items.map((item) => (
+									<li
+										key={`${item.organisationTypeCode}/${item.registrationNo}`}
+										className="flex items-start text-sm text-slate-700"
+									>
+										<FileText className="h-4 w-4 mr-2 mt-0.5 shrink-0" />
+										{item.organisationName}
+									</li>
+								))}
+							</ul>
 						)}
 
 						<div className="space-y-3">
 							<div className="flex items-center justify-center text-sm text-slate-600">
-								<Mail className="h-4 w-4 mr-2" />A receipt has been sent to your
-								email
+								<Mail className="h-4 w-4 mr-2" />
+								Your invoice is on its way by email
 							</div>
 
 							<button
@@ -76,7 +98,7 @@ const ReturnForm = () => {
 		);
 	}
 
-	if (isCanceled) {
+	if (state.status === "canceled") {
 		return (
 			<div className="min-h-screen flex items-center justify-center p-4">
 				<div className="max-w-md w-full">
@@ -122,7 +144,6 @@ const ReturnForm = () => {
 		);
 	}
 
-	// Fallback for unknown state
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
 			<div className="max-w-md w-full">
@@ -151,6 +172,6 @@ const ReturnForm = () => {
 			</div>
 		</div>
 	);
-};
+});
 
 export default ReturnForm;

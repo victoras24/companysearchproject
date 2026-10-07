@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import {
 	Card,
 	CardContent,
@@ -9,16 +9,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, ArrowRight, FileText } from "lucide-react";
+import { ShoppingCart, Trash2, ArrowRight, FileText, Loader2 } from "lucide-react";
 import { observer } from "mobx-react";
 import { useCartStore } from "@/context/CartStore";
-import { CheckoutFormModel } from "../CheckoutForm/CheckoutForm_model";
+import { checkout, formatPrice } from "@/checkout";
 
 const Cart = observer(() => {
-	const [checkoutModel] = useState(() => new CheckoutFormModel());
 	const cartStore = useCartStore();
 
-	const total = cartStore.subtotal();
+	useEffect(() => checkout.loadPrice(), []);
+
+	const { price, state } = checkout;
+	const reports = cartStore.cartItems.length;
+	const pending = state.status === "pending";
 
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -53,7 +56,7 @@ const Cart = observer(() => {
 							<CardContent>
 								<div className="space-y-6">
 									{cartStore.cartItems.map((item) => (
-										<div key={item.companyRegNo}>
+										<div key={`${item.organisationTypeCode}/${item.registrationNo}`}>
 											<div className="flex items-center gap-4">
 												<div className="h-24 w-24 overflow-hidden rounded-md">
 													<FileText className="h-full w-full object-cover" />
@@ -61,20 +64,20 @@ const Cart = observer(() => {
 
 												<div className="flex-1">
 													<div className="flex justify-between">
-														<h3 className="font-medium">{item.companyName}</h3>
+														<h3 className="font-medium">{item.organisationName}</h3>
 													</div>
-													<p className="text-sm text-gray-500 mt-1">
-														€{item.unitPrice?.toFixed(2)}
-													</p>
+													{price && (
+														<p className="text-sm text-gray-500 mt-1">
+															{formatPrice(price)}
+														</p>
+													)}
 
 													<div className="flex items-center gap-4 mt-4">
 														<Button
 															variant="ghost"
 															size="sm"
 															className="text-red-500 hover:text-red-700 hover:bg-red-50"
-															onClick={() =>
-																cartStore.removeItem(item.companyRegNo)
-															}
+															onClick={() => cartStore.removeItem(item)}
 														>
 															<Trash2 className="h-4 w-4 mr-1" /> Remove
 														</Button>
@@ -97,36 +100,48 @@ const Cart = observer(() => {
 							<CardContent className="space-y-4">
 								<div className="flex justify-between">
 									<span>Quantity</span>
-									<span>{cartStore.cartItems.length}</span>
+									<span>{reports}</span>
 								</div>
 
-								<div className="flex justify-between">
-									<span>Subtotal</span>
-									<span>€{cartStore.subtotal().toFixed(2)}</span>
-								</div>
+								{price && (
+									<>
+										<div className="flex justify-between">
+											<span>Subtotal</span>
+											<span>{formatPrice(price, reports)}</span>
+										</div>
 
-								<Separator />
+										<Separator />
 
-								<div className="flex justify-between font-semibold text-lg">
-									<span>Total</span>
-									<span>€{total.toFixed(2)}</span>
-								</div>
+										<div className="flex justify-between font-semibold text-lg">
+											<span>Total</span>
+											<span>{formatPrice(price, reports)}</span>
+										</div>
+									</>
+								)}
 							</CardContent>
-							<CardFooter>
+							<CardFooter className="flex-col gap-3">
 								<Button
 									className="w-full"
 									size="lg"
-									onClick={async () => {
-										const res = await checkoutModel.createCheckoutSession(
-											cartStore.cartItems
-										);
-										if (res.url) {
-											window.location.href = res.url;
-										}
-									}}
+									disabled={pending}
+									onClick={() => checkout.checkOut(cartStore.cartItems)}
 								>
-									Checkout <ArrowRight className="ml-2 h-4 w-4" />
+									{pending ? (
+										<>
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" /> Starting
+											checkout...
+										</>
+									) : (
+										<>
+											Checkout <ArrowRight className="ml-2 h-4 w-4" />
+										</>
+									)}
 								</Button>
+								{state.status === "failed" && (
+									<p role="alert" className="text-sm text-red-600">
+										{state.message}
+									</p>
+								)}
 							</CardFooter>
 						</Card>
 					</div>

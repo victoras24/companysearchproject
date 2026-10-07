@@ -4,11 +4,33 @@ import { toast } from "sonner";
 
 const CART_STORAGE_KEY = "user_cart_items";
 
+type CartStorage = Pick<Storage, "getItem" | "setItem">;
+
+/** What names an organisation in the cart: its type code together with its registration number. */
+type CartKey = Pick<ICartItem, "organisationTypeCode" | "registrationNo">;
+
+const idOf = (key: CartKey) =>
+	`${key.organisationTypeCode.trim().toUpperCase()}/${key.registrationNo.trim()}`;
+
+// Items saved before the cart knew organisation types have no type code and cannot be ordered.
+const isCartItem = (item: unknown): item is ICartItem => {
+	const candidate = item as Partial<ICartItem> | null;
+	return (
+		typeof candidate?.organisationTypeCode === "string" &&
+		candidate.organisationTypeCode.trim() !== "" &&
+		typeof candidate.registrationNo === "string" &&
+		candidate.registrationNo.trim() !== ""
+	);
+};
+
 export class CartModel {
 	@observable accessor cartItems: ICartItem[] = [];
 	@observable accessor isLoading: boolean = false;
 
-	constructor() {
+	private readonly storage: CartStorage;
+
+	constructor(storage: CartStorage = localStorage) {
+		this.storage = storage;
 		makeObservable(this);
 		this.isLoading = false;
 		this.loadCartFromStorage();
@@ -17,9 +39,10 @@ export class CartModel {
 	@action
 	loadCartFromStorage = () => {
 		try {
-			const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+			const savedCart = this.storage.getItem(CART_STORAGE_KEY);
 			if (savedCart) {
-				this.cartItems = JSON.parse(savedCart);
+				const items: unknown = JSON.parse(savedCart);
+				this.cartItems = Array.isArray(items) ? items.filter(isCartItem) : [];
 			}
 		} catch (error) {
 			console.error("Failed to load cart from localStorage:", error);
@@ -30,7 +53,7 @@ export class CartModel {
 	@action
 	saveCartToStorage = () => {
 		try {
-			localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.cartItems));
+			this.storage.setItem(CART_STORAGE_KEY, JSON.stringify(this.cartItems));
 		} catch (error) {
 			console.error("Failed to save cart to localStorage:", error);
 			toast.error("Failed to save your cart. Please try again.");
@@ -38,41 +61,29 @@ export class CartModel {
 	};
 
 	@action
-	subtotal = () => {
-		return this.cartItems.reduce(
-			(total: number, item: ICartItem) => total + item.unitPrice,
-			0
-		);
-	};
-
-	@action
 	addItem = (item: ICartItem) => {
-		window.console.log(item);
-		const existingItem = this.cartItems.find(
-			(cartItem) => cartItem.companyRegNo === item.companyRegNo
-		);
-		window.console.log(existingItem);
+		const id = idOf(item);
+		const existingItem = this.cartItems.find((cartItem) => idOf(cartItem) === id);
 		if (existingItem) {
 			toast.warning(
-				`The report for ${item.companyName} is already in the cart`
+				`The report for ${item.organisationName} is already in the cart`
 			);
 		} else {
 			this.cartItems.push(item);
 			this.saveCartToStorage(); // Save to localStorage after adding
-			toast.success(`Added ${item.companyName} to your cart`);
+			toast.success(`Added ${item.organisationName} to your cart`);
 		}
 	};
 
 	@action
-	removeItem = (id: number | string) => {
-		const itemToRemove = this.cartItems.find(
-			(item) => item.companyRegNo === id
-		);
-		this.cartItems = this.cartItems.filter((item) => item.companyRegNo !== id);
+	removeItem = (key: CartKey) => {
+		const id = idOf(key);
+		const itemToRemove = this.cartItems.find((item) => idOf(item) === id);
+		this.cartItems = this.cartItems.filter((item) => idOf(item) !== id);
 		this.saveCartToStorage(); // Save to localStorage after removing
 
 		if (itemToRemove) {
-			toast.success(`Removed ${itemToRemove.companyName} from your cart`);
+			toast.success(`Removed ${itemToRemove.organisationName} from your cart`);
 		}
 	};
 
@@ -80,7 +91,6 @@ export class CartModel {
 	clearCart = () => {
 		this.cartItems = [];
 		this.saveCartToStorage();
-		toast.success("Cart cleared");
 	};
 
 	@computed

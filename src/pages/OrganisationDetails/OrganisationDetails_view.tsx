@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 
 import { useCartStore } from "@/context/CartStore";
+import { checkout, formatPrice } from "@/checkout";
 import { NavLink, useParams } from "react-router";
 import type { ICartItem } from "@/gEntities";
 import type { OrganisationSummary } from "@/organisation/organisation";
@@ -71,6 +72,8 @@ const OrganisationDetails: React.FC = observer(() => {
 	}, [loader, typeCode, registrationNo]);
 
 	useEffect(() => () => loader.dispose(), [loader]);
+
+	useEffect(() => checkout.loadPrice(), []);
 
 	const view = loader.view;
 	const organisationName =
@@ -90,9 +93,9 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const handleOrderReport = (company: OrganisationSummary) => {
 		const cartItem: ICartItem = {
-			companyName: company.organisationName ?? "",
-			companyRegNo: company.registrationNo,
-			unitPrice: Number(import.meta.env.VITE_COMPANY_REPORT_PRICE),
+			organisationTypeCode: company.organisationTypeCode ?? typeCode,
+			registrationNo: company.registrationNo,
+			organisationName: company.organisationName ?? "",
 		};
 
 		cartStore.addItem(cartItem);
@@ -444,6 +447,7 @@ const OrganisationDetails: React.FC = observer(() => {
 					>
 						<FileText className="mr-2 h-4 w-4" />
 						Order Full Company Report
+						{checkout.price && ` · ${formatPrice(checkout.price)}`}
 					</Button>
 				</CardFooter>
 			</Card>

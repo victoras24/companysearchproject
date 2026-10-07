@@ -21,15 +21,9 @@ export interface IRelatedCompany {
 }
 
 export interface ICartItem {
-	companyName: string;
-	companyRegNo: string;
-	unitPrice: number;
-}
-
-export interface ICart {
-	items: ICartItem[];
-	subtotal: number;
-	total: number;
+	organisationTypeCode: string;
+	registrationNo: string;
+	organisationName: string;
 }
 
 export interface IPaginatedSearchData {

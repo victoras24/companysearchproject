@@ -79,3 +79,34 @@ _Avoid_: Saved company, bookmark
 **Group**:
 A named list of organisations a user has made. It is independent of favourites: an organisation can be in any number of groups whether or not it is a favourite.
 _Avoid_: Folder, category
+
+### Checkout
+
+**Report**:
+A document about one organisation that a buyer pays for. The interface labels it "Full Company Report".
+_Avoid_: Company report (outside interface text), product
+
+**Buyer**:
+Whoever places an order. A buyer does not have to be signed in.
+_Avoid_: Customer, user (for a buyer)
+
+**Cart**:
+The reports a buyer has chosen but not yet paid for, kept in the browser. It holds at most one report per organisation and is emptied when an order made from it is paid.
+_Avoid_: Basket
+
+**Order**:
+One attempt to buy the reports in a cart. It belongs to the signed-in user who placed it, or to no one when the buyer was a guest.
+
+**Order item**:
+One report in an order, naming its organisation by organisation type and registration number.
+
+**Order status**:
+Where an order stands: Pending (payment not yet confirmed), Paid (the payment provider has confirmed payment), Expired (the buyer never paid and can no longer pay this order) or Fulfilled (the reports have reached the buyer).
+_Avoid_: Cancelled, failed, success
+
+**Price**:
+What one report costs. Every report costs the same, and the payment provider holds the amount.
+
+**Invoice**:
+The payment provider's proof of payment for an order, sent to the buyer. It is not the report.
+_Avoid_: Receipt
