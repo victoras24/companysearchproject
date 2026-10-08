@@ -79,6 +79,22 @@ const ReturnForm = observer(() => {
 						)}
 
 						<div className="space-y-3">
+							<p className="text-sm text-slate-700">
+								{state.items.length === 1 ? "Your report" : "Your reports"} will
+								arrive{" "}
+								{state.buyerEmail ? (
+									<>
+										at{" "}
+										<span className="font-medium break-all">
+											{state.buyerEmail}
+										</span>
+									</>
+								) : (
+									"by email"
+								)}{" "}
+								within one business day.
+							</p>
+
 							<div className="flex items-center justify-center text-sm text-slate-600">
 								<Mail className="h-4 w-4 mr-2" />
 								Your invoice is on its way by email

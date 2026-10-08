@@ -211,9 +211,9 @@ const Home: React.FC = () => {
 								How quickly are reports delivered?
 							</AccordionTrigger>
 							<AccordionContent>
-								Detailed company reports are typically delivered within 6 hours
-								of your request, complete with professional analysis and summary
-								prepared by our research experts.
+								Detailed company reports are typically delivered within one
+								business day of your request, complete with professional analysis
+								and summary prepared by our research experts.
 							</AccordionContent>
 						</AccordionItem>
 					</Accordion>

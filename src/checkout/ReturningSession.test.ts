@@ -6,7 +6,9 @@ const items = [
 	{ organisationTypeCode: "B", registrationNo: "60580", organisationName: "2 ALPHA SWEETS" },
 ];
 
-const answer = (status: SessionAnswer["status"]): SessionAnswer => ({ status, items });
+const buyerEmail = "maria@example.test";
+
+const answer = (status: SessionAnswer["status"]): SessionAnswer => ({ status, items, buyerEmail });
 
 /** The backend's session route in memory: it gives the queued answers in turn, then repeats the last. */
 function fakeApi(...answers: (SessionAnswer | null | Error)[]) {
@@ -47,7 +49,7 @@ describe("ReturningSession", () => {
 			session.resolve("?session_id=cs_test_1");
 			await settle();
 
-			expect(session.state).toEqual({ status: "paid", items });
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail });
 			expect(api.requests).toEqual(["cs_test_1"]);
 			expect(cart.emptied).toBe(1);
 
@@ -62,8 +64,37 @@ describe("ReturningSession", () => {
 			session.resolve("?session_id=cs_test_1");
 			await settle();
 
-			expect(session.state).toEqual({ status: "paid", items });
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail });
 			expect(cart.emptied).toBe(1);
+		});
+	});
+
+	describe("where the report will be sent", () => {
+		it("is the buyer's email the backend answered with", async () => {
+			const { session } = setup({ status: "paid", items, buyerEmail: "other@example.test" });
+
+			session.resolve("?session_id=cs_test_1");
+			await settle();
+
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail: "other@example.test" });
+		});
+
+		it("is unknown for an order paid before orders kept the email", async () => {
+			const { session } = setup({ status: "fulfilled", items, buyerEmail: null });
+
+			session.resolve("?session_id=cs_test_1");
+			await settle();
+
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail: null });
+		});
+
+		it("is unknown when a backend from before this change leaves it out", async () => {
+			const { session } = setup({ status: "paid", items } as unknown as SessionAnswer);
+
+			session.resolve("?session_id=cs_test_1");
+			await settle();
+
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail: null });
 		});
 	});
 
@@ -103,7 +134,7 @@ describe("ReturningSession", () => {
 			expect(cart.emptied).toBe(0);
 
 			await seconds(2);
-			expect(session.state).toEqual({ status: "paid", items });
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail });
 			expect(cart.emptied).toBe(1);
 
 			await seconds(30);
@@ -260,7 +291,7 @@ describe("ReturningSession", () => {
 			session.resolve("?session_id=cs_test_1");
 			await settle();
 
-			expect(session.state).toEqual({ status: "paid", items });
+			expect(session.state).toEqual({ status: "paid", items, buyerEmail });
 			expect(cart.emptied).toBe(1);
 		});
 	});

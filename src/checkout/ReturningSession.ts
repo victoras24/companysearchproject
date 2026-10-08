@@ -12,6 +12,8 @@ export type SessionItem = {
 export type SessionAnswer = {
 	status: "pending" | "paid" | "expired" | "fulfilled";
 	items: SessionItem[];
+	/** The email the buyer paid with. Null until the order is paid, and for orders from before it was kept. */
+	buyerEmail: string | null;
 };
 
 /** The backend's session route. It resolves null for a session the backend does not know. */
@@ -22,7 +24,8 @@ export interface SessionPort {
 export type ReturnState =
 	/** The order is not paid yet as far as the backend knows; `takingLong` once it stopped asking. */
 	| { status: "confirming"; takingLong: boolean }
-	| { status: "paid"; items: SessionItem[] }
+	/** `buyerEmail` is where the reports will be sent, when the order has it. */
+	| { status: "paid"; items: SessionItem[]; buyerEmail: string | null }
 	| { status: "canceled" }
 	| { status: "unknown" };
 
@@ -83,7 +86,7 @@ export class ReturningSession {
 				this.cartEmptied = true;
 				this.emptyCart();
 			}
-			this.setState({ status: "paid", items: answer.items });
+			this.setState({ status: "paid", items: answer.items, buyerEmail: answer.buyerEmail ?? null });
 		} else if (answer?.status !== "pending") {
 			this.setState({ status: "unknown" });
 		} else if (rechecksLeft === 0) {

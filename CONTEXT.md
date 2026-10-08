@@ -101,7 +101,7 @@ One attempt to buy the reports in a cart. It belongs to the signed-in user who p
 One report in an order, naming its organisation by organisation type and registration number.
 
 **Order status**:
-Where an order stands: Pending (payment not yet confirmed), Paid (the payment provider has confirmed payment), Expired (the buyer never paid and can no longer pay this order) or Fulfilled (the reports have reached the buyer).
+Where an order stands: Pending (payment not yet confirmed), Paid (the payment provider has confirmed payment), Expired (the buyer never paid and can no longer pay this order) or Fulfilled (the owner has sent the reports to the buyer's email).
 _Avoid_: Cancelled, failed, success
 
 **Price**:

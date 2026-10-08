@@ -414,7 +414,7 @@ const OrganisationDetails: React.FC = observer(() => {
 						<div>
 							<CardTitle className="text-xl">Comprehensive Reports</CardTitle>
 							<CardDescription>
-								Professional analysis within 6 hours
+								Professional analysis within one business day
 							</CardDescription>
 						</div>
 					</div>
