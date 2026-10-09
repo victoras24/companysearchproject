@@ -5,6 +5,8 @@ export type Profile = {
 	email: string;
 	fullName: string;
 	phoneNumber: string;
+	/** Whether the user is emailed the changes in their tracked organisations. */
+	alertEmails: boolean;
 };
 
 export type AuthState =
@@ -42,7 +44,7 @@ export interface AuthProviderPort {
 }
 
 export type SignUpDetails = { email: string; password: string; fullName: string };
-export type ProfileChanges = { fullName?: string; phoneNumber?: string };
+export type ProfileChanges = { fullName?: string; phoneNumber?: string; alertEmails?: boolean };
 
 /** The backend's profile routes, called as the user of the current session. */
 export interface ProfilePort {
@@ -144,6 +146,21 @@ export class AuthSession {
 			return { ok: true };
 		} catch (error) {
 			return failure(error);
+		}
+	};
+
+	/**
+	 * Reads the profile again after something outside the session changed it, as an unsubscribe
+	 * link does. A failure leaves the profile as it was.
+	 */
+	reloadProfile = async (): Promise<void> => {
+		const userId = this.userId;
+		if (this.current.status !== "signed-in" || !userId) return;
+		try {
+			const profile = await this.ports.profiles.load();
+			if (this.userId === userId) this.set({ status: "signed-in", profile });
+		} catch {
+			// The profile shown is the one already loaded.
 		}
 	};
 

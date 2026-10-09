@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { User, Building2, Users, Mail, Lock, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 
@@ -24,6 +25,7 @@ const AccountDetails = observer(() => {
 	const [activeTab, setActiveTab] = useState("overview");
 	const [draft, setDraft] = useState<{ fullName: string; phoneNumber: string } | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [savingAlertEmails, setSavingAlertEmails] = useState(false);
 
 	// The route only shows this page to a signed-in user.
 	if (auth.state.status !== "signed-in") return null;
@@ -49,6 +51,15 @@ const AccountDetails = observer(() => {
 		}
 		setDraft(null);
 		toast.success("Your details have been updated");
+	};
+
+	const setAlertEmails = async (alertEmails: boolean) => {
+		setSavingAlertEmails(true);
+		const result = await auth.updateProfile({ alertEmails });
+		setSavingAlertEmails(false);
+
+		if (!result.ok) toast.error("Failed to change your alert emails");
+		else toast.success(alertEmails ? "Alert emails are on" : "Alert emails are off");
 	};
 
 	const sendResetEmail = async () => {
@@ -169,6 +180,26 @@ const AccountDetails = observer(() => {
 								</Button>
 							)}
 						</CardFooter>
+					</Card>
+
+					<Card>
+						<CardContent className="flex items-center justify-between gap-4">
+							<div className="space-y-0.5">
+								<h3 id="account-alert-emails" className="text-base font-medium">
+									Alert emails
+								</h3>
+								<p className="text-sm text-muted-foreground">
+									One email on a day when your tracked organisations changed. The changes
+									show on your Tracking page either way.
+								</p>
+							</div>
+							<Switch
+								aria-labelledby="account-alert-emails"
+								checked={user.alertEmails}
+								disabled={savingAlertEmails}
+								onCheckedChange={setAlertEmails}
+							/>
+						</CardContent>
 					</Card>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">

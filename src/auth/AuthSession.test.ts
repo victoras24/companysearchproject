@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthSession, type Profile, type ProfilePort } from "./AuthSession";
+import { AuthSession, type Profile, type ProfileChanges, type ProfilePort } from "./AuthSession";
 import { InMemoryAuthProvider } from "./InMemoryAuthProvider";
 
 const flush = async () => {
@@ -11,12 +11,14 @@ const maria: Profile = {
 	email: "maria@example.com",
 	fullName: "Maria Georgiou",
 	phoneNumber: "",
+	alertEmails: true,
 };
 
 /** The backend's profile routes as a map, counting the loads. */
 function fakeProfiles(profiles: Profile[] = [maria]) {
 	const stored = new Map(profiles.map((p) => [p.id, p]));
 	const port = {
+		stored,
 		loads: 0,
 		failing: false,
 		provider: null as InMemoryAuthProvider | null,
@@ -26,7 +28,7 @@ function fakeProfiles(profiles: Profile[] = [maria]) {
 			const id = port.provider!.currentUserId()!;
 			return stored.get(id)!;
 		},
-		update: async (changes: { fullName?: string; phoneNumber?: string }) => {
+		update: async (changes: ProfileChanges) => {
 			if (port.failing) throw new Error("backend down");
 			const id = port.provider!.currentUserId()!;
 			const updated = { ...stored.get(id)!, ...changes };
@@ -45,7 +47,7 @@ function setup(options: { signedInAs?: string } = {}) {
 
 	const profiles = fakeProfiles([
 		maria,
-		{ id: "user-nikos", email: "nikos@example.com", fullName: "Nikos", phoneNumber: "" },
+		{ id: "user-nikos", email: "nikos@example.com", fullName: "Nikos", phoneNumber: "", alertEmails: true },
 	]);
 	profiles.provider = provider;
 
@@ -267,6 +269,53 @@ describe("AuthSession", () => {
 			await flush();
 
 			expect((await auth.updateProfile({ fullName: "X" })).ok).toBe(false);
+		});
+
+		it("is read again when it was changed outside the session, as by an unsubscribe link", async () => {
+			const { auth, profiles } = setup({ signedInAs: "user-maria" });
+			auth.start();
+			await flush();
+			profiles.stored.set("user-maria", { ...maria, alertEmails: false });
+
+			await auth.reloadProfile();
+
+			expect(auth.state).toEqual({ status: "signed-in", profile: { ...maria, alertEmails: false } });
+		});
+
+		it("stays as it is when it cannot be read again", async () => {
+			const { auth, profiles, errors } = setup({ signedInAs: "user-maria" });
+			auth.start();
+			await flush();
+			profiles.failing = true;
+
+			await auth.reloadProfile();
+
+			expect(auth.state).toEqual({ status: "signed-in", profile: maria });
+			expect(errors).toEqual([]);
+		});
+
+		it("is not read again when signed out", async () => {
+			const { auth, profiles } = setup();
+			auth.start();
+			await flush();
+
+			await auth.reloadProfile();
+
+			expect(auth.state).toEqual({ status: "signed-out" });
+			expect(profiles.loads).toBe(0);
+		});
+
+		it("is not put back when the user signed out while it was read again", async () => {
+			const { auth } = setup({ signedInAs: "user-maria" });
+			auth.start();
+			await flush();
+
+			const reloading = auth.reloadProfile();
+			await auth.signOut();
+			await reloading;
+			await flush();
+
+			expect(auth.state).toEqual({ status: "signed-out" });
 		});
 	});
 

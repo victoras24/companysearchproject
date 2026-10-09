@@ -40,7 +40,7 @@ describe("sign-in and sign-up rules", () => {
 });
 
 describe("a page that needs a user", () => {
-	const profile = { id: "u", email: "m@example.com", fullName: "M", phoneNumber: "" };
+	const profile = { id: "u", email: "m@example.com", fullName: "M", phoneNumber: "", alertEmails: true };
 
 	it("waits while the session is being checked", () => {
 		expect(routeFor({ status: "checking" })).toBe("loading");
