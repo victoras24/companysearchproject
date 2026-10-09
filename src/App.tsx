@@ -6,6 +6,7 @@ import { RequireUser } from "./auth/RequireUser";
 import OrganisationDetails from "./pages/OrganisationDetails/OrganisationDetails_view";
 import Favorites from "./pages/Favorites/Favorites_view";
 import Organiser from "./pages/Organiser/Organiser_view";
+import Tracking from "./pages/Tracking/Tracking_view";
 import AuthCallback from "./pages/Account/AuthCallback";
 import ResetPassword from "./pages/Account/ResetPassword";
 import SonnerToastProvider from "./context/SonnerToastProvider";
@@ -72,6 +73,14 @@ function AppRoutes() {
 							element={
 								<RequireUser>
 									<Organiser />
+								</RequireUser>
+							}
+						/>
+						<Route
+							path="tracking"
+							element={
+								<RequireUser>
+									<Tracking />
 								</RequireUser>
 							}
 						/>

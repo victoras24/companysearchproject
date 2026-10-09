@@ -3,6 +3,7 @@ import {
 	Group,
 	Heart,
 	Home,
+	Radar,
 	ScanFace,
 	Search,
 	ShoppingCart,
@@ -48,6 +49,11 @@ export const AppSidebar = observer(() => {
 			title: "Organiser",
 			url: "/organiser",
 			icon: Group,
+		},
+		{
+			title: "Tracking",
+			url: "/tracking",
+			icon: Radar,
 		},
 		{
 			title: state.status === "signed-out" ? "Login" : "Account",

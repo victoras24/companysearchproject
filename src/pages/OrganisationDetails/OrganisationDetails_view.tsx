@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { library } from "@/library";
 import { toggleSaved } from "@/library/saveCompany";
+import { tracking } from "@/tracking";
+import { TrackButton } from "@/tracking/TrackButton";
+import { TrackedPanel } from "@/tracking/TrackedPanel";
 import { observer } from "mobx-react";
 import { OrganisationRecordLoader } from "./OrganisationRecordLoader";
 import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisation_model";
@@ -74,6 +77,16 @@ const OrganisationDetails: React.FC = observer(() => {
 	useEffect(() => () => loader.dispose(), [loader]);
 
 	useEffect(() => checkout.loadPrice(), []);
+
+	// What the checker has for this organisation, for a user tracking it; a first check shows as it finishes.
+	useEffect(() => {
+		tracking.open({ organisationTypeCode: typeCode, registrationNo });
+		const stopWatching = tracking.watch();
+		return () => {
+			stopWatching();
+			tracking.close();
+		};
+	}, [typeCode, registrationNo]);
 
 	const view = loader.view;
 	const organisationName =
@@ -197,6 +210,7 @@ const OrganisationDetails: React.FC = observer(() => {
 					<Badge variant={statusGroupOf(organisation)} className="text-md">
 						{statusLabel(organisation)}
 					</Badge>
+					<TrackButton organisation={organisation} />
 					<TooltipProvider>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -225,10 +239,11 @@ const OrganisationDetails: React.FC = observer(() => {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-				<TabsList className="grid w-full max-w-xxl grid-cols-3">
+				<TabsList className="grid w-full max-w-xxl grid-cols-4">
 					<TabsTrigger value="overview">Overview</TabsTrigger>
 					<TabsTrigger value="people">Key People</TabsTrigger>
 					<TabsTrigger value="related">Related</TabsTrigger>
+					<TabsTrigger value="tracking">Tracking</TabsTrigger>
 				</TabsList>
 				<TabsContent value="overview" className="space-y-6 pt-4">
 					<Card>
@@ -401,6 +416,9 @@ const OrganisationDetails: React.FC = observer(() => {
 							)}
 						</CardContent>
 					</Card>
+				</TabsContent>
+				<TabsContent value="tracking" className="pt-4">
+					<TrackedPanel organisation={organisation} />
 				</TabsContent>
 			</Tabs>
 

@@ -80,6 +80,38 @@ _Avoid_: Saved company, bookmark
 A named list of organisations a user has made. It is independent of favourites: an organisation can be in any number of groups whether or not it is a favourite.
 _Avoid_: Folder, category
 
+### Tracking
+
+**Tracked organisation**:
+An organisation a signed-in user has asked to be told about when it changes. It is independent of favourites, and a user's plan limits how many they may have. It is paused, not removed, while the user is over their plan's limit.
+_Avoid_: Subscription, subscribed company, followed company, watch
+
+**Slot**:
+One place for a tracked organisation in a user's plan. A slot is used once an organisation has been tracked in it, and stays used when that organisation is untracked.
+
+**Swap**:
+Starting to track an organisation in a slot that has been used before, including tracking again one the user untracked. A plan allows a number of swaps each calendar month; Free allows none.
+_Avoid_: Rotation
+
+**Change**:
+One detected difference in a tracked organisation, of one kind: a filing, a pending service, the registry status, an official, the registered address or the name. It belongs to the organisation, so every user tracking it sees the same changes.
+_Avoid_: Update, event, diff
+
+**Filing**:
+A form the registry records as submitted for an organisation, such as HE32 (annual return) or XACC (accounts), with the date it is made up to. That date is not the day it was submitted.
+_Avoid_: Report (that is the paid document), upload, document
+
+**Pending service**:
+An application lodged with the registry for an organisation that the registry has not yet processed.
+
+**Alert**:
+A message telling a user about the changes found in their tracked organisations since they started tracking them. A user is never alerted about what was already there when they started.
+_Avoid_: Notification
+
+**Plan**:
+What a user pays for, recurring, which sets how many tracked organisations they may have. There are three: Free, Starter and Pro.
+_Avoid_: Subscription, tier, package
+
 ### Checkout
 
 **Report**:

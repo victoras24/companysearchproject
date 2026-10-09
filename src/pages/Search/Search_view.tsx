@@ -10,6 +10,7 @@ import {
 import { search } from "@/api/searchApi";
 import { library } from "@/library";
 import { toggleSaved } from "@/library/saveCompany";
+import { TrackButton } from "@/tracking/TrackButton";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,7 @@ export const Search = observer(() => {
 								<Badge variant={statusGroupOf(data)}>
 									{statusLabel(data)}
 								</Badge>
+								<TrackButton organisation={data} compact />
 								<Button
 									variant="ghost"
 									size="icon"
