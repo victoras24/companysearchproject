@@ -22,10 +22,26 @@ export type TrackedOrganisation = CheckState & {
 	organisationName: string | null;
 	organisationType: string | null;
 	startedAt: string;
+	/** Paused while the user is over their plan's limit: not checked, and no alerts. */
+	paused: boolean;
 	latestChange: Change | null;
 };
 
-export type TrackingContents = { slots: number; slotsUsed: number; organisations: TrackedOrganisation[] };
+export type PlanName = "free" | "basic" | "starter" | "pro";
+
+/** A user's tracking as the backend sends it: what their plan allows, how much is used, and their organisations. */
+export type TrackingContents = {
+	plan: PlanName;
+	slots: number;
+	slotsUsed: number;
+	swapsAMonth: number;
+	swapsLeft: number;
+	/** The user came down to Free and keeps no organisation yet. */
+	freeChoiceOpen: boolean;
+	organisations: TrackedOrganisation[];
+	/** Organisations the user untracked whose slots are still theirs, the next to be swapped first. */
+	untracked: Key[];
+};
 
 export type PendingService = { service: string; applicationDate: string | null; applicationNumber: string };
 
@@ -54,21 +70,32 @@ export type TrackableOrganisation = OrganisationKey & {
 	organisationType?: string | null;
 };
 
-type Key = { organisationTypeCode: string; registrationNo: string };
+export type Key = { organisationTypeCode: string; registrationNo: string };
 
 /** The backend's tracking routes, called as the signed-in user. They reject on failure. */
 export interface TrackingPort {
 	load(): Promise<TrackingContents>;
 	track(key: Key): Promise<void>;
 	untrack(key: Key): Promise<void>;
+	/** Makes a paused organisation active; at a paid plan's limit, in place of an active one. */
+	activate(key: Key, inPlaceOf?: Key): Promise<void>;
 	/** Rejects for an organisation the user does not track. */
 	details(key: Key): Promise<TrackedDetails>;
 }
 
 export type TrackingStatus = "idle" | "loading" | "loaded" | "error";
 
-/** Whether an organisation is tracked, can be, or cannot because the plan has no slot left. */
-export type Availability = "tracked" | "available" | "no-slot" | "unknown";
+/**
+ * Whether an organisation is tracked, can be tracked in a slot never used, can be as a swap, or
+ * cannot: because the month's swaps are spent, or the plan has no slot for it.
+ */
+export type Availability = "tracked" | "available" | "swap" | "no-swap" | "no-slot" | "unknown";
+
+/**
+ * How a paused organisation can become active again: as the one kept on Free, straight away where
+ * the plan has room, in place of an active one, or only by upgrading.
+ */
+export type ResumeOption = "keep-on-free" | "room" | "in-place-of" | "upgrade";
 
 export type DetailsView =
 	| { status: "not-tracked" }
@@ -80,6 +107,7 @@ export type Failure = { ok: false; message: string };
 export type Done = { ok: true } | Failure;
 
 export const SLOT_USED = "Your one free tracked organisation is already used.";
+const FREE_WARNING = "This is your one free tracked organisation and can't be changed.";
 const NOT_SIGNED_IN = "Please log in to track an organisation.";
 const NOT_TRACKED: DetailsView = { status: "not-tracked" };
 
@@ -92,7 +120,10 @@ type Options = {
 
 /**
  * The signed-in user's tracked organisations, held in memory and loaded from the backend. A plan
- * sets how many slots there are; Free has one, used for good by the first organisation tracked.
+ * sets how many slots there are and how many swaps a month; Free has one slot, used for good by
+ * the first organisation tracked, and no swaps. Basic has no swaps either, so each of its slots is
+ * used for good too. With no swaps a tracked organisation cannot be untracked. Organisations over
+ * a plan's limit are paused.
  * Every write goes to the backend first and changes the state only when it succeeded.
  *
  * A first check takes about a minute, so while a page is watching and an organisation is waiting
@@ -102,7 +133,12 @@ export class Tracking {
 	@observable.ref accessor status: TrackingStatus = "idle";
 	@observable.ref accessor slots = 0;
 	@observable.ref accessor slotsUsed = 0;
+	@observable.ref accessor plan: PlanName = "free";
+	@observable.ref accessor swapsAMonth = 0;
+	@observable.ref accessor swapsLeft = 0;
+	@observable.ref accessor freeChoiceOpen = false;
 	@observable.ref accessor organisations: TrackedOrganisation[] = [];
+	@observable.ref private accessor untracked: Key[] = [];
 	/** What the checker has for the organisation a page has opened. */
 	@observable.ref accessor details: DetailsView = NOT_TRACKED;
 	@observable.ref private accessor busy: ReadonlySet<string> = new Set();
@@ -129,17 +165,67 @@ export class Tracking {
 		return `${this.slotsUsed} of ${this.slots}`;
 	}
 
-	/** What the user has to agree to before tracking, or null when there is nothing to warn about. */
-	get trackWarning(): string | null {
-		return this.slots === 1 ? "This is your one free tracked organisation and can't be changed." : null;
+	/** "4 of 5 swaps left this month", or null on a plan with no swaps. */
+	get swapsText(): string | null {
+		return this.swapsAMonth > 0 ? `${this.swapsLeft} of ${this.swapsAMonth} swaps left this month` : null;
 	}
 
-	/** What the user has to agree to before untracking, or null. */
-	get untrackWarning(): string | null {
-		return this.slots === 1
-			? "Your one free tracked organisation stays used: you won't be able to track it again or track another."
-			: null;
+	get activeOrganisations() {
+		return this.organisations.filter((o) => !o.paused);
 	}
+
+	get pausedOrganisations() {
+		return this.organisations.filter((o) => o.paused);
+	}
+
+	/** What the user has to agree to before tracking this organisation, or null when there is nothing to warn about. */
+	trackWarning = (organisation: OrganisationKey): string | null => {
+		const availability = this.availability(organisation);
+		if (availability === "swap")
+			return this.swapsLeft === 1
+				? "This uses your last swap this month."
+				: `This uses 1 of your ${this.swapsLeft} swaps left this month.`;
+		if (availability !== "available") return null;
+		if (this.plan === "free") return FREE_WARNING;
+		if (this.swapsAMonth > 0) return null;
+
+		const unused = this.slots - this.slotsUsed;
+		return unused === 1
+			? "This uses your last unused slot for good: your plan has no swaps."
+			: `This uses 1 of your ${unused} unused slots for good: your plan has no swaps.`;
+	};
+
+	/** Why a tracked organisation cannot be untracked; null when it can. With no swaps it is permanent. */
+	get untrackRefusal(): string | null {
+		if (this.swapsAMonth > 0) return null;
+		return this.plan === "free"
+			? "Your one free tracked organisation can't be changed. Upgrade to swap."
+			: "Your plan has no swaps, so a tracked organisation can't be changed. Upgrade to swap.";
+	}
+
+	/** What the user has to agree to before untracking. */
+	get untrackWarning(): string {
+		return "Its slot stays used: tracking this organisation again, or another in its slot, uses a swap.";
+	}
+
+	/** Why this organisation, or with none any other, cannot be tracked now; null when it can. */
+	refusal = (organisation?: OrganisationKey | null): string | null => {
+		const availability = organisation ? this.availability(organisation) : this.availabilityOf(null);
+		if (availability === "no-swap") return "You have no swaps left this month.";
+		if (availability !== "no-slot") return null;
+
+		if (this.plan === "free")
+			return this.organisations.length > 0 ? "Free keeps one tracked organisation. Upgrade to track more." : SLOT_USED;
+		if (this.pausedOrganisations.length > 0)
+			return this.swapsAMonth > 0
+				? `You are over your plan's ${this.slots} slots. Upgrade, or stop tracking an organisation, to make room.`
+				: `You are over your plan's ${this.slots} slots. Upgrade to track more.`;
+		if (this.swapsAMonth > 0) return `All ${this.slots} slots of your plan are in use.`;
+		// With no swaps a slot never used is the only way in, and an untracked organisation has none.
+		return this.slotsUsed < this.slots
+			? "Your plan has no swaps, so an organisation you stopped tracking can't be tracked again. Upgrade to swap."
+			: `All ${this.slots} slots of your plan are used, and it has no swaps. Upgrade to track more.`;
+	};
 
 	/** Loads the tracked organisations of the user who signed in; clears them when nobody is. */
 	@action
@@ -148,7 +234,12 @@ export class Tracking {
 		this.userId = userId;
 		this.slots = 0;
 		this.slotsUsed = 0;
+		this.plan = "free";
+		this.swapsAMonth = 0;
+		this.swapsLeft = 0;
+		this.freeChoiceOpen = false;
 		this.organisations = [];
+		this.untracked = [];
 		this.details = NOT_TRACKED;
 		this.busy = new Set();
 		this.status = "idle";
@@ -180,8 +271,26 @@ export class Tracking {
 		const id = idOf(organisation);
 		if (this.status !== "loaded" || id === null) return "unknown";
 		if (this.organisations.some((o) => idOf(o) === id)) return "tracked";
-		return this.slotsUsed < this.slots ? "available" : "no-slot";
+		return this.availabilityOf(id);
 	};
+
+	/** For an organisation not tracked now; null stands for any the user never tracked. */
+	private availabilityOf(id: string | null): Availability {
+		if (this.plan === "free") {
+			// Free's one organisation is permanent: a used slot is only tracked into by a user who
+			// came down to Free tracking nothing, once.
+			const canChoose = this.freeChoiceOpen && this.organisations.length === 0;
+			return this.slotsUsed < this.slots || canChoose ? "available" : "no-slot";
+		}
+
+		// Over the plan's limit nothing more is tracked.
+		if (this.pausedOrganisations.length > 0) return "no-slot";
+
+		const untrackedBefore = id !== null && this.untracked.some((key) => idOf(key) === id);
+		if (!untrackedBefore && this.slotsUsed < this.slots) return "available";
+		if (this.untracked.length === 0 || this.swapsAMonth === 0) return "no-slot";
+		return this.swapsLeft > 0 ? "swap" : "no-swap";
+	}
 
 	isTracked = (organisation: OrganisationKey): boolean => this.availability(organisation) === "tracked";
 
@@ -198,8 +307,10 @@ export class Tracking {
 
 		const availability = this.availability(key);
 		if (availability === "tracked") return { ok: true };
-		if (availability === "no-slot") return { ok: false, message: SLOT_USED };
+		const refusal = this.refusal(key);
+		if (refusal) return { ok: false, message: refusal };
 
+		const id = idOf(key);
 		return this.write(key, () => this.port.track(key), () => {
 			this.organisations = [
 				...this.organisations,
@@ -208,6 +319,7 @@ export class Tracking {
 					organisationName: organisation.organisationName ?? null,
 					organisationType: organisation.organisationType ?? null,
 					startedAt: new Date().toISOString(),
+					paused: false,
 					// The backend starts the first check; until it is seen done there is nothing to show.
 					firstCheckInProgress: true,
 					lastCheckedAt: null,
@@ -215,23 +327,89 @@ export class Tracking {
 					latestChange: null,
 				},
 			];
-			this.slotsUsed += 1;
+			if (availability === "swap") {
+				// Its own slot when it was untracked before; otherwise the next to be swapped.
+				const own = this.untracked.findIndex((untracked) => idOf(untracked) === id);
+				this.untracked = this.untracked.filter((_, index) => index !== Math.max(own, 0));
+				this.swapsLeft -= 1;
+			} else if (this.slotsUsed < this.slots) {
+				this.slotsUsed += 1;
+			} else {
+				// On Free, in a used slot: the one organisation to keep is now chosen.
+				this.untracked = this.untracked.slice(1);
+			}
+			if (this.plan === "free") this.freeChoiceOpen = false;
 			this.showOpened();
 			this.poll();
 		});
 	};
 
-	/** The slot stays used. */
+	/** The slot stays used. Refused on a plan with no swaps. */
 	untrack = async (organisation: OrganisationKey): Promise<Done> => {
 		const key = keyOf(organisation);
 		if (!this.userId) return { ok: false, message: NOT_SIGNED_IN };
 		if (!key) return { ok: false, message: "This organisation is not tracked." };
+		if (this.untrackRefusal) return { ok: false, message: this.untrackRefusal };
 
 		const id = idOf(key);
 		return this.write(key, () => this.port.untrack(key), () => {
 			this.organisations = this.organisations.filter((o) => idOf(o) !== id);
+			this.untracked = [...this.untracked, key];
+			this.resumeIntoRoom();
 			this.showOpened();
 		});
+	};
+
+	/** How this organisation can be made active again; null when it is not paused. */
+	resumeOption = (organisation: OrganisationKey): ResumeOption | null => {
+		const id = idOf(organisation);
+		if (id === null || !this.pausedOrganisations.some((o) => idOf(o) === id)) return null;
+
+		if (this.plan === "free") return this.freeChoiceOpen ? "keep-on-free" : "upgrade";
+		return this.activeOrganisations.length < this.slots ? "room" : "in-place-of";
+	};
+
+	/**
+	 * Makes a paused organisation active: on Free the one to keep, chosen once; on a paid plan at
+	 * its limit, in place of the active one given, which is paused instead.
+	 */
+	activate = async (organisation: OrganisationKey, inPlaceOf?: OrganisationKey): Promise<Done> => {
+		const key = keyOf(organisation);
+		const other = inPlaceOf ? keyOf(inPlaceOf) : null;
+		if (!this.userId) return { ok: false, message: NOT_SIGNED_IN };
+
+		const option = key ? this.resumeOption(key) : null;
+		if (!key || option === null) return { ok: false, message: "This organisation is not paused." };
+		if (option === "upgrade") return { ok: false, message: "Upgrade your plan to resume this organisation." };
+
+		const swapped = option === "in-place-of" ? other : null;
+		if (option === "in-place-of" && !this.activeOrganisations.some((o) => idOf(o) === idOf(swapped ?? {})))
+			return { ok: false, message: "Choose an active organisation to pause in its place." };
+
+		return this.write(key, () => this.port.activate(key, swapped ?? undefined), () => {
+			const paused = new Map([[idOf(key), false]]);
+			if (swapped) paused.set(idOf(swapped), true);
+			this.organisations = this.organisations.map((o) =>
+				paused.has(idOf(o)) ? { ...o, paused: paused.get(idOf(o))! } : o
+			);
+			if (this.plan === "free") this.freeChoiceOpen = false;
+		});
+	};
+
+	/**
+	 * A plan is on its way: the payment provider tells the backend a little after the user is back.
+	 * Looks again until the plan is no longer the one it is now.
+	 */
+	expectPlanChange = async () => {
+		const userId = this.userId;
+		const before = this.plan;
+
+		for (let looks = 0; looks < this.maximumPolls; looks++) {
+			await this.wait(this.pollMilliseconds);
+			if (this.userId !== userId || this.plan !== before) return;
+			await this.lookAgain();
+			if (this.plan !== before) return;
+		}
 	};
 
 	/** A page is showing this organisation: its details load, if the user tracks it. */
@@ -265,7 +443,22 @@ export class Tracking {
 	private apply(contents: TrackingContents) {
 		this.slots = contents.slots;
 		this.slotsUsed = contents.slotsUsed;
+		this.plan = contents.plan;
+		this.swapsAMonth = contents.swapsAMonth;
+		this.swapsLeft = contents.swapsLeft;
+		this.freeChoiceOpen = contents.freeChoiceOpen;
 		this.organisations = contents.organisations;
+		this.untracked = contents.untracked;
+	}
+
+	/** As the backend does on a paid plan: room left by an untracked organisation goes to the oldest paused. */
+	@action
+	private resumeIntoRoom() {
+		if (this.plan === "free" || this.activeOrganisations.length >= this.slots) return;
+
+		const oldest = [...this.pausedOrganisations].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0];
+		if (!oldest) return;
+		this.organisations = this.organisations.map((o) => (o === oldest ? { ...o, paused: false } : o));
 	}
 
 	/** Brings the opened organisation's details in line with whether it is tracked. */

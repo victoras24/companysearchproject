@@ -16,7 +16,7 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { tracking } from "./index";
-import { SLOT_USED, type TrackableOrganisation } from "./Tracking";
+import type { TrackableOrganisation } from "./Tracking";
 
 type Props = {
 	organisation: TrackableOrganisation;
@@ -25,8 +25,9 @@ type Props = {
 };
 
 /**
- * Tracks an organisation, or stops tracking it. Where the plan makes either one final, it asks
- * first. A signed-out user is sent to sign in.
+ * Tracks an organisation, or stops tracking it. Where tracking is final, or either uses a swap, it
+ * asks first. On a plan with no swaps a tracked organisation cannot be untracked. A signed-out
+ * user is sent to sign in.
  */
 export const TrackButton = observer(({ organisation, compact = false }: Props) => {
 	const navigate = useNavigate();
@@ -36,6 +37,9 @@ export const TrackButton = observer(({ organisation, compact = false }: Props) =
 	const availability = tracking.availability(organisation);
 	const tracked = availability === "tracked";
 	const busy = tracking.isBusy(organisation);
+	const refusal = tracking.refusal(organisation);
+	const trackWarning = tracking.trackWarning(organisation);
+	const untrackRefusal = tracked ? tracking.untrackRefusal : null;
 	const name = organisation.organisationName ?? "this organisation";
 
 	const track = async () => {
@@ -47,7 +51,7 @@ export const TrackButton = observer(({ organisation, compact = false }: Props) =
 	const untrack = async () => {
 		const result = await tracking.untrack(organisation);
 		if (result.ok) toast.success(`Stopped tracking ${name}`);
-		else toast.error("Failed to stop tracking");
+		else toast.error(result.message);
 	};
 
 	const press = (event: React.MouseEvent) => {
@@ -59,9 +63,8 @@ export const TrackButton = observer(({ organisation, compact = false }: Props) =
 			toast.info("Log in or register to track an organisation");
 			navigate("/account");
 		} else if (tracked) {
-			if (tracking.untrackWarning) setAsking("untrack");
-			else untrack();
-		} else if (tracking.trackWarning) {
+			setAsking("untrack");
+		} else if (trackWarning) {
 			setAsking("track");
 		} else {
 			track();
@@ -72,11 +75,10 @@ export const TrackButton = observer(({ organisation, compact = false }: Props) =
 	const title = signedOut
 		? "Log in to track this organisation"
 		: tracked
-			? "Stop tracking"
-			: availability === "no-slot"
-				? SLOT_USED
-				: "Be told when this organisation changes";
-	const disabled = busy || (!signedOut && (availability === "no-slot" || availability === "unknown"));
+			? (untrackRefusal ?? "Stop tracking")
+			: (refusal ?? "Be told when this organisation changes");
+	const disabled =
+		busy || (!signedOut && (refusal !== null || untrackRefusal !== null || availability === "unknown"));
 	const icon = busy ? (
 		<Loader2 className="h-4 w-4 animate-spin" />
 	) : (
@@ -106,7 +108,7 @@ export const TrackButton = observer(({ organisation, compact = false }: Props) =
 							{asking === "untrack" ? `Stop tracking ${name}?` : `Track ${name}?`}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							{asking === "untrack" ? tracking.untrackWarning : tracking.trackWarning}
+							{asking === "untrack" ? tracking.untrackWarning : trackWarning}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

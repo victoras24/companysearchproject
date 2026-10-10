@@ -15,6 +15,7 @@ const flush = async () => {
 
 const blueworth = { organisationTypeCode: "C", registrationNo: "382116", organisationName: "BLUEWORTH LTD" };
 const sweets = { organisationTypeCode: "B", registrationNo: "60580", organisationName: "2 ALPHA SWEETS" };
+const adminico = { organisationTypeCode: "C", registrationNo: "60580", organisationName: "ADMINICO LTD" };
 
 const tracked = (
 	organisation: typeof blueworth,
@@ -25,6 +26,7 @@ const tracked = (
 	organisationName: organisation.organisationName,
 	organisationType: "Εταιρεία",
 	startedAt: "2026-10-09T12:00:00+00:00",
+	paused: false,
 	firstCheckInProgress: false,
 	lastCheckedAt: "2026-10-09T01:30:00+00:00",
 	checksFailing: false,
@@ -46,7 +48,35 @@ const detailsOf = (organisation: typeof blueworth, different: Partial<TrackedDet
 	...different,
 });
 
-const NOTHING: TrackingContents = { slots: 1, slotsUsed: 0, organisations: [] };
+/** A user's tracking on Free, as the backend sends it. */
+function free(different: Partial<TrackingContents> = {}): TrackingContents {
+	return {
+		plan: "free",
+		slots: 1,
+		slotsUsed: 0,
+		swapsAMonth: 0,
+		swapsLeft: 0,
+		freeChoiceOpen: false,
+		organisations: [],
+		untracked: [],
+		...different,
+	};
+}
+
+/** The same on Basic: five slots and, as on Free, no swaps. */
+const basic = (different: Partial<TrackingContents> = {}): TrackingContents =>
+	free({ plan: "basic", slots: 5, ...different });
+
+/** The same on Starter. */
+const starter = (different: Partial<TrackingContents> = {}): TrackingContents =>
+	free({ plan: "starter", slots: 25, swapsAMonth: 5, swapsLeft: 5, ...different });
+
+const keyOf = (organisation: typeof blueworth) => ({
+	organisationTypeCode: organisation.organisationTypeCode,
+	registrationNo: organisation.registrationNo,
+});
+
+const NOTHING: TrackingContents = free();
 
 /** The backend's tracking routes in memory, one user at a time, recording the calls. */
 function fakeBackend(initial: Record<string, TrackingContents> = {}) {
@@ -72,6 +102,8 @@ function fakeBackend(initial: Record<string, TrackingContents> = {}) {
 		},
 		track: async (key) => call(`track ${id(key)}`),
 		untrack: async (key) => call(`untrack ${id(key)}`),
+		activate: async (key, inPlaceOf) =>
+			call(`activate ${id(key)}${inPlaceOf ? ` in place of ${id(inPlaceOf)}` : ""}`),
 		details: async (key) => {
 			call(`details ${id(key)}`);
 			const found = backend.details[id(key)];
@@ -111,7 +143,7 @@ describe("Tracking", () => {
 		});
 
 		it("loads when a user signs in", async () => {
-			const { tracking } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			expect(tracking.status).toBe("loaded");
 			expect(tracking.organisations.map((o) => o.organisationName)).toEqual(["BLUEWORTH LTD"]);
@@ -119,7 +151,7 @@ describe("Tracking", () => {
 		});
 
 		it("clears when the user signs out, and loads the next user's own", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			tracking.followUser(null);
 			expect(tracking.organisations).toEqual([]);
@@ -154,15 +186,15 @@ describe("Tracking", () => {
 		});
 
 		it("is tracked when it is the user's, whatever the case of its type code", async () => {
-			const { tracking } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			expect(tracking.availability({ organisationTypeCode: "c", registrationNo: " 382116 " })).toBe("tracked");
 			expect(tracking.isTracked(blueworth)).toBe(true);
 		});
 
 		it("cannot be tracked once the slot is used, by another organisation or by one untracked since", async () => {
-			const other = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
-			const untracked = await setup({ slots: 1, slotsUsed: 1, organisations: [] });
+			const other = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
+			const untracked = await setup(free({ slotsUsed: 1, organisations: [] }));
 
 			expect(other.tracking.availability(sweets)).toBe("no-slot");
 			expect(untracked.tracking.availability(blueworth)).toBe("no-slot");
@@ -179,7 +211,9 @@ describe("Tracking", () => {
 		it("warns on Free that the one organisation cannot be changed", async () => {
 			const { tracking } = await setup();
 
-			expect(tracking.trackWarning).toBe("This is your one free tracked organisation and can't be changed.");
+			expect(tracking.trackWarning(blueworth)).toBe(
+				"This is your one free tracked organisation and can't be changed."
+			);
 		});
 
 		it("tracks through the backend and shows the organisation with its first check in progress", async () => {
@@ -221,7 +255,7 @@ describe("Tracking", () => {
 		});
 
 		it("does not ask the backend when the slot is used", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [] });
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [] }));
 
 			const result = await tracking.track(blueworth);
 
@@ -242,27 +276,30 @@ describe("Tracking", () => {
 
 	describe("untrack", () => {
 		it("stops tracking through the backend and the slot stays used", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(starter({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			const result = await tracking.untrack(blueworth);
 
 			expect(result).toEqual({ ok: true });
 			expect(backend.calls).toEqual(["untrack C/382116"]);
 			expect(tracking.organisations).toEqual([]);
-			expect(tracking.slotsText).toBe("1 of 1");
-			expect(tracking.availability(blueworth)).toBe("no-slot");
+			expect(tracking.slotsText).toBe("1 of 25");
+			expect(tracking.availability(blueworth)).toBe("swap");
 		});
 
-		it("warns on Free that the slot stays used", async () => {
-			const { tracking } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+		it("cannot untrack on Free, whose one organisation is permanent", async () => {
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
-			expect(tracking.untrackWarning).toBe(
-				"Your one free tracked organisation stays used: you won't be able to track it again or track another."
-			);
+			const result = await tracking.untrack(blueworth);
+
+			expect(tracking.untrackRefusal).toBe("Your one free tracked organisation can't be changed. Upgrade to swap.");
+			expect(result).toEqual({ ok: false, message: tracking.untrackRefusal });
+			expect(backend.calls).toEqual([]);
+			expect(tracking.isTracked(blueworth)).toBe(true);
 		});
 
 		it("keeps the organisation when the backend fails", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(starter({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 			backend.failing = true;
 
 			const result = await tracking.untrack(blueworth);
@@ -284,7 +321,7 @@ describe("Tracking", () => {
 		});
 
 		it("loads them for a tracked organisation", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 			backend.details["C/382116"] = detailsOf(blueworth);
 
 			tracking.open(blueworth);
@@ -296,7 +333,7 @@ describe("Tracking", () => {
 
 		it("loads them once the user's tracked organisations have loaded", async () => {
 			const { port, backend } = fakeBackend({
-				maria: { slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] },
+				maria: free({ slotsUsed: 1, organisations: [tracked(blueworth)] }),
 			});
 			backend.user = "maria";
 			backend.details["C/382116"] = detailsOf(blueworth);
@@ -310,7 +347,7 @@ describe("Tracking", () => {
 		});
 
 		it("says so when they could not load", async () => {
-			const { tracking } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			tracking.open(blueworth);
 			await flush();
@@ -319,7 +356,7 @@ describe("Tracking", () => {
 		});
 
 		it("shows them as soon as the organisation is tracked, and drops them when it is untracked", async () => {
-			const { tracking, backend } = await setup();
+			const { tracking, backend } = await setup(starter());
 			backend.details["C/382116"] = detailsOf(blueworth, { firstCheckInProgress: true, lastCheckedAt: null });
 			tracking.open(blueworth);
 
@@ -332,7 +369,7 @@ describe("Tracking", () => {
 		});
 
 		it("drops them when the page is left", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 			backend.details["C/382116"] = detailsOf(blueworth);
 			tracking.open(blueworth);
 			await flush();
@@ -344,7 +381,7 @@ describe("Tracking", () => {
 	});
 
 	describe("waiting for the first check", () => {
-		const waiting = { slots: 1, slotsUsed: 1, organisations: [tracked(blueworth, { firstCheckInProgress: true, lastCheckedAt: null })] };
+		const waiting = free({ slotsUsed: 1, organisations: [tracked(blueworth, { firstCheckInProgress: true, lastCheckedAt: null })] });
 
 		it("looks again until the first check is done, then stops", async () => {
 			const { tracking, backend, tick } = await setup(waiting);
@@ -358,7 +395,7 @@ describe("Tracking", () => {
 			expect(backend.calls).toEqual(["load", "details C/382116"]);
 			expect(tracking.organisations[0].firstCheckInProgress).toBe(true);
 
-			backend.contents.maria = { slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] };
+			backend.contents.maria = free({ slotsUsed: 1, organisations: [tracked(blueworth)] });
 			backend.details["C/382116"] = detailsOf(blueworth);
 			await tick();
 
@@ -369,7 +406,7 @@ describe("Tracking", () => {
 		});
 
 		it("does not look again when nothing is waiting for its first check", async () => {
-			const { tracking, backend } = await setup({ slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] });
+			const { tracking, backend } = await setup(free({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
 
 			tracking.watch();
 			await flush();
@@ -413,7 +450,7 @@ describe("Tracking", () => {
 
 			await tracking.track(blueworth);
 			await flush();
-			backend.contents.maria = { slots: 1, slotsUsed: 1, organisations: [tracked(blueworth)] };
+			backend.contents.maria = free({ slotsUsed: 1, organisations: [tracked(blueworth)] });
 			backend.calls.length = 0;
 			await tick();
 
@@ -431,6 +468,329 @@ describe("Tracking", () => {
 
 			expect(tracking.status).toBe("loaded");
 			expect(tracking.organisations).toHaveLength(1);
+		});
+	});
+
+	describe("on a paid plan", () => {
+		it("shows the plan, its slots and the swaps left this month", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 3, swapsLeft: 4, organisations: [tracked(blueworth)] }));
+
+			expect(tracking.plan).toBe("starter");
+			expect(tracking.slotsText).toBe("3 of 25");
+			expect(tracking.swapsText).toBe("4 of 5 swaps left this month");
+		});
+
+		it("has no swaps to show on Free", async () => {
+			const { tracking } = await setup();
+
+			expect(tracking.plan).toBe("free");
+			expect(tracking.swapsText).toBeNull();
+		});
+
+		it("tracks into a slot never used without a warning, and it is not a swap", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
+
+			expect(tracking.availability(sweets)).toBe("available");
+			expect(tracking.trackWarning(sweets)).toBeNull();
+
+			await tracking.track(sweets);
+
+			expect(tracking.slotsText).toBe("2 of 25");
+			expect(tracking.swapsText).toBe("5 of 5 swaps left this month");
+		});
+
+		it("warns that tracking again an organisation the user untracked is a swap, and counts it", async () => {
+			const { tracking } = await setup(
+				starter({ slotsUsed: 2, swapsLeft: 2, organisations: [tracked(blueworth)], untracked: [keyOf(sweets)] })
+			);
+
+			expect(tracking.availability(sweets)).toBe("swap");
+			expect(tracking.trackWarning(sweets)).toBe("This uses 1 of your 2 swaps left this month.");
+
+			await tracking.track(sweets);
+
+			expect(tracking.isTracked(sweets)).toBe(true);
+			expect(tracking.slotsText).toBe("2 of 25");
+			expect(tracking.swapsText).toBe("1 of 5 swaps left this month");
+			// Its slot is no longer one to swap into.
+			expect(tracking.availability(adminico)).toBe("available");
+		});
+
+		it("warns when it is the last swap of the month", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 1, swapsLeft: 1, untracked: [keyOf(sweets)] }));
+
+			expect(tracking.trackWarning(sweets)).toBe("This uses your last swap this month.");
+		});
+
+		it("swaps another organisation into an untracked slot once every slot is used", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 25, swapsLeft: 3, untracked: [keyOf(sweets)] }));
+
+			expect(tracking.availability(adminico)).toBe("swap");
+
+			await tracking.track(adminico);
+
+			expect(tracking.swapsText).toBe("2 of 5 swaps left this month");
+			// The one untracked slot now holds it: there is none left to swap into.
+			expect(tracking.availability(blueworth)).toBe("no-slot");
+			expect(tracking.refusal(blueworth)).toBe("All 25 slots of your plan are in use.");
+		});
+
+		it("refuses a swap when the month's swaps are spent, without asking the backend", async () => {
+			const { tracking, backend } = await setup(starter({ slotsUsed: 25, swapsLeft: 0, untracked: [keyOf(sweets)] }));
+
+			const result = await tracking.track(sweets);
+
+			expect(tracking.availability(sweets)).toBe("no-swap");
+			expect(result).toEqual({ ok: false, message: "You have no swaps left this month." });
+			expect(backend.calls).toEqual([]);
+		});
+
+		it("warns that an untracked organisation's slot stays used, and remembers it as untracked", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
+
+			expect(tracking.untrackRefusal).toBeNull();
+			expect(tracking.untrackWarning).toBe(
+				"Its slot stays used: tracking this organisation again, or another in its slot, uses a swap."
+			);
+
+			await tracking.untrack(blueworth);
+
+			expect(tracking.availability(blueworth)).toBe("swap");
+		});
+	});
+
+	describe("on a paid plan with no swaps", () => {
+		it("warns that tracking uses a slot for good", async () => {
+			const { tracking } = await setup(basic({ slotsUsed: 3, organisations: [tracked(blueworth)] }));
+
+			expect(tracking.availability(sweets)).toBe("available");
+			expect(tracking.trackWarning(sweets)).toBe(
+				"This uses 1 of your 2 unused slots for good: your plan has no swaps."
+			);
+			expect(tracking.swapsText).toBeNull();
+		});
+
+		it("warns that it is the last unused slot", async () => {
+			const { tracking } = await setup(basic({ slotsUsed: 4 }));
+
+			expect(tracking.trackWarning(sweets)).toBe("This uses your last unused slot for good: your plan has no swaps.");
+		});
+
+		it("cannot track again an organisation the user untracked, nor another once every slot is used", async () => {
+			const { tracking, backend } = await setup(
+				basic({ slotsUsed: 5, organisations: [tracked(blueworth)], untracked: [keyOf(sweets)] })
+			);
+
+			expect(tracking.availability(sweets)).toBe("no-slot");
+			expect(tracking.availability(adminico)).toBe("no-slot");
+			expect(tracking.refusal(adminico)).toBe(
+				"All 5 slots of your plan are used, and it has no swaps. Upgrade to track more."
+			);
+			expect((await tracking.track(adminico)).ok).toBe(false);
+			expect(backend.calls).toEqual([]);
+		});
+
+		it("cannot track again an organisation the user untracked even with slots never used", async () => {
+			const { tracking } = await setup(basic({ slotsUsed: 2, untracked: [keyOf(sweets)] }));
+
+			expect(tracking.availability(sweets)).toBe("no-slot");
+			expect(tracking.refusal(sweets)).toBe(
+				"Your plan has no swaps, so an organisation you stopped tracking can't be tracked again. Upgrade to swap."
+			);
+			expect(tracking.availability(adminico)).toBe("available");
+		});
+
+		it("cannot untrack: a tracked organisation is permanent", async () => {
+			const { tracking, backend } = await setup(basic({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
+
+			const result = await tracking.untrack(blueworth);
+
+			expect(tracking.untrackRefusal).toBe(
+				"Your plan has no swaps, so a tracked organisation can't be changed. Upgrade to swap."
+			);
+			expect(result).toEqual({ ok: false, message: tracking.untrackRefusal });
+			expect(backend.calls).toEqual([]);
+			expect(tracking.isTracked(blueworth)).toBe(true);
+		});
+
+		it("says only to upgrade while organisations are paused, as none can be untracked", async () => {
+			const { tracking } = await setup(
+				basic({
+					slotsUsed: 6,
+					organisations: [tracked(blueworth), tracked(sweets, { paused: true, startedAt: "2026-10-10T12:00:00+00:00" })],
+				})
+			);
+
+			expect(tracking.refusal(adminico)).toBe("You are over your plan's 5 slots. Upgrade to track more.");
+		});
+	});
+
+	describe("paused organisations", () => {
+		const paused = (organisation: typeof blueworth, startedAt: string) =>
+			tracked(organisation, { paused: true, startedAt });
+
+		it("lists active and paused organisations apart", async () => {
+			const { tracking } = await setup(
+				free({ slotsUsed: 2, organisations: [tracked(blueworth), paused(sweets, "2026-10-10T12:00:00+00:00")] })
+			);
+
+			expect(tracking.activeOrganisations.map((o) => o.organisationName)).toEqual(["BLUEWORTH LTD"]);
+			expect(tracking.pausedOrganisations.map((o) => o.organisationName)).toEqual(["2 ALPHA SWEETS"]);
+			// Paused is still tracked.
+			expect(tracking.isTracked(sweets)).toBe(true);
+		});
+
+		it("cannot track another while organisations are paused, and says to upgrade", async () => {
+			const onFree = await setup(
+				free({ slotsUsed: 2, organisations: [tracked(blueworth), paused(sweets, "2026-10-10T12:00:00+00:00")] })
+			);
+			const onStarter = await setup(
+				starter({ slotsUsed: 27, organisations: [tracked(blueworth), paused(sweets, "2026-10-10T12:00:00+00:00")] })
+			);
+
+			expect(onFree.tracking.availability(adminico)).toBe("no-slot");
+			expect(onFree.tracking.refusal(adminico)).toBe("Free keeps one tracked organisation. Upgrade to track more.");
+			expect(onStarter.tracking.availability(adminico)).toBe("no-slot");
+			expect(onStarter.tracking.refusal(adminico)).toBe(
+				"You are over your plan's 25 slots. Upgrade, or stop tracking an organisation, to make room."
+			);
+		});
+
+		it("says a used free slot is used when nothing is paused", async () => {
+			const { tracking } = await setup(free({ slotsUsed: 1 }));
+
+			expect(tracking.refusal(blueworth)).toBe("Your one free tracked organisation is already used.");
+			expect(tracking.refusal(null)).toBe("Your one free tracked organisation is already used.");
+		});
+
+		it("lets a user who came down to Free keep one paused organisation, once", async () => {
+			const { tracking, backend } = await setup(
+				free({
+					slotsUsed: 2,
+					freeChoiceOpen: true,
+					organisations: [paused(blueworth, "2026-10-09T12:00:00+00:00"), paused(sweets, "2026-10-10T12:00:00+00:00")],
+				})
+			);
+
+			expect(tracking.resumeOption(sweets)).toBe("keep-on-free");
+
+			const result = await tracking.activate(sweets);
+
+			expect(result).toEqual({ ok: true });
+			expect(backend.calls).toEqual(["activate B/60580"]);
+			expect(tracking.pausedOrganisations.map((o) => o.organisationName)).toEqual(["BLUEWORTH LTD"]);
+			expect(tracking.resumeOption(blueworth)).toBe("upgrade");
+		});
+
+		it("lets a user who came down to Free tracking nothing track one organisation, with the warning", async () => {
+			const { tracking } = await setup(free({ slotsUsed: 3, freeChoiceOpen: true }));
+
+			expect(tracking.availability(blueworth)).toBe("available");
+			expect(tracking.trackWarning(blueworth)).toBe("This is your one free tracked organisation and can't be changed.");
+
+			await tracking.track(blueworth);
+
+			expect(tracking.availability(sweets)).toBe("no-slot");
+			expect(tracking.slotsText).toBe("3 of 1");
+		});
+
+		it("offers only an upgrade for a paused organisation on Free once one is kept", async () => {
+			const { tracking, backend } = await setup(
+				free({ slotsUsed: 2, organisations: [tracked(blueworth), paused(sweets, "2026-10-10T12:00:00+00:00")] })
+			);
+
+			const result = await tracking.activate(sweets);
+
+			expect(tracking.resumeOption(sweets)).toBe("upgrade");
+			expect(result.ok).toBe(false);
+			expect(backend.calls).toEqual([]);
+		});
+
+		it("on a paid plan at its limit makes a paused organisation active in place of an active one", async () => {
+			const { tracking, backend } = await setup(
+				starter({
+					slots: 1,
+					slotsUsed: 2,
+					organisations: [tracked(blueworth), paused(sweets, "2026-10-10T12:00:00+00:00")],
+				})
+			);
+
+			expect(tracking.resumeOption(sweets)).toBe("in-place-of");
+			expect((await tracking.activate(sweets)).ok).toBe(false);
+
+			const result = await tracking.activate(sweets, blueworth);
+
+			expect(result).toEqual({ ok: true });
+			expect(backend.calls).toEqual(["activate B/60580 in place of C/382116"]);
+			expect(tracking.activeOrganisations.map((o) => o.organisationName)).toEqual(["2 ALPHA SWEETS"]);
+			expect(tracking.pausedOrganisations.map((o) => o.organisationName)).toEqual(["BLUEWORTH LTD"]);
+		});
+
+		it("has nothing to resume for an organisation that is not paused", async () => {
+			const { tracking } = await setup(starter({ slotsUsed: 1, organisations: [tracked(blueworth)] }));
+
+			expect(tracking.resumeOption(blueworth)).toBeNull();
+		});
+
+		it("keeps an organisation paused when the backend refuses", async () => {
+			const { tracking, backend } = await setup(
+				free({ slotsUsed: 1, freeChoiceOpen: true, organisations: [paused(sweets, "2026-10-10T12:00:00+00:00")] })
+			);
+			backend.failing = true;
+
+			const result = await tracking.activate(sweets);
+
+			expect(result).toEqual({ ok: false, message: "backend down" });
+			expect(tracking.pausedOrganisations).toHaveLength(1);
+			expect(tracking.resumeOption(sweets)).toBe("keep-on-free");
+		});
+
+		it("resumes the oldest paused organisation when an active one is untracked on a paid plan", async () => {
+			const { tracking } = await setup(
+				starter({
+					slots: 1,
+					slotsUsed: 3,
+					organisations: [
+						tracked(blueworth),
+						paused(sweets, "2026-10-11T12:00:00+00:00"),
+						paused(adminico, "2026-10-10T12:00:00+00:00"),
+					],
+				})
+			);
+
+			await tracking.untrack(blueworth);
+
+			expect(tracking.activeOrganisations.map((o) => o.organisationName)).toEqual(["ADMINICO LTD"]);
+			expect(tracking.pausedOrganisations.map((o) => o.organisationName)).toEqual(["2 ALPHA SWEETS"]);
+		});
+	});
+
+	describe("waiting for a plan to start", () => {
+		it("looks again until the plan has changed, then stops", async () => {
+			const { tracking, backend, tick } = await setup();
+
+			tracking.expectPlanChange();
+			await tick();
+			expect(tracking.plan).toBe("free");
+
+			backend.contents.maria = starter();
+			await tick();
+			expect(tracking.plan).toBe("starter");
+			expect(tracking.slotsText).toBe("0 of 25");
+
+			const calls = backend.calls.length;
+			await tick();
+			expect(backend.calls.length).toBe(calls);
+		});
+
+		it("gives up after a while", async () => {
+			const { tracking, backend, tick } = await setup();
+
+			tracking.expectPlanChange();
+			for (let i = 0; i < 10; i++) await tick();
+
+			expect(backend.calls).toEqual(["load", "load", "load"]);
+			expect(tracking.plan).toBe("free");
 		});
 	});
 

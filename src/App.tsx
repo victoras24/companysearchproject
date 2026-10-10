@@ -7,6 +7,7 @@ import OrganisationDetails from "./pages/OrganisationDetails/OrganisationDetails
 import Favorites from "./pages/Favorites/Favorites_view";
 import Organiser from "./pages/Organiser/Organiser_view";
 import Tracking from "./pages/Tracking/Tracking_view";
+import Plans from "./pages/Plans/Plans_view";
 import Unsubscribe from "./pages/Alerts/Unsubscribe_view";
 import AuthCallback from "./pages/Account/AuthCallback";
 import ResetPassword from "./pages/Account/ResetPassword";
@@ -93,6 +94,7 @@ function AppRoutes() {
 								</RequireUser>
 							}
 						/>
+						<Route path="plans" element={<Plans />} />
 						<Route path="alerts/unsubscribe" element={<Unsubscribe />} />
 						<Route path="auth/callback" element={<AuthCallback />} />
 						<Route path="reset-password" element={<ResetPassword />} />

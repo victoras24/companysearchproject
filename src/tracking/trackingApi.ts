@@ -12,13 +12,19 @@ export const trackingApi: TrackingPort = {
 		try {
 			await userApi.put(`/tracking/${path(key)}`);
 		} catch (error) {
-			// 409: the plan has no slot left.
-			if (isAxiosError(error) && error.response?.status === 409) throw new Error(SLOT_USED);
+			// 409: the plan has no slot left, or no swap; the backend says which.
+			if (isAxiosError(error) && error.response?.status === 409) {
+				const reason = error.response.data;
+				throw new Error(typeof reason === "string" && reason ? reason : SLOT_USED);
+			}
 			throw error;
 		}
 	},
 	untrack: async (key) => {
 		await userApi.delete(`/tracking/${path(key)}`);
+	},
+	activate: async (key, inPlaceOf) => {
+		await userApi.put(`/tracking/${path(key)}/active`, inPlaceOf ? { inPlaceOf } : undefined);
 	},
 	details: async (key) => (await userApi.get<TrackedDetails>(`/tracking/${path(key)}`)).data,
 };

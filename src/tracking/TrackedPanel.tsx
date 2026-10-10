@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { checkLine, dayText, tracking } from "./index";
-import { SLOT_USED, type ChangeKind, type TrackableOrganisation, type TrackedDetails } from "./Tracking";
+import type { ChangeKind, TrackableOrganisation, TrackedDetails } from "./Tracking";
 import { TrackButton } from "./TrackButton";
 
 const KIND_LABELS: Record<ChangeKind, string> = {
@@ -29,6 +29,7 @@ const KIND_LABELS: Record<ChangeKind, string> = {
 export const TrackedPanel = observer(({ organisation }: { organisation: TrackableOrganisation }) => {
 	const signedOut = auth.state.status === "signed-out";
 	const availability = tracking.availability(organisation);
+	const refusal = signedOut ? null : tracking.refusal(organisation);
 	const view = tracking.details;
 
 	return (
@@ -44,6 +45,21 @@ export const TrackedPanel = observer(({ organisation }: { organisation: Trackabl
 			<CardContent className="space-y-6">
 				{availability === "tracked" ? (
 					<>
+						{tracking.pausedOrganisations.some(
+							(o) =>
+								o.organisationTypeCode === organisation.organisationTypeCode?.trim().toUpperCase() &&
+								o.registrationNo === organisation.registrationNo?.trim()
+						) && (
+							<Alert>
+								<Info className="h-4 w-4" />
+								<AlertDescription>
+									<span>
+										Paused: this organisation is over your plan's limit, so it is not checked and what is
+										shown may be out of date. See your <NavLink to="/tracking" className="underline">Tracking page</NavLink>.
+									</span>
+								</AlertDescription>
+							</Alert>
+						)}
 						{view.status === "loading" && <Skeleton className="h-32 w-full rounded-lg" />}
 						{view.status === "error" && (
 							<div className="space-y-4">
@@ -62,9 +78,10 @@ export const TrackedPanel = observer(({ organisation }: { organisation: Trackabl
 				) : (
 					<div className="space-y-4">
 						<p className="text-muted-foreground">
-							{availability === "no-slot" ? (
+							{refusal ? (
 								<>
-									{SLOT_USED} See it on your <NavLink to="/tracking" className="underline">Tracking page</NavLink>.
+									{refusal} See your <NavLink to="/tracking" className="underline">Tracking page</NavLink> and
+									the <NavLink to="/plans" className="underline">plans</NavLink>.
 								</>
 							) : signedOut ? (
 								"Log in and track this organisation to see its filings and pending services, and every change from then on. One organisation is free."
@@ -72,7 +89,7 @@ export const TrackedPanel = observer(({ organisation }: { organisation: Trackabl
 								"Track this organisation to see its filings and pending services, and every change from now on."
 							)}
 						</p>
-						{availability !== "no-slot" && <TrackButton organisation={organisation} />}
+						{!refusal && <TrackButton organisation={organisation} />}
 					</div>
 				)}
 			</CardContent>

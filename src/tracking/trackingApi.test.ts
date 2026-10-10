@@ -14,10 +14,10 @@ function fakeNetwork(reply: unknown) {
 }
 
 /** Stands in for the network answering every request with this status code. */
-function failingNetwork(status: number) {
+function failingNetwork(status: number, data: unknown = null) {
 	userApi.defaults.adapter = async (config) => {
 		throw new AxiosError("Request failed", AxiosError.ERR_BAD_RESPONSE, config, null, {
-			data: null,
+			data,
 			status,
 			statusText: "",
 			headers: {},
@@ -37,7 +37,16 @@ describe("trackingApi", () => {
 	});
 
 	it("loads the user's tracked organisations as the signed-in user", async () => {
-		const contents = { slots: 1, slotsUsed: 0, organisations: [] };
+		const contents = {
+			plan: "free",
+			slots: 1,
+			slotsUsed: 0,
+			swapsAMonth: 0,
+			swapsLeft: 0,
+			freeChoiceOpen: false,
+			organisations: [],
+			untracked: [],
+		};
 		const requests = fakeNetwork(contents);
 
 		expect(await trackingApi.load()).toEqual(contents);
@@ -68,6 +77,29 @@ describe("trackingApi", () => {
 		await expect(trackingApi.track(blueworth)).rejects.toThrow(
 			"Your one free tracked organisation is already used."
 		);
+	});
+
+	it("says what the backend said when it refuses a track with a reason", async () => {
+		failingNetwork(409, "You have no swap left this month to track another organisation.");
+
+		await expect(trackingApi.track(blueworth)).rejects.toThrow(
+			"You have no swap left this month to track another organisation."
+		);
+	});
+
+	it("makes a paused organisation active, alone or in place of another", async () => {
+		const requests = fakeNetwork(null);
+		const sweets = { organisationTypeCode: "B", registrationNo: "60580" };
+
+		await trackingApi.activate(blueworth);
+		await trackingApi.activate(blueworth, sweets);
+
+		expect(requests.map((r) => `${r.method} ${r.url}`)).toEqual([
+			"put /tracking/C/382116/active",
+			"put /tracking/C/382116/active",
+		]);
+		expect(requests[0].data).toBeUndefined();
+		expect(JSON.parse(requests[1].data)).toEqual({ inPlaceOf: sweets });
 	});
 
 	it("passes any other failure on", async () => {

@@ -90,8 +90,15 @@ _Avoid_: Subscription, subscribed company, followed company, watch
 One place for a tracked organisation in a user's plan. A slot is used once an organisation has been tracked in it, and stays used when that organisation is untracked.
 
 **Swap**:
-Starting to track an organisation in a slot that has been used before, including tracking again one the user untracked. A plan allows a number of swaps each calendar month; Free allows none.
+Starting to track an organisation in a slot that has been used before, including tracking again one the user untracked. A plan allows a number of swaps each calendar month; Free and Basic allow none, so on them a tracked organisation cannot be untracked.
 _Avoid_: Rotation
+
+**Paused**:
+A tracked organisation over its user's plan limit: still tracked, but not checked and sending no alerts until the plan has room for it again. Its first check after it resumes is a new baseline, so nothing found then is alerted.
+_Avoid_: Suspended, disabled, inactive (that is a registry status)
+
+**Free organisation**:
+The one tracked organisation a user keeps active on Free: the one they tracked there, or the one they picked after coming down to Free without it. It is permanent.
 
 **Change**:
 One detected difference in a tracked organisation, of one kind: a filing, a pending service, the registry status, an official, the registered address or the name. It belongs to the organisation, so every user tracking it sees the same changes.
@@ -109,7 +116,7 @@ A message telling a user about the changes found in their tracked organisations 
 _Avoid_: Notification
 
 **Plan**:
-What a user pays for, recurring, which sets how many tracked organisations they may have. There are three: Free, Starter and Pro.
+What a user is on, which sets how many tracked organisations they may have and how many swaps a month. There are four: Free, which costs nothing, and Basic, Starter and Pro, paid monthly.
 _Avoid_: Subscription, tier, package
 
 ### Checkout
