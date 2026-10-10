@@ -63,7 +63,7 @@ export const AppSidebar = observer(() => {
 		},
 		{
 			title: state.status === "signed-out" ? "Login" : "Account",
-			url: "/account",
+			url: state.status === "signed-out" ? "/login" : "/account",
 			icon: ScanFace,
 		},
 		{

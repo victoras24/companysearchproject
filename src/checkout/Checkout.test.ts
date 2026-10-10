@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Checkout, type CheckoutItem, type CheckoutPort, type Price } from "./Checkout";
+import { Checkout, formatVatIncluded, type CheckoutItem, type CheckoutPort, type Price } from "./Checkout";
 
 const flush = async () => {
 	for (let i = 0; i < 10; i++) await Promise.resolve();
@@ -172,5 +172,12 @@ describe("Checkout", () => {
 			await checkout.checkOut([adminico]);
 			expect(redirects).toEqual([STRIPE_URL, STRIPE_URL]);
 		});
+	});
+});
+
+describe("formatVatIncluded", () => {
+	it("is the 19% VAT inside a price that already includes it", () => {
+		expect(formatVatIncluded({ amount: 39.99, currency: "eur" }, 1)).toBe("€6.38");
+		expect(formatVatIncluded({ amount: 39.99, currency: "eur" }, 2)).toBe("€12.77");
 	});
 });

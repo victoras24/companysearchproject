@@ -4,6 +4,7 @@ import { observer } from "mobx-react";
 import { toast } from "sonner";
 import { auth } from "@/auth";
 import { SessionLoader } from "@/auth/RequireUser";
+import { APP_HOME } from "@/site/SiteHeader";
 
 /**
  * Where Supabase sends the browser back after a Google sign-in or an email confirmation. The
@@ -16,10 +17,10 @@ const AuthCallback = observer(() => {
 	useEffect(() => {
 		if (state.status === "signed-in") {
 			toast.success(`Welcome ${state.profile.fullName || state.profile.email}!`);
-			navigate("/", { replace: true });
+			navigate(APP_HOME, { replace: true });
 		} else if (state.status === "signed-out") {
 			toast.error("Sign-in failed. Please try again.");
-			navigate("/account", { replace: true });
+			navigate("/login", { replace: true });
 		}
 	}, [state, navigate]);
 

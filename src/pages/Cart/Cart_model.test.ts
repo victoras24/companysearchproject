@@ -96,4 +96,23 @@ describe("CartModel", () => {
 		expect(cart.cartItems).toEqual([]);
 		expect(new CartModel(storage).cartItems).toEqual([]);
 	});
+
+	it("says whether an organisation's report is in it, whatever the case and spacing of its key", () => {
+		const cart = new CartModel(memoryStorage());
+		cart.addItem(adminico);
+
+		expect(cart.has(adminico)).toBe(true);
+		expect(cart.has({ organisationTypeCode: "c", registrationNo: " 60580 " })).toBe(true);
+		expect(cart.has(sweets)).toBe(false);
+		expect(cart.has({ organisationTypeCode: null, registrationNo: "60580" })).toBe(false);
+	});
+
+	it("keeps what it was told about an organisation's status and registration date", () => {
+		const storage = memoryStorage();
+		new CartModel(storage).addItem({ ...adminico, statusGroup: "at-risk", registrationDate: "04/03/2014" });
+
+		const [item] = new CartModel(storage).cartItems;
+		expect(item.statusGroup).toBe("at-risk");
+		expect(item.registrationDate).toBe("04/03/2014");
+	});
 });

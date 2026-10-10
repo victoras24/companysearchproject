@@ -41,7 +41,7 @@ const Plans: React.FC = observer(() => {
 	const choose = async (offer: PlanOffer) => {
 		if (!signedIn) {
 			toast.info("Log in or register to choose a plan");
-			navigate("/account");
+			navigate("/login", { state: { from: "/plans" } });
 			return;
 		}
 		say(await plans.start(offer.plan));

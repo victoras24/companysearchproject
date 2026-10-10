@@ -1,181 +1,84 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, ArrowRight, FileText } from "lucide-react";
-import "./_blog.css";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { auth } from "@/auth";
+import { Link } from "react-router";
 import { observer } from "mobx-react";
-
-interface BlogPost {
-	id: string;
-	title: string;
-	excerpt: string;
-	date: string;
-	readTime: string;
-	category: string;
-	slug: string;
-	featured?: boolean;
-}
+import { auth } from "@/auth";
+import { Reveal, Rise } from "@/site/motion";
+import { SitePage } from "@/site/SitePage";
+import { eyebrow, primaryPill } from "@/site/ui";
+import { POSTS, formatPostDate } from "./posts";
 
 const Blog: React.FC = observer(() => {
-	const navigate = useNavigate();
-	const user = auth.state.status === "signed-in";
-
-	const blogPosts: BlogPost[] = [
-		{
-			id: "1",
-			title:
-				"How to Find Cyprus Company Information Online: Registrar Search & Audit Files",
-			excerpt:
-				"A comprehensive step-by-step guide on accessing Cyprus company information through official registrar channels, including due diligence processes and competitive research.",
-			date: "2025-09-15",
-			readTime: "8 min read",
-			category: "Guides",
-			slug: "cyprus-company-search-guide",
-			featured: true,
-		},
-	];
-
-	const handleReadMore = (slug: string) => {
-		navigate(`/blog/${slug}`);
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString("en-US", {
-			year: "numeric",
-			month: "long",
-			day: "numeric",
-		});
-	};
-
-	const featuredPost = blogPosts.find((post) => post.featured);
+	const signedIn = auth.state.status === "signed-in";
 
 	return (
-		<div className="blog-container">
-			<div className="w-full p-5 lg:p-12">
-				{/* Hero Section */}
-				<div className="text-center space-y-6 mb-16">
-					<h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-						Cyprus Business <span className="text-primary">Insights</span>
+		<SitePage className="w-full">
+			<section className="mx-auto max-w-[1200px] px-[clamp(16px,4vw,28px)] pt-[clamp(56px,9vw,96px)] pb-10">
+				<Rise>
+					<div className={`${eyebrow} text-[13.5px]`}>Blog</div>
+				</Rise>
+				<Rise delay={60}>
+					<h1 className="mt-3.5 mb-0 max-w-[820px] font-display text-[clamp(40px,6vw,72px)] leading-[1.02] font-semibold tracking-[-0.035em] text-balance">
+						Guides to the Cyprus company registry.
 					</h1>
-					<p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-						Expert guides, insights, and updates on Cyprus company research, due
-						diligence, and business intelligence.
+				</Rise>
+				<Rise delay={120}>
+					<p className="mt-5 mb-0 max-w-[560px] text-[19px] leading-normal text-pretty text-muted-foreground">
+						Due diligence, registry filings and company research, explained step by step.
 					</p>
-				</div>
+				</Rise>
+			</section>
 
-				{/* Featured Post */}
-				{featuredPost && (
-					<div className="mb-16">
-						<div className="flex items-center mb-6">
-							<h2 className="text-2xl font-semibold">Featured Article</h2>
-							<Badge variant="outline" className="ml-3">
-								Latest
-							</Badge>
-						</div>
-						<Card className="transition-all hover:shadow-lg border-primary/20">
-							<CardHeader className="pb-4">
-								<div className="flex items-center gap-2 mb-2">
-									<Badge variant="secondary">{featuredPost.category}</Badge>
-									<div className="flex items-center text-sm text-muted-foreground">
-										<Calendar className="h-4 w-4 mr-1" />
-										{formatDate(featuredPost.date)}
-									</div>
-									<div className="flex items-center text-sm text-muted-foreground">
-										<Clock className="h-4 w-4 mr-1" />
-										{featuredPost.readTime}
-									</div>
-								</div>
-								<CardTitle className="text-2xl leading-tight">
-									{featuredPost.title}
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<p className="text-muted-foreground mb-6 leading-relaxed">
-									{featuredPost.excerpt}
-								</p>
-								<Button
-									onClick={() => handleReadMore(featuredPost.slug)}
-									className="group"
-								>
-									Read Full Article
-									<ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-								</Button>
-							</CardContent>
-						</Card>
-					</div>
-				)}
-
-				<Separator className="mb-16" />
-
-				{/* All Articles */}
-				<div className="mb-16">
-					<h2 className="text-2xl font-semibold mb-8">All Articles</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{blogPosts.map((post) => (
-							<Card
-								key={post.id}
-								className="transition-all hover:shadow-md cursor-pointer group"
-								onClick={() => handleReadMore(post.slug)}
+			<section className="mx-auto max-w-[1200px] px-[clamp(16px,4vw,28px)] pb-[100px]">
+				<div className="flex flex-col gap-5">
+					{POSTS.map((post, i) => (
+						<Reveal key={post.slug} delay={120 + i * 90}>
+							<Link
+								to={`/blog/${post.slug}`}
+								className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] overflow-hidden rounded-[28px] border border-border bg-surface text-ink transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_30px_80px_-30px_rgba(15,31,25,0.3)]"
 							>
-								<CardHeader className="pb-3">
-									<div className="flex items-center justify-between mb-2">
-										<Badge variant="outline" className="text-xs">
-											{post.category}
-										</Badge>
-										<div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
-											<FileText className="h-4 w-4 text-primary" />
-										</div>
+								<div className="flex min-h-[340px] items-end bg-tint p-8">
+									<img
+										src={post.cover.src}
+										alt={post.cover.alt}
+										className="block w-full rounded-[14px] shadow-[0_20px_50px_-20px_rgba(15,31,25,0.35)]"
+									/>
+								</div>
+								<div className="flex flex-col p-[clamp(24px,4vw,44px)]">
+									<div className="flex flex-wrap items-center gap-3.5 text-[14px] text-muted-foreground">
+										<span className="rounded-full bg-tint px-3 py-[5px] font-semibold text-primary-text">{post.category}</span>
+										<span>{formatPostDate(post.date)}</span>
+										<span>{post.readTime}</span>
 									</div>
-									<CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+									<h2 className="mt-[22px] mb-0 font-display text-[clamp(26px,3vw,36px)] leading-[1.12] font-semibold tracking-[-0.025em] text-balance">
 										{post.title}
-									</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+									</h2>
+									<p className="mt-4 mb-0 flex-1 text-[16.5px] leading-[1.6] text-pretty text-muted-foreground">
 										{post.excerpt}
 									</p>
-									<div className="flex items-center justify-between text-xs text-muted-foreground">
-										<div className="flex items-center">
-											<Calendar className="h-3 w-3 mr-1" />
-											{formatDate(post.date)}
-										</div>
-										<div className="flex items-center">
-											<Clock className="h-3 w-3 mr-1" />
-											{post.readTime}
-										</div>
+									<div className="mt-7 flex items-center gap-2 text-[15.5px] font-semibold text-primary-text">
+										Read the guide <span>→</span>
 									</div>
-								</CardContent>
-							</Card>
-						))}
-					</div>
+								</div>
+							</Link>
+						</Reveal>
+					))}
 				</div>
 
-				{/* Newsletter Signup */}
-				<Card className="mb-16 border-none bg-muted/50">
-					<CardContent className="pt-6 text-center">
-						<h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
-						<p className="text-muted-foreground mb-6 max-w-md mx-auto">
-							Get the latest insights on Cyprus business intelligence and
-							company research delivered to your inbox.
-						</p>
-						<Button
-							onClick={() => navigate("/account")}
-							size="lg"
-							className="background-primary"
-						>
-							{user
-								? "Thank you for subscribing"
-								: "Create account for updates"}
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		</div>
+				{!signedIn && (
+					<Reveal className="mt-5 flex flex-wrap items-center justify-between gap-7 rounded-[28px] bg-tint px-[clamp(24px,4vw,40px)] py-14">
+						<div>
+							<h3 className="m-0 font-display text-[clamp(24px,2.6vw,32px)] font-semibold tracking-[-0.025em]">
+								Get new guides by email.
+							</h3>
+							<p className="mt-2 mb-0 text-[16px] text-text2">Included with every free account.</p>
+						</div>
+						<Link to="/signup" className={`${primaryPill} px-[26px] py-3.5 text-[15.5px]`}>
+							Create free account
+						</Link>
+					</Reveal>
+				)}
+			</section>
+		</SitePage>
 	);
 });
 

@@ -71,7 +71,7 @@ export class CartModel {
 		} else {
 			this.cartItems.push(item);
 			this.saveCartToStorage(); // Save to localStorage after adding
-			toast.success(`Added ${item.organisationName} to your cart`);
+			toast.success("Full Company Report added to cart", { description: item.organisationName });
 		}
 	};
 
@@ -91,6 +91,13 @@ export class CartModel {
 	clearCart = () => {
 		this.cartItems = [];
 		this.saveCartToStorage();
+	};
+
+	/** Whether this organisation's report is in the cart. */
+	has = (key: { organisationTypeCode?: string | null; registrationNo?: string | null }): boolean => {
+		if (!key.organisationTypeCode || !key.registrationNo) return false;
+		const id = idOf({ organisationTypeCode: key.organisationTypeCode, registrationNo: key.registrationNo });
+		return this.cartItems.some((item) => idOf(item) === id);
 	};
 
 	@computed

@@ -24,6 +24,9 @@ export interface ICartItem {
 	organisationTypeCode: string;
 	registrationNo: string;
 	organisationName: string;
+	/** Shown on the cart; missing for items added where they were not known. */
+	statusGroup?: string | null;
+	registrationDate?: string | null;
 }
 
 export interface IPaginatedSearchData {

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { checkNewPassword, checkSignIn, checkSignUp, normaliseEmail, routeFor } from "./credentials";
+import {
+	checkNewPassword,
+	checkResetEmail,
+	checkSignIn,
+	checkSignUp,
+	normaliseEmail,
+	routeFor,
+} from "./credentials";
 
 describe("sign-in and sign-up rules", () => {
 	const valid = { fullName: "Maria Georgiou", email: "maria@example.com", password: "secret1" };
@@ -52,5 +59,19 @@ describe("a page that needs a user", () => {
 
 	it("shows the page to a signed-in user", () => {
 		expect(routeFor({ status: "signed-in", profile })).toBe("page");
+	});
+});
+
+describe("checkResetEmail", () => {
+	it("asks for an email address when there is none", () => {
+		expect(checkResetEmail("  ")).toBe("Please enter your email address");
+	});
+
+	it("refuses what is not an email address", () => {
+		expect(checkResetEmail("maria")).toBe("Please enter a valid email address");
+	});
+
+	it("accepts an email address, whatever the spaces round it", () => {
+		expect(checkResetEmail(" maria@example.com ")).toBeNull();
 	});
 });

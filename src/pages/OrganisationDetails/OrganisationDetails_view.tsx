@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { library } from "@/library";
-import { toggleSaved } from "@/library/saveCompany";
-import { tracking } from "@/tracking";
-import { TrackButton } from "@/tracking/TrackButton";
-import { TrackedPanel } from "@/tracking/TrackedPanel";
+import { Link, useNavigate, useParams } from "react-router";
 import { observer } from "mobx-react";
-import { OrganisationRecordLoader } from "./OrganisationRecordLoader";
-import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisation_model";
+import { Lock } from "lucide-react";
+import { auth } from "@/auth";
 import { lookup } from "@/api/organisationApi";
+import { checkout, reportPrice } from "@/checkout";
+import { BackToSearchLink } from "@/components/BackToSearchLink";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCartStore } from "@/context/CartStore";
+import { SaveButton } from "@/library/SaveButton";
 import {
 	detailsPath,
 	registeredAddressText,
@@ -16,62 +17,43 @@ import {
 	statusLabel,
 	statusLine,
 } from "@/organisation/organisation";
-import { BackToSearchLink } from "@/components/BackToSearchLink";
+import { Rise } from "@/site/motion";
+import { SitePage } from "@/site/SitePage";
+import { StatusBadge } from "@/site/StatusBadge";
+import { primaryPill, statusDotClass } from "@/site/ui";
+import { tracking } from "@/tracking";
+import { TrackButton } from "@/tracking/TrackButton";
+import { TrackedPanel } from "@/tracking/TrackedPanel";
+import PersonOrOrganisationModel from "../PersonOrOrganisation/PersonOrOrganisation_model";
+import { OrganisationRecordLoader } from "./OrganisationRecordLoader";
 
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+type Tab = "overview" | "people" | "related" | "tracking";
 
-import {
-	BookmarkPlus,
-	Bookmark,
-	Building,
-	Calendar,
-	MapPin,
-	Users,
-	User,
-	Info,
-	Lock,
-	FileText,
-	Link,
-	Loader2,
-	RotateCw,
-} from "lucide-react";
+const TABS: Array<[Tab, string]> = [
+	["overview", "Overview"],
+	["people", "Key people"],
+	["related", "Related"],
+	["tracking", "Tracking"],
+];
 
-import { useCartStore } from "@/context/CartStore";
-import { checkout, formatPrice } from "@/checkout";
-import { NavLink, useParams } from "react-router";
-import type { ICartItem } from "@/gEntities";
-import type { OrganisationSummary } from "@/organisation/organisation";
+// What the registry holds about an official that only the report shows.
+const LOCKED_FIELDS = ["Address", "Country", "Appointed", "Previous address"];
+
+const card = "mt-4 rounded-[24px] border border-border bg-surface p-[clamp(20px,4vw,32px)]";
+const cardTitle = "font-display text-[20px] font-semibold";
+const fieldLabel = "text-[13px] font-medium text-muted-foreground";
 
 const OrganisationDetails: React.FC = observer(() => {
 	const { typeCode = "", registrationNo = "" } = useParams();
+	const navigate = useNavigate();
 	const [loader] = useState(() => new OrganisationRecordLoader({ lookup }));
-	const [activeTab, setActiveTab] = useState("overview");
+	const [activeTab, setActiveTab] = useState<Tab>("overview");
 
 	const cartStore = useCartStore();
 
 	useEffect(() => {
 		loader.load(typeCode, registrationNo);
+		setActiveTab("overview");
 	}, [loader, typeCode, registrationNo]);
 
 	useEffect(() => () => loader.dispose(), [loader]);
@@ -104,373 +86,370 @@ const OrganisationDetails: React.FC = observer(() => {
 		model.onMount();
 	}, [organisationName]);
 
-	const handleOrderReport = (company: OrganisationSummary) => {
-		const cartItem: ICartItem = {
-			organisationTypeCode: company.organisationTypeCode ?? typeCode,
-			registrationNo: company.registrationNo,
-			organisationName: company.organisationName ?? "",
-		};
-
-		cartStore.addItem(cartItem);
-	};
-
 	if (view.status === "loading") {
 		return (
-			<div className="container mx-auto max-w-4xl p-6 space-y-6">
-				<div className="space-y-2">
-					<Skeleton className="h-12 w-3/4" />
-					<Skeleton className="h-6 w-1/2" />
+			<SitePage header={{ current: "search" }}>
+				<div className="space-y-6">
+					<div className="space-y-3">
+						<Skeleton className="h-5 w-40" />
+						<Skeleton className="h-12 w-3/4" />
+						<Skeleton className="h-5 w-1/2" />
+					</div>
+					<Skeleton className="h-[260px] w-full rounded-[24px]" />
 				</div>
-				<Skeleton className="h-[200px] w-full rounded-lg" />
-				<div className="space-y-2">
-					<Skeleton className="h-8 w-1/4" />
-					<Skeleton className="h-32 w-full rounded-lg" />
-				</div>
-			</div>
+			</SitePage>
 		);
 	}
 
 	if (view.status === "not-found") {
 		return (
-			<div className="container mx-auto max-w-4xl p-6 space-y-4">
-				<Alert>
-					<Info className="h-4 w-4" />
-					<AlertDescription>
-						No company found for {view.typeCode} {view.registrationNo}.
-					</AlertDescription>
-				</Alert>
+			<SitePage header={{ current: "search" }}>
 				<BackToSearchLink />
-			</div>
+				<div className={card}>
+					<div className={cardTitle}>Company not found</div>
+					<p className="mt-1 mb-0 text-[14.5px] text-muted-foreground">
+						No company found for {view.typeCode} {view.registrationNo}.
+					</p>
+				</div>
+			</SitePage>
 		);
 	}
 
 	if (view.status === "error") {
 		return (
-			<div className="container mx-auto max-w-4xl p-6 space-y-4">
-				<Alert variant="destructive">
-					<Info className="h-4 w-4" />
-					<AlertDescription>
-						Something went wrong while loading this company.
-					</AlertDescription>
-				</Alert>
-				<Button variant="outline" onClick={loader.retry}>
-					<RotateCw className="mr-2 h-4 w-4" />
-					Retry
-				</Button>
-			</div>
+			<SitePage header={{ current: "search" }}>
+				<BackToSearchLink />
+				<div role="alert" className={card}>
+					<div className={cardTitle}>Something went wrong while loading this company.</div>
+					<button type="button" onClick={loader.retry} className={`${primaryPill} mt-4 cursor-pointer px-5 py-3 text-[15px]`}>
+						Try again
+					</button>
+				</div>
+			</SitePage>
 		);
 	}
 
 	const { organisation, address, officials } = view.record;
 
-	const isSaved = library.isSaved(organisation);
 	const registrationDate = registrationDateText(organisation.registrationDate);
-	const fullAddress = registeredAddressText(address);
 	const status = statusLine(organisation);
+	const inCart = cartStore.has({ organisationTypeCode: organisation.organisationTypeCode ?? typeCode, registrationNo: organisation.registrationNo });
+	const signedOut = auth.state.status === "signed-out";
+	const related = appointments && !appointments.isLoading ? appointments.relatedCompanies : null;
 
-	const getInitials = (name: string) => {
-		return name
-			? name
-					.split(" ")
-					.map((n) => n[0])
-					.slice(0, 2)
-					.join("")
-			: "CO";
+	const orderReport = () => {
+		if (inCart) {
+			navigate("/cart");
+			return;
+		}
+		cartStore.addItem({
+			organisationTypeCode: organisation.organisationTypeCode ?? typeCode,
+			registrationNo: organisation.registrationNo,
+			organisationName: organisation.organisationName ?? "",
+			statusGroup: organisation.statusGroup,
+			registrationDate: organisation.registrationDate,
+		});
 	};
 
-	const TabLoadingSkeleton = () => (
-		<div className="space-y-4 p-6">
-			<div className="flex items-center space-x-4">
-				<Skeleton className="h-12 w-12 rounded-full" />
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-[200px]" />
-					<Skeleton className="h-4 w-[160px]" />
-				</div>
+	const quickLink = (count: number | null, label: string, tab: Tab) => (
+		<button
+			type="button"
+			onClick={() => setActiveTab(tab)}
+			className="flex cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-border bg-surface px-[22px] py-5 text-left transition-colors hover:border-tint-border"
+		>
+			<div>
+				<div className="font-display text-[26px] font-semibold text-ink">{count ?? "…"}</div>
+				<div className="mt-0.5 text-[14px] text-muted-foreground">{label}</div>
 			</div>
-			<Skeleton className="h-4 w-full" />
-			<Skeleton className="h-4 w-3/4" />
-		</div>
+			<span className="text-[18px] text-primary-text">→</span>
+		</button>
 	);
 
 	return (
-		<div className="container mx-auto max-w-4xl p-6 space-y-8">
-			<div className="flex items-start justify-between">
-				<div className="space-y-1">
-					<h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+		<SitePage
+			header={{ current: "search" }}
+			className="mx-auto w-full max-w-[1200px] px-[clamp(16px,4vw,28px)] pt-[clamp(24px,5vw,44px)] pb-[164px] min-[860px]:pb-20"
+		>
+			<Rise>
+				<BackToSearchLink />
+			</Rise>
+
+			<Rise delay={60} className="mt-[22px] flex flex-wrap items-end justify-between gap-6">
+				<div className="min-w-0 flex-[1_1_520px]">
+					<div className="flex flex-wrap items-center gap-2.5">
+						<StatusBadge organisation={organisation} large />
+						<span className="font-mono text-[13px] text-muted-foreground">Reg No {organisation.registrationNo}</span>
+					</div>
+					<h1 className="mt-3 mb-0 font-display text-[clamp(28px,4.4vw,48px)] leading-[1.06] font-semibold tracking-[-0.03em] text-balance">
 						{organisation.organisationName}
 					</h1>
-					<p className="text-muted-foreground flex items-center gap-2">
-						<Calendar className="h-4 w-4" />
-						Incorporated on {registrationDate}
-					</p>
-					{status && <p className="text-muted-foreground">{status}</p>}
-					<BackToSearchLink />
+					<div className="mt-3 flex flex-wrap gap-x-[18px] gap-y-1.5 text-[15px] text-muted-foreground">
+						<span>Incorporated on {registrationDate}</span>
+						{address?.territory && <span>{address.territory}</span>}
+						{organisation.organisationType && <span>{organisation.organisationType}</span>}
+					</div>
+					{status && <div className="mt-1.5 text-[15px] text-muted-foreground">{status}</div>}
 				</div>
-				<div className="flex items-center gap-3">
-					<Badge variant={statusGroupOf(organisation)} className="text-md">
-						{statusLabel(organisation)}
-					</Badge>
+				<div className="flex flex-wrap gap-2">
 					<TrackButton organisation={organisation} />
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="outline"
-									size="icon"
-									disabled={library.isBusy(organisation)}
-									onClick={(e) => {
-										e.preventDefault();
-										toggleSaved(organisation);
-									}}
-								>
-									{isSaved ? (
-										<Bookmark className="h-4 w-4" />
-									) : (
-										<BookmarkPlus className="h-4 w-4" />
-									)}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								{isSaved ? "Remove from saved" : "Save company"}
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
+					<SaveButton organisation={organisation} />
 				</div>
+			</Rise>
+
+			<div className="mt-9 grid grid-cols-1 items-start gap-7 min-[860px]:grid-cols-[minmax(0,1fr)_360px]">
+				<Rise delay={120} className="min-w-0">
+					<div role="tablist" className="csc-no-scrollbar flex gap-1 overflow-x-auto rounded-full bg-divider p-1">
+						{TABS.map(([id, label]) => (
+							<button
+								key={id}
+								type="button"
+								role="tab"
+								aria-selected={activeTab === id}
+								onClick={() => setActiveTab(id)}
+								className={`flex-[1_0_auto] cursor-pointer rounded-full px-4 py-2.5 text-[14.5px] font-semibold whitespace-nowrap transition-colors duration-200 ${
+									activeTab === id
+										? "bg-surface text-ink shadow-[0_1px_3px_rgba(15,31,25,0.12)]"
+										: "bg-transparent text-muted-foreground"
+								}`}
+							>
+								{label}
+							</button>
+						))}
+					</div>
+
+					{activeTab === "overview" && (
+						<Rise key="overview" distance={16}>
+							<div className={card}>
+								<div className={cardTitle}>Company information</div>
+								<div className="mt-[22px] grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-x-7 gap-y-[22px]">
+									<div>
+										<div className={fieldLabel}>Registration number</div>
+										<div className="mt-1.5 font-mono text-[15.5px]">{organisation.registrationNo || "Not available"}</div>
+									</div>
+									<div>
+										<div className={fieldLabel}>Registration date</div>
+										<div className="mt-1.5 text-[15.5px]">{registrationDate}</div>
+									</div>
+									{organisation.organisationType && (
+										<div>
+											<div className={fieldLabel}>Type</div>
+											<div className="mt-1.5 text-[15.5px]">{organisation.organisationType}</div>
+										</div>
+									)}
+									<div>
+										<div className={fieldLabel}>Status</div>
+										<div className="mt-1.5 flex items-center gap-2 text-[15.5px]">
+											<span className={`size-2 rounded-full ${statusDotClass[statusGroupOf(organisation)]}`} />
+											{statusLabel(organisation)}
+										</div>
+									</div>
+								</div>
+								<div className="my-[26px] h-px bg-divider" />
+								<div className={fieldLabel}>Registered address</div>
+								<div className="mt-1.5 text-[15.5px] leading-normal">{registeredAddressText(address)}</div>
+							</div>
+							<div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-3">
+								{quickLink(officials.length, officials.length === 1 ? "Official" : "Officials", "people")}
+								{quickLink(related ? related.length : null, "Potentially related entities", "related")}
+							</div>
+						</Rise>
+					)}
+
+					{activeTab === "people" && (
+						<Rise key="people" distance={16} className={card}>
+							<div className={cardTitle}>Key people</div>
+							<div className="mt-1 text-[14.5px] text-muted-foreground">
+								Officials and key individuals involved with the company.
+							</div>
+							{officials.length > 0 ? (
+								<div className="mt-3.5 flex flex-col">
+									{officials.map((person, index) => (
+										<div key={index} className="flex flex-wrap gap-x-[18px] gap-y-3.5 border-t border-divider py-[18px]">
+											<div className="min-w-0 flex-[1_1_240px]">
+												<Link
+													to={`/official/${encodeURIComponent(person.personOrOrganisationName)}`}
+													className="block text-[15.5px] font-semibold text-ink hover:text-primary-text"
+												>
+													{person.personOrOrganisationName}
+												</Link>
+												<div className="mt-[3px] text-[13.5px] text-muted-foreground">{person.officialPosition}</div>
+											</div>
+											<div className="flex flex-wrap items-center gap-1.5">
+												{LOCKED_FIELDS.map((field) => (
+													<span
+														key={field}
+														className="inline-flex items-center gap-1.5 rounded-lg bg-field px-2.5 py-1.5 text-[12.5px] text-muted-foreground"
+													>
+														<Lock className="size-[11px]" strokeWidth={2.4} />
+														{field}
+													</span>
+												))}
+											</div>
+										</div>
+									))}
+								</div>
+							) : (
+								<div className="py-12 text-center text-[15px] text-muted-foreground">No officials data available</div>
+							)}
+							<div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-tint2 px-[18px] py-4">
+								<span className="text-[14.5px] text-body2">
+									Addresses, countries and appointment dates are included in the Full Company Report.
+								</span>
+								<button type="button" onClick={orderReport} className={`${primaryPill} cursor-pointer px-4 py-2.5 text-[14px] whitespace-nowrap`}>
+									{inCart ? "In cart ✓" : "Order report"}
+								</button>
+							</div>
+						</Rise>
+					)}
+
+					{activeTab === "related" && (
+						<Rise key="related" distance={16} className={card}>
+							<div className={cardTitle}>Potentially related entities</div>
+							<div className="mt-1 text-[14.5px] text-muted-foreground">
+								Companies where {organisation.organisationName} holds an official position.
+							</div>
+							{related === null ? (
+								<div className="mt-5 space-y-3">
+									<Skeleton className="h-12 w-full rounded-[14px]" />
+									<Skeleton className="h-12 w-full rounded-[14px]" />
+									<Skeleton className="h-12 w-3/4 rounded-[14px]" />
+								</div>
+							) : related.length > 0 ? (
+								<div className="mt-3.5 flex flex-col">
+									{related.map((appointment, index) => {
+										const path = detailsPath(appointment);
+										const content = (
+											<>
+												<div className="min-w-0 flex-1">
+													<div className="text-[15.5px] font-semibold">{appointment.organisationName}</div>
+													<div className="mt-[3px] text-[13.5px] text-muted-foreground">
+														Official position: {appointment.officialPosition}
+													</div>
+												</div>
+												{path && <span className="text-[18px] text-faint">→</span>}
+											</>
+										);
+										const row = "-mx-2.5 flex items-center gap-3.5 rounded-[14px] px-2.5 py-4 text-ink";
+										return path ? (
+											<Link key={index} to={path} className={`${row} hover:bg-hover`}>
+												{content}
+											</Link>
+										) : (
+											<div key={index} className={row}>
+												{content}
+											</div>
+										);
+									})}
+								</div>
+							) : (
+								<div className="py-12 text-center text-[15px] text-muted-foreground">No related data available</div>
+							)}
+						</Rise>
+					)}
+
+					{activeTab === "tracking" && (
+						<Rise key="tracking" distance={16} className="mt-4">
+							{signedOut ? <TrackingTeaser /> : <TrackedPanel organisation={organisation} />}
+						</Rise>
+					)}
+				</Rise>
+
+				<Rise delay={200} className="min-w-0 min-[860px]:sticky min-[860px]:top-24">
+					<aside className="rounded-[26px] bg-primary p-[clamp(22px,4vw,30px)] text-white">
+						<div className="text-[13px] font-semibold tracking-[0.06em] text-on-primary-muted uppercase">Full Company Report</div>
+						<div className="mt-3 flex flex-wrap items-baseline gap-1.5">
+							<span className="font-display text-[42px] leading-none font-semibold tracking-[-0.03em]">{reportPrice()}</span>
+							<span className="text-[14px] text-on-primary-soft">per company</span>
+						</div>
+						<div className="mt-2.5 text-[14.5px] text-on-primary-soft">
+							Delivered within one business day, with a summary from our research team.
+						</div>
+						<div className="mt-5 flex flex-col gap-2.5 text-[14.5px] leading-[1.4]">
+							{[
+								"Current and historical shareholders with addresses",
+								"Complete company documents and filings",
+								"Historical changes, previous names and mortgages",
+							].map((line) => (
+								<div key={line} className="flex gap-2.5">
+									<span className="text-[#9FE3C1]">✓</span>
+									{line}
+								</div>
+							))}
+						</div>
+						<button
+							type="button"
+							onClick={orderReport}
+							className={`mt-6 w-full cursor-pointer rounded-[14px] p-[15px] text-[15.5px] font-semibold text-[#0A3B2C] transition-colors duration-200 ${
+								inCart ? "bg-[#9FE3C1]" : "bg-white hover:bg-[#E6F2EC]"
+							}`}
+						>
+							{inCart ? "In cart ✓ · Go to checkout" : "Order Full Company Report"}
+						</button>
+						<div className="mt-3 text-center text-[13px] text-on-primary-muted">Guest checkout · no account needed</div>
+					</aside>
+				</Rise>
 			</div>
 
-			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-				<TabsList className="grid w-full max-w-xxl grid-cols-4">
-					<TabsTrigger value="overview">Overview</TabsTrigger>
-					<TabsTrigger value="people">Key People</TabsTrigger>
-					<TabsTrigger value="related">Related</TabsTrigger>
-					<TabsTrigger value="tracking">Tracking</TabsTrigger>
-				</TabsList>
-				<TabsContent value="overview" className="space-y-6 pt-4">
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Building className="h-5 w-5" /> Company Information
-							</CardTitle>
-							<CardDescription>
-								Comprehensive information about the company structure and
-								registration.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-6">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<div className="space-y-2">
-									<h3 className="text-sm font-medium text-muted-foreground">
-										Registration Number
-									</h3>
-									<p>{organisation.registrationNo || "Not available"}</p>
-								</div>
-								<div className="space-y-2">
-									<h3 className="text-sm font-medium text-muted-foreground">
-										Registration Date
-									</h3>
-									<p>{registrationDate}</p>
-								</div>
-							</div>
-
-							<Separator />
-
-							<div className="space-y-2">
-								<h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-									<MapPin className="h-4 w-4" /> Registered Address
-								</h3>
-								<p>{fullAddress}</p>
-							</div>
-						</CardContent>
-					</Card>
-				</TabsContent>
-
-				<TabsContent value="people" className="pt-4">
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Users className="h-5 w-5" /> Key People
-							</CardTitle>
-							<CardDescription>
-								Officials and key individuals involved with the company.
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ScrollArea className="h-[400px] pr-4">
-								{officials.length > 0 ? (
-									<div className="space-y-4">
-										{officials.map((person, index) => (
-											<NavLink
-												key={index}
-												className="flex items-start space-x-4 py-4"
-												to={`/official/${encodeURIComponent(person.personOrOrganisationName)}`}
-											>
-												<Avatar className="h-10 w-10 border">
-													<AvatarFallback className="bg-primary/10">
-														{getInitials(person.personOrOrganisationName)}
-													</AvatarFallback>
-												</Avatar>
-												<div className="space-y-1">
-													<p className="font-medium leading-none">
-														{person.personOrOrganisationName}
-													</p>
-													<p className="text-sm text-muted-foreground">
-														Official position: {person.officialPosition}
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Address:
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Country:
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Date of Appointment:
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-													<p className="text-sm text-muted-foreground flex items-center">
-														Previous Address:
-														<Lock className="h-3 w-3 ml-1 text-muted-foreground/70" />
-													</p>
-												</div>
-											</NavLink>
-										))}
-									</div>
-								) : (
-									<div className="flex flex-col items-center justify-center py-12 text-center">
-										<User className="h-12 w-12 text-muted-foreground/30 mb-3" />
-										<p className="text-muted-foreground">
-											No officials data available
-										</p>
-									</div>
-								)}
-							</ScrollArea>
-						</CardContent>
-					</Card>
-				</TabsContent>
-				<TabsContent value={"related"} className="pt-4">
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Link className="h-5 w-5" />
-								Potentially Related Entities
-								{appointments?.isLoading && (
-									<Loader2 className="h-4 w-4 animate-spin ml-2" />
-								)}
-							</CardTitle>
-							<CardDescription>
-								Related companies with {organisation.organisationName}
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							{!appointments || appointments.isLoading ? (
-								<TabLoadingSkeleton />
-							) : (
-								<ScrollArea className="h-[400px] pr-4">
-									{appointments.relatedCompanies.length > 0 ? (
-										<div className="space-y-0">
-											{appointments.relatedCompanies.map((relatedCompany, index) => {
-												const path = detailsPath(relatedCompany);
-												const content = (
-													<>
-														<Avatar className="h-10 w-10 border">
-															<AvatarFallback className="bg-primary/10">
-																{getInitials(relatedCompany.organisationName)}
-															</AvatarFallback>
-														</Avatar>
-														<div className="space-y-1">
-															<p className="font-medium leading-none">
-																{relatedCompany.organisationName}
-															</p>
-															<p className="text-sm text-muted-foreground">
-																Official position:
-																{relatedCompany.officialPosition}
-															</p>
-														</div>
-													</>
-												);
-												return path ? (
-													<NavLink
-														key={index}
-														to={path}
-														className="flex items-start space-x-4 py-4"
-													>
-														{content}
-													</NavLink>
-												) : (
-													<div key={index} className="flex items-start space-x-4 py-4">
-														{content}
-													</div>
-												);
-											})}
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center py-12 text-center">
-											<Link className="h-12 w-12 text-muted-foreground/30 mb-3" />
-											<p className="text-muted-foreground">
-												No related data available
-											</p>
-										</div>
-									)}
-								</ScrollArea>
-							)}
-						</CardContent>
-					</Card>
-				</TabsContent>
-				<TabsContent value="tracking" className="pt-4">
-					<TrackedPanel organisation={organisation} />
-				</TabsContent>
-			</Tabs>
-
-			{/* Comprehensive Reports Section */}
-			<Card className="bg-primary/5 border-primary/20">
-				<CardHeader>
-					<div className="flex items-center gap-3">
-						<div className="bg-primary/10 p-2 rounded-lg">
-							<FileText className="h-5 w-5 text-primary" />
-						</div>
-						<div>
-							<CardTitle className="text-xl">Comprehensive Reports</CardTitle>
-							<CardDescription>
-								Professional analysis within one business day
-							</CardDescription>
-						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<p className="text-muted-foreground mb-4">
-						Receive detailed reports with current information from the official
-						registry, including comprehensive data gathering and professional
-						summaries prepared by our experts.
-					</p>
-					<div className="space-y-2">
-						<div className="flex items-center gap-2 text-sm">
-							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
-							<span>Current and historical shareholders with addresses</span>
-						</div>
-						<div className="flex items-center gap-2 text-sm">
-							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
-							<span>Complete company documents and filings</span>
-						</div>
-						<div className="flex items-center gap-2 text-sm">
-							<div className="h-1.5 w-1.5 bg-primary rounded-full"></div>
-							<span>Historical changes, previous names, and mortgages</span>
-						</div>
-					</div>
-				</CardContent>
-				<CardFooter>
-					<Button
-						className="w-full"
-						onClick={() => handleOrderReport(organisation)}
-					>
-						<FileText className="mr-2 h-4 w-4" />
-						Order Full Company Report
-						{checkout.price && ` · ${formatPrice(checkout.price)}`}
-					</Button>
-				</CardFooter>
-			</Card>
-		</div>
+			{/* On a phone the report card is far down the page, so its price and button stay in reach. */}
+			<div className="fixed inset-x-0 bottom-0 z-[25] flex items-center gap-3 border-t border-border bg-[var(--header)] px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] min-[860px]:hidden">
+				<div className="min-w-0 flex-1">
+					<div className="text-[12.5px] text-muted-foreground">Full Company Report</div>
+					<div className="font-display text-[20px] font-semibold">{reportPrice()}</div>
+				</div>
+				<button type="button" onClick={orderReport} className={`${primaryPill} cursor-pointer px-5 py-[13px] text-[14.5px] whitespace-nowrap`}>
+					{inCart ? "In cart ✓" : "Order report"}
+				</button>
+			</div>
+		</SitePage>
 	);
 });
+
+// A picture of what tracking shows, behind the invitation. Its changes are made up.
+const SAMPLE_CHANGES = [
+	["Director appointed", "Elena Charalambous", "12 Oct"],
+	["Registered office changed", "Nicosia → Limassol", "28 Sep"],
+	["Secretary resigned", "Pafos Secretarial Ltd", "03 Sep"],
+	["Name changed", "from Aegean Maritime Ltd", "14 Jul"],
+];
+
+/** What a signed-out visitor sees in place of an organisation's tracked changes. */
+function TrackingTeaser() {
+	return (
+		<div className="relative overflow-hidden rounded-[24px] border border-border bg-surface p-[clamp(20px,4vw,32px)]">
+			<div className={cardTitle}>Change history</div>
+			<div aria-hidden className="pointer-events-none mt-4 flex flex-col gap-0.5 opacity-60 blur-[3px] select-none">
+				{SAMPLE_CHANGES.map(([title, detail, day], i) => (
+					<div key={title} className={`flex gap-3.5 rounded-[14px] p-3.5 ${i === 0 ? "bg-tint2" : ""}`}>
+						<span className={`mt-1.5 size-2 flex-none rounded-full ${i === 0 ? "bg-primary" : "bg-border-strong"}`} />
+						<div className="flex-1">
+							<div className="text-[14.5px] font-semibold">{title}</div>
+							<div className="mt-0.5 text-[13.5px] text-muted-foreground">{detail}</div>
+						</div>
+						<span className={`font-mono text-[12px] ${i === 0 ? "text-primary-text" : "text-faint"}`}>{day}</span>
+					</div>
+				))}
+			</div>
+			<div className="absolute inset-x-4 top-[70px] bottom-4 grid place-items-center">
+				<div className="max-w-[380px] rounded-[22px] border border-border bg-surface p-[26px] text-center shadow-[0_30px_60px_-24px_rgba(15,31,25,0.3)]">
+					<div className="font-display text-[21px] leading-[1.2] font-semibold text-balance">
+						Be told when this company changes.
+					</div>
+					<p className="mt-2.5 mb-0 text-[14.5px] leading-[1.55] text-muted-foreground">
+						Track officials, addresses, names and status, with an email for every change. Your first tracked
+						company is free.
+					</p>
+					<div className="mt-[18px] flex flex-col gap-2">
+						<Link to="/signup" className={`${primaryPill} p-[13px] text-[15px]`}>
+							Create free account
+						</Link>
+						<Link to="/login" className="p-1.5 text-[14px] text-text2 hover:text-ink">
+							I already have an account
+						</Link>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 export default OrganisationDetails;

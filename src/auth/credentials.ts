@@ -28,6 +28,12 @@ export function checkNewPassword(password: string, repeated: string): string | n
 	return checkPassword(password) ?? (password === repeated ? null : "The passwords do not match");
 }
 
+/** For the form that asks only for the email to send a reset link to. */
+export function checkResetEmail(email: string): string | null {
+	if (!email.trim()) return "Please enter your email address";
+	return checkEmail(email);
+}
+
 function checkEmail(email: string): string | null {
 	return EMAIL.test(email.trim()) ? null : "Please enter a valid email address";
 }

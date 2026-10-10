@@ -83,3 +83,13 @@ export const formatPrice = (price: Price, reports = 1) =>
 	new Intl.NumberFormat("en-IE", { style: "currency", currency: price.currency.toUpperCase() }).format(
 		price.amount * reports
 	);
+
+const VAT_RATE = 0.19;
+
+/** The VAT inside a price that already includes it, for a number of reports, e.g. "€6.38". */
+export const formatVatIncluded = (price: Price, reports = 1) => {
+	const total = price.amount * reports;
+	return new Intl.NumberFormat("en-IE", { style: "currency", currency: price.currency.toUpperCase() }).format(
+		total - total / (1 + VAT_RATE)
+	);
+};

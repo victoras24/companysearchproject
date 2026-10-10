@@ -1,13 +1,12 @@
 import { toast } from "sonner";
 import { auth } from "@/auth";
+import { promptSignUp } from "@/auth/promptSignUp";
 import { library, toLibraryCompany, type SavableOrganisation } from "./index";
 
 /** The bookmark button on search results and the details page: saves or unsaves, and says so. */
 export async function toggleSaved(organisation: SavableOrganisation) {
 	if (auth.state.status !== "signed-in") {
-		toast.warning(
-			"Please register or login if you already have an account, to save and organise companies"
-		);
+		promptSignUp("Create a free account to save and organise companies.");
 		return;
 	}
 
