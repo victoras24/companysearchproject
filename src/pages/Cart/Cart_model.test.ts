@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { CartModel } from "./Cart_model";
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }));
 
 const CART_STORAGE_KEY = "user_cart_items";
 
@@ -26,6 +29,37 @@ function memoryStorage(savedCart?: unknown) {
 const names = (cart: CartModel) => cart.cartItems.map((item) => item.organisationName);
 
 describe("CartModel", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("says that a report was added", () => {
+		const cart = new CartModel(memoryStorage());
+
+		cart.addItem(adminico);
+
+		expect(toast.success).toHaveBeenCalledTimes(1);
+	});
+
+	it("adds without a word for a page that says it itself", () => {
+		const cart = new CartModel(memoryStorage());
+
+		cart.addItem(adminico, { announce: false });
+		cart.addItem(adminico, { announce: false });
+
+		expect(names(cart)).toEqual(["ADMINICO MANAGEMENT SERVICES LIMITED"]);
+		expect(toast.success).not.toHaveBeenCalled();
+		expect(toast.warning).not.toHaveBeenCalled();
+	});
+
+	it("removes without a word for a page that says it itself", () => {
+		const cart = new CartModel(memoryStorage());
+		cart.addItem(adminico, { announce: false });
+
+		cart.removeItem(adminico, { announce: false });
+
+		expect(names(cart)).toEqual([]);
+		expect(toast.success).not.toHaveBeenCalled();
+	});
+
 	it("holds one report per organisation", () => {
 		const cart = new CartModel(memoryStorage());
 

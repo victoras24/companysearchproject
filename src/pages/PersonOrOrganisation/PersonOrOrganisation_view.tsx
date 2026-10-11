@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCartStore } from "@/context/CartStore";
 import type { IRelatedCompany } from "@/gEntities";
 import { detailsPath } from "@/organisation/organisation";
+import { positionLabel } from "@/organisation/position";
 import { Rise } from "@/site/motion";
 import { SitePage } from "@/site/SitePage";
 import { cartPill, eyebrow, primaryPill } from "@/site/ui";
@@ -86,7 +87,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 										{stat.count}
 									</div>
 									<div className={`mt-2 text-[14px] ${on ? "text-on-primary-soft" : "text-muted-foreground"}`}>
-										{stat.position ?? "All companies"}
+										{stat.position === null ? "All companies" : positionLabel(stat.position)}
 									</div>
 								</button>
 							</Rise>
@@ -109,7 +110,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 			<Rise delay={240} className="mt-6 overflow-hidden rounded-[26px] border border-border bg-surface">
 				<div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-[clamp(18px,3vw,28px)] py-[clamp(18px,3vw,24px)]">
 					<div className="font-display text-[20px] font-semibold">
-						{position === null ? "Linked companies" : `As ${position}`}
+						{position === null ? "Linked companies" : `As ${positionLabel(position)}`}
 					</div>
 					<label className="flex h-[42px] min-w-0 flex-[0_1_280px] items-center gap-2.5 rounded-xl bg-field px-3.5">
 						<Search className="size-[15px] flex-none text-muted-foreground" strokeWidth={2.2} />
@@ -154,7 +155,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 										<div className="min-w-0 flex-[1_1_300px]">{company}</div>
 									)}
 									<span className="rounded-full bg-field px-3 py-1.5 text-[13.5px] font-semibold whitespace-nowrap text-text2">
-										{appointment.officialPosition}
+										{positionLabel(appointment.officialPosition)}
 									</span>
 									{appointment.organisationTypeCode && (
 										<button
@@ -183,7 +184,7 @@ const PersonOrOrganisation: React.FC = observer(() => {
 						Track any of these companies in the free web app and get an email for every change.
 					</div>
 				</div>
-				<Link to={signedIn ? "/tracking" : "/signup"} className={`${primaryPill} px-[22px] py-[13px] text-[15px] whitespace-nowrap`}>
+				<Link to={signedIn ? "/app/tracking" : "/signup"} className={`${primaryPill} px-[22px] py-[13px] text-[15px] whitespace-nowrap`}>
 					{signedIn ? "Open tracking" : "Create free account"}
 				</Link>
 			</Rise>

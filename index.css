@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "./global.css";
 @import "./src/site/site.css";
+@import "./src/app/app.css";
 
 @custom-variant dark (&: is(.dark *));
 
@@ -28,13 +29,18 @@
 	--color-deep: var(--deep);
 	--color-on-primary-muted: #bfe3d2;
 	--color-on-primary-soft: #d6ece1;
-	--color-danger: #b42318;
+	--color-danger: var(--danger);
 	--color-danger-tint: var(--danger-tint);
 	--color-warn-bg: var(--warn-bg);
 	--color-warn-border: var(--warn-border);
 	--color-warn-fg: var(--warn-fg);
 	--color-glow1: var(--glow1);
 	--color-glow2: var(--glow2);
+	--color-fill2: var(--fill2);
+	--color-sel: var(--sel);
+	--color-side: var(--side);
+	--color-bar: var(--bar);
+	--color-alert: var(--alert);
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
@@ -121,6 +127,7 @@
 	--primary-text: #0e6b4f;
 	--primary-border: #0e6b4f;
 	--deep: #0a3b2c;
+	--danger: #b42318;
 	--danger-tint: #fdf3f2;
 	--warn-bg: #fff8e6;
 	--warn-border: #f5e2b0;

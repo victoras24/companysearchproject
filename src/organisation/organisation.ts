@@ -51,6 +51,11 @@ export function detailsPath(o: {
 	return `/cyprus-company-search/${typeCode}/${encodeURIComponent(registrationNo)}`;
 }
 
+/** A company's name without the "Ltd" or "Limited" it ends in. */
+export function shortName(name: string | null | undefined): string {
+	return (name ?? "").trim().replace(/\s+(ltd\.?|limited)$/i, "");
+}
+
 // Anything else, such as a saved favourite from before status groups, is unknown.
 export function statusGroupOf(o: { statusGroup?: string | null }): StatusGroup {
 	return STATUS_GROUPS.find((group) => group === o.statusGroup) ?? "unknown";

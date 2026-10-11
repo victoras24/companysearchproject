@@ -55,7 +55,7 @@ export const TrackedPanel = observer(({ organisation }: { organisation: Trackabl
 								<AlertDescription>
 									<span>
 										Paused: this organisation is over your plan's limit, so it is not checked and what is
-										shown may be out of date. See your <NavLink to="/tracking" className="underline">Tracking page</NavLink>.
+										shown may be out of date. See your <NavLink to="/app/tracking" className="underline">Tracking page</NavLink>.
 									</span>
 								</AlertDescription>
 							</Alert>
@@ -80,8 +80,8 @@ export const TrackedPanel = observer(({ organisation }: { organisation: Trackabl
 						<p className="text-muted-foreground">
 							{refusal ? (
 								<>
-									{refusal} See your <NavLink to="/tracking" className="underline">Tracking page</NavLink> and
-									the <NavLink to="/plans" className="underline">plans</NavLink>.
+									{refusal} See your <NavLink to="/app/tracking" className="underline">Tracking page</NavLink> and
+									the <NavLink to="/app/plans" className="underline">plans</NavLink>.
 								</>
 							) : signedOut ? (
 								"Log in and track this organisation to see its filings and pending services, and every change from then on. One organisation is free."

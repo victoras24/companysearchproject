@@ -346,7 +346,7 @@ const AuthPage = observer(({ form }: { form: AuthForm }) => {
 									You're signed in with your new password.
 								</p>
 								<Link to={APP_HOME} className={`${primaryPill} mt-7 h-[50px] px-6 text-[15.5px]`}>
-									Open web app
+									Go to dashboard
 								</Link>
 							</>
 						)}

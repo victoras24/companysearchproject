@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, Navigate, useLocation } from "react-router";
 import { observer } from "mobx-react";
 import { Check, Mail, RefreshCw, X } from "lucide-react";
 import { auth } from "@/auth";
+import { routeFor } from "@/auth/credentials";
+import { SessionLoader } from "@/auth/RequireUser";
 import { returningSession } from "@/checkout";
 import { useCartStore } from "@/context/CartStore";
 import { Rise } from "@/site/motion";
@@ -14,7 +16,17 @@ const body = "mt-3 mb-0 text-[15.5px] leading-[1.55] text-pretty text-muted-fore
 const outlinePill =
 	"rounded-full border border-input bg-surface px-5 py-3 text-[15px] font-semibold text-ink hover:border-border-strong";
 
+/** A buyer's return from the payment page. A signed-in buyer sees what came of it inside the app. */
 const ReturnForm = observer(() => {
+	const { search } = useLocation();
+	const route = routeFor(auth.state);
+
+	if (route === "loading") return <SessionLoader />;
+	if (route === "page") return <Navigate to={`/app/cart${search}`} replace />;
+	return <GuestReturn />;
+});
+
+const GuestReturn = observer(() => {
 	const cartStore = useCartStore();
 	const [session] = useState(() => returningSession(cartStore.clearCart));
 
@@ -24,7 +36,6 @@ const ReturnForm = observer(() => {
 	}, [session]);
 
 	const state = session.state;
-	const signedIn = auth.state.status === "signed-in";
 
 	const page = (content: React.ReactNode) => (
 		<SitePage
@@ -101,8 +112,8 @@ const ReturnForm = observer(() => {
 					<Link to="/" className={outlinePill}>
 						Back to search
 					</Link>
-					<Link to={signedIn ? "/tracking" : "/signup"} className={`${primaryPill} px-5 py-3 text-[15px]`}>
-						{signedIn ? "Track these companies" : "Track these companies free"}
+					<Link to="/signup" className={`${primaryPill} px-5 py-3 text-[15px]`}>
+						Track these companies free
 					</Link>
 				</div>
 			</>

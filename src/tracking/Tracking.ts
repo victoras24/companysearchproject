@@ -559,6 +559,36 @@ export function checkLine(check: CheckState): string | null {
 	return check.firstCheckInProgress ? "First check in progress" : null;
 }
 
+/** What a tracked organisation's row says about its checks. */
+export function checkedText(check: CheckState, now: Date = new Date()): string {
+	if (check.checksFailing) return checkLine(check)!;
+	if (check.firstCheckInProgress) return "First check running against the registry…";
+
+	const checked = check.lastCheckedAt ? moment(check.lastCheckedAt, moment.ISO_8601, true) : null;
+	if (!checked?.isValid()) return "Not checked yet";
+	const day = checked.isSame(now, "day") ? "today" : shortDay(check.lastCheckedAt, now);
+	return `Checked ${day} at ${checked.format("HH:mm")}`;
+}
+
+const CHANGE_TITLES: Record<ChangeKind, string> = {
+	filing: "New filing",
+	pending_service: "Pending service",
+	status: "Status changed",
+	official: "Officials changed",
+	address: "Registered address changed",
+	name: "Name changed",
+};
+
+/** What a change is headed with; its detail says the rest. */
+export const changeTitle = (kind: ChangeKind): string => CHANGE_TITLES[kind] ?? "Change";
+
+/** "9 Oct", or "16 Dec 2025" for a day in another year; null for what is not a date. */
+export function shortDay(raw: string | null | undefined, now: Date = new Date()): string | null {
+	const date = raw ? moment(raw, moment.ISO_8601, true) : null;
+	if (!date?.isValid()) return null;
+	return date.format(date.isSame(now, "year") ? "D MMM" : "D MMM YYYY");
+}
+
 /** "December 16, 2023", for one of the registry's dates or a moment in time; null for neither. */
 export function dayText(raw: string | null | undefined): string | null {
 	const date = raw ? moment(raw, moment.ISO_8601, true) : null;

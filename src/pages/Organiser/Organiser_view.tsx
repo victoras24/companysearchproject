@@ -1,348 +1,199 @@
-import React, { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import { observer } from "mobx-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { OptionalLink } from "@/components/OptionalLink";
-import { detailsPath } from "@/organisation/organisation";
+import * as Menu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, Minus, Trash2 } from "lucide-react";
+import { flash } from "@/app/actions";
+import { ask } from "@/app/dialog";
+import { box, CompanyLink, Disclosure, EASE, EmptyCard, Failed, Loading, menu, menuItem, Page, PageHeader, pill, roundButton, Status } from "@/app/ui";
 import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
-import { RegistryNote } from "@/library/RegistryNote";
-import { useLocalOrder } from "@/library/useLocalOrder";
 
-// Shadcn Components
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+/** A group: its name and count, and under them its companies. */
+const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; open: boolean; onToggle: () => void }) => {
+	const count = group.companies.length;
+	const inGroup = new Set(group.companies.map(companyId));
+	const addable = library.favourites.filter((company) => !inGroup.has(companyId(company)));
 
-// Icons
-import {
-	ChevronDown,
-	ChevronUp,
-	Trash2,
-	GripVertical,
-	PlusCircle,
-	FolderOpen,
-	X,
-	RotateCw,
-} from "lucide-react";
-
-// Drag and Drop
-import {
-	DndContext,
-	closestCenter,
-	KeyboardSensor,
-	PointerSensor,
-	useSensor,
-	useSensors,
-	DragOverlay,
-	type DragEndEvent,
-	type DragStartEvent,
-} from "@dnd-kit/core";
-import {
-	SortableContext,
-	sortableKeyboardCoordinates,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-
-const groupId = (group: LibraryGroup) => group.id;
-
-const report = (result: { ok: boolean }, failure: string) => {
-	if (!result.ok) toast.error(failure);
-};
-
-const dragSensorOptions = { activationConstraint: { distance: 5 } };
-
-// A company in a group: a row that can be dragged within its group.
-const SortableCompany: React.FC<{ company: LibraryCompany; group: LibraryGroup }> = ({
-	company,
-	group,
-}) => {
-	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: companyId(company) });
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
+	const remove = async (company: LibraryCompany) => {
+		const result = await library.removeFromGroup(group.id, company);
+		if (!result.ok) toast.error("That company could not be removed from the group. Please try again.");
 	};
 
+	const add = async (company: LibraryCompany) => {
+		const result = await library.addToGroup(group.id, company);
+		if (!result.ok) toast.error("That company could not be added to the group. Please try again.");
+	};
+
+	const askToDelete = () =>
+		ask(
+			{
+				title: `Delete "${group.name}"?`,
+				body: "The companies stay in your saved list. Only the group is removed.",
+				confirm: "Delete group",
+				danger: true,
+			},
+			async () => {
+				const result = await library.deleteGroup(group.id);
+				if (result.ok) flash(`Deleted "${group.name}".`);
+				else toast.error("The group could not be deleted. Please try again.");
+			}
+		);
+
 	return (
-		<TableRow ref={setNodeRef} style={style} className="hover:bg-accent">
-			<TableCell className="w-12 pl-2">
-				<div {...attributes} {...listeners} className="cursor-grab">
-					<GripVertical className="h-4 w-4 text-muted-foreground" />
-				</div>
-			</TableCell>
-			<TableCell className="font-medium py-2">
-				<OptionalLink to={company.inRegistry ? detailsPath(company) : null}>
-					{company.organisationName}
-					<RegistryNote company={company} />
-				</OptionalLink>
-			</TableCell>
-			<TableCell className="w-12 text-right">
-				<Button
-					variant="ghost"
-					size="icon"
-					className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-					onClick={async () =>
-						report(
-							await library.removeFromGroup(group.id, company),
-							"Failed to remove the company from the group"
-						)
-					}
+		<div className={box}>
+			<div className="flex items-center gap-1 py-1 pr-1.5">
+				<button
+					type="button"
+					aria-expanded={open}
+					onClick={onToggle}
+					className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-[9px] pr-2 pl-3.5 text-left text-foreground"
 				>
-					<X className="h-4 w-4" />
-				</Button>
-			</TableCell>
-		</TableRow>
-	);
-};
+					<ChevronDown
+						className={`size-3 flex-none text-faint transition-transform duration-300 ${EASE} ${open ? "rotate-180" : ""}`}
+						strokeWidth={2.6}
+					/>
+					<span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{group.name}</span>
+					<span className="text-[13px] whitespace-nowrap text-muted-foreground">
+						{count === 1 ? "1 company" : `${count} companies`}
+					</span>
+				</button>
+				<button
+					type="button"
+					aria-label="Delete group"
+					title="Delete group"
+					onClick={askToDelete}
+					className="grid size-10 flex-none cursor-pointer place-items-center rounded-full text-faint hover:bg-danger-tint hover:text-danger min-[860px]:size-7"
+				>
+					<Trash2 className="size-3.5" strokeWidth={1.9} />
+				</button>
+			</div>
 
-// A group: a card that can be dragged among the groups, with its companies inside.
-const SortableGroup: React.FC<{ group: LibraryGroup }> = ({ group }) => {
-	const [expanded, setExpanded] = useState(false);
-	// Dragging reorders the companies for this visit only.
-	const [companies, moveCompany] = useLocalOrder(group.companies, companyId);
-	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: group.id });
-
-	const sensors = useSensors(
-		useSensor(PointerSensor, dragSensorOptions),
-		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-	);
-
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
-
-	return (
-		<Collapsible open={expanded} onOpenChange={setExpanded} className="w-full">
-			<Card
-				ref={setNodeRef}
-				style={style}
-				className="mb-4 border shadow-sm hover:shadow"
-			>
-				<CardHeader className="pb-2">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<div {...attributes} {...listeners} className="cursor-grab">
-								<GripVertical className="h-5 w-5 text-muted-foreground" />
-							</div>
-							<CardTitle className="text-lg font-medium">{group.name}</CardTitle>
-							<Badge variant="outline" className="ml-2">
-								{group.companies.length} companies
-							</Badge>
-						</div>
-						<div className="flex items-center gap-1">
-							<CollapsibleTrigger asChild>
-								<Button variant="ghost" size="icon" className="h-8 w-8">
-									{expanded ? (
-										<ChevronUp className="h-4 w-4" />
-									) : (
-										<ChevronDown className="h-4 w-4" />
-									)}
-								</Button>
-							</CollapsibleTrigger>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-								onClick={async () =>
-									report(await library.deleteGroup(group.id), "Failed to delete the group")
-								}
-							>
-								<Trash2 className="h-4 w-4" />
-							</Button>
-						</div>
-					</div>
-				</CardHeader>
-				<CollapsibleContent>
-					<CardContent className="pt-0">
-						{companies.length > 0 ? (
-							<DndContext
-								sensors={sensors}
-								collisionDetection={closestCenter}
-								onDragEnd={({ active, over }: DragEndEvent) => {
-									if (over) moveCompany(String(active.id), String(over.id));
-								}}
-								modifiers={[restrictToVerticalAxis]}
-							>
-								<Table>
-									<TableBody>
-										<SortableContext
-											items={companies.map(companyId)}
-											strategy={verticalListSortingStrategy}
-										>
-											{companies.map((company) => (
-												<SortableCompany
-													key={companyId(company)}
-													company={company}
-													group={group}
-												/>
-											))}
-										</SortableContext>
-									</TableBody>
-								</Table>
-							</DndContext>
-						) : (
-							<div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-								<FolderOpen className="h-8 w-8 mb-2" />
-								<p>No companies in this group yet.</p>
-								<p className="text-sm">Add companies from your favorites page.</p>
-							</div>
-						)}
-					</CardContent>
-				</CollapsibleContent>
-			</Card>
-		</Collapsible>
-	);
-};
-
-const Organiser: React.FC = observer(() => {
-	const [groupName, setGroupName] = useState("");
-	const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
-	// Dragging reorders the groups for this visit only.
-	const [groups, moveGroup] = useLocalOrder(library.groups, groupId);
-
-	const sensors = useSensors(
-		useSensor(PointerSensor, dragSensorOptions),
-		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-	);
-
-	const createGroup = async () => {
-		const result = await library.createGroup(groupName);
-		if (result.ok) setGroupName("");
-		else toast.error("Failed to create the group");
-	};
-
-	const handleGroupDragStart = (event: DragStartEvent) => {
-		setActiveGroupId(String(event.active.id));
-	};
-
-	const handleGroupDragEnd = ({ active, over }: DragEndEvent) => {
-		setActiveGroupId(null);
-		if (over) moveGroup(String(active.id), String(over.id));
-	};
-
-	const isLoading = library.status === "idle" || library.status === "loading";
-
-	return (
-		<Card className="w-full max-w-4xl mx-auto mt-8">
-			<CardHeader>
-				<CardTitle className="text-2xl font-bold">Company Organiser</CardTitle>
-				<CardDescription>
-					Create and manage groups to efficiently organize your saved companies.
-					Categorize your favorites for easy access and streamlined management.
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<AnimatePresence>
-					<motion.div
-						initial={{ opacity: 0, y: -10 }}
-						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: -10 }}
-						transition={{ duration: 0.2 }}
-						className="mb-8"
-					>
-						<Card className="bg-accent/50">
-							<CardHeader className="pb-2">
-								<CardTitle className="text-lg">Create New Group</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="flex gap-4">
-									<Input
-										placeholder="Enter group name"
-										value={groupName}
-										maxLength={100}
-										onChange={(e) => setGroupName(e.target.value)}
-										className="flex-1"
-									/>
-									<Button onClick={createGroup} disabled={!groupName.trim()}>
-										<PlusCircle className="h-4 w-4 mr-2" />
-										Create Group
-									</Button>
+			<Disclosure open={open}>
+				<div className="app-rows pb-2 [--row-line-left:34px]">
+					{/* The first company has a line above it too, under the group's name. */}
+					<span className="app-row block" />
+					{group.companies.map((company) => (
+						<div key={companyId(company)} className="app-row flex items-center gap-2.5 py-[9px] pr-2 pl-[34px] hover:bg-hover">
+							<div className="min-w-0 flex-1">
+								<CompanyLink company={company} from="Groups" linked={company.inRegistry} className="text-[14px]" />
+								<div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted-foreground">
+									<span className="app-mono text-[12px]">{company.registrationNo}</span>
+									{company.inRegistry ? <Status organisation={company} /> : <span>No longer in registry</span>}
 								</div>
-							</CardContent>
-						</Card>
-					</motion.div>
-				</AnimatePresence>
-
-				{isLoading ? (
-					<div className="space-y-3">
-						<Skeleton className="h-20 w-full" />
-						<Skeleton className="h-20 w-full" />
-						<Skeleton className="h-20 w-full" />
-					</div>
-				) : library.status === "error" ? (
-					<div className="flex flex-col items-center justify-center py-12 text-center">
-						<p className="text-sm text-muted-foreground mb-4">
-							Something went wrong while loading your groups.
-						</p>
-						<Button variant="outline" onClick={library.reload}>
-							<RotateCw className="mr-2 h-4 w-4" />
-							Retry
-						</Button>
-					</div>
-				) : groups.length > 0 ? (
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragStart={handleGroupDragStart}
-						onDragEnd={handleGroupDragEnd}
-						modifiers={[restrictToVerticalAxis]}
-					>
-						<SortableContext
-							items={groups.map(groupId)}
-							strategy={verticalListSortingStrategy}
-						>
-							{groups.map((group) => (
-								<SortableGroup key={group.id} group={group} />
-							))}
-						</SortableContext>
-
-						<DragOverlay>
-							{activeGroupId && (
-								<Card className="shadow-md w-full opacity-80 border-2 border-primary">
-									<CardHeader>
-										<CardTitle className="text-lg font-medium">
-											{groups.find((g) => g.id === activeGroupId)?.name}
-										</CardTitle>
-									</CardHeader>
-								</Card>
-							)}
-						</DragOverlay>
-					</DndContext>
-				) : (
-					<div className="flex flex-col items-center justify-center py-12 text-center">
-						<div className="mb-4 rounded-full bg-muted-foreground/20 p-4">
-							<FolderOpen className="h-8 w-8 text-muted-foreground" />
+							</div>
+							<button type="button" aria-label="Remove from group" onClick={() => remove(company)} className={roundButton}>
+								<Minus className="size-2.5" strokeWidth={3} />
+							</button>
 						</div>
-						<h3 className="mb-2 text-lg font-semibold">
-							No groups created yet
-						</h3>
-						<p className="text-sm text-muted-foreground mb-6 max-w-md">
-							Create your first group above to start organizing your favorite
-							companies.
-						</p>
+					))}
+					{count === 0 && (
+						<div className="mr-[11px] border-t border-divider pt-2.5 pr-3.5 pb-1 pl-[39px] text-[13.5px] text-muted-foreground">
+							No companies yet.
+						</div>
+					)}
+					<div className="pt-1.5 pl-[34px]">
+						<Menu.Root>
+							<Menu.Trigger className="-my-2 cursor-pointer px-[5px] py-3 text-[13.5px] text-primary-text hover:opacity-80">Add from saved…</Menu.Trigger>
+							<Menu.Portal>
+								<Menu.Content align="start" sideOffset={4} className={`${menu} w-[min(300px,calc(100vw-80px))]`}>
+									{addable.map((company) => (
+										<Menu.Item key={companyId(company)} className={menuItem} onSelect={() => add(company)}>
+											<span className="min-w-0 flex-1 truncate">{company.organisationName ?? company.registrationNo}</span>
+										</Menu.Item>
+									))}
+									{addable.length === 0 && (
+										<div className="px-[9px] py-2 text-[13px] text-muted-foreground">
+											{library.favouriteCount === 0 ? "You have no saved companies yet." : "Every saved company is already here."}
+										</div>
+									)}
+								</Menu.Content>
+							</Menu.Portal>
+						</Menu.Root>
 					</div>
-				)}
-			</CardContent>
-		</Card>
+				</div>
+			</Disclosure>
+		</div>
+	);
+});
+
+/** The groups a user sorts companies into. */
+const Organiser = observer(() => {
+	const location = useLocation();
+	const input = useRef<HTMLInputElement>(null);
+	const [name, setName] = useState("");
+	const [creating, setCreating] = useState(false);
+	const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+
+	// "New group…" on a saved company's menu lands here, ready to type the name.
+	const newGroupAsked = (location.state as { newGroup?: boolean } | null)?.newGroup === true;
+	useEffect(() => {
+		if (newGroupAsked) input.current?.focus();
+	}, [newGroupAsked]);
+
+	const toggle = (id: string) =>
+		setOpen((before) => {
+			const after = new Set(before);
+			if (!after.delete(id)) after.add(id);
+			return after;
+		});
+
+	const create = async () => {
+		const trimmed = name.trim();
+		if (!trimmed || creating) return;
+
+		setCreating(true);
+		const result = await library.createGroup(trimmed);
+		setCreating(false);
+
+		if (!result.ok) return toast.error("The group could not be created. Please try again.");
+		setName("");
+		// A new group comes first, and opens ready to be filled.
+		const created = library.groups[0];
+		if (created) setOpen((before) => new Set(before).add(created.id));
+		flash(`Group "${trimmed}" created.`);
+	};
+
+	return (
+		<Page>
+			<PageHeader title="Groups" subtitle="Organise saved companies by client, deal or sector." />
+
+			<div className="mt-[22px] flex items-center gap-2">
+				<input
+					ref={input}
+					value={name}
+					maxLength={100}
+					onChange={(event) => setName(event.target.value)}
+					onKeyDown={(event) => {
+						if (event.key === "Enter") void create();
+					}}
+					placeholder="New group name"
+					aria-label="New group name"
+					className="h-11 min-w-0 flex-1 rounded-lg border-0 bg-field px-2.5 text-[14px] text-foreground outline-none placeholder:text-muted-foreground min-[860px]:h-8"
+				/>
+				<button type="button" disabled={!name.trim() || creating} onClick={create} className={pill({ tone: "accent" })}>
+					Create
+				</button>
+			</div>
+
+			{(library.status === "idle" || library.status === "loading") && <Loading className="mt-5 h-40" />}
+
+			{library.status === "error" && <Failed onRetry={library.reload}>Something went wrong while loading your groups.</Failed>}
+
+			{library.status === "loaded" && library.groups.length > 0 && (
+				<div className="mt-5 flex flex-col gap-3">
+					{library.groups.map((group) => (
+						<GroupCard key={group.id} group={group} open={open.has(group.id)} onToggle={() => toggle(group.id)} />
+					))}
+				</div>
+			)}
+
+			{library.status === "loaded" && library.groups.length === 0 && (
+				<EmptyCard title="No groups">
+					<p className="mt-1.5 mb-0 text-[14px] text-muted-foreground">Name your first group above.</p>
+				</EmptyCard>
+			)}
+		</Page>
 	);
 });
 

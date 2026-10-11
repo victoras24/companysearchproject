@@ -1,7 +1,7 @@
 import { Plans } from "./Plans";
 import { plansApi } from "./plansApi";
 
-export { arrivalNote, arrivalOf, planLabel, priceText } from "./Plans";
+export { amountText, arrivalNote, arrivalOf, planLabel, planStep, priceText } from "./Plans";
 export type { PlanName, PlanOffer } from "./Plans";
 
 /** The app's one plans. Components read it inside an observer. */

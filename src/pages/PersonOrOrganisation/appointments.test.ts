@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IRelatedCompany } from "@/gEntities";
-import { filterAppointments, roleStats } from "./appointments";
+import { filterAppointments, roleStats, secretaryLast } from "./appointments";
 
 const appointment = (organisationName: string, registrationNo: string, officialPosition: string): IRelatedCompany => ({
 	organisationName,
@@ -33,6 +33,19 @@ describe("roleStats", () => {
 		const many = [...all, appointment("X LTD", "1", "Ιδιοκτήτης"), appointment("Y LTD", "2", "Εκκαθαριστής")];
 
 		expect(roleStats(many).map((stat) => stat.position)).toEqual([null, "Διευθυντής", "Μέτοχος", "Γραμματέας"]);
+	});
+
+	it("shows every position when asked for all of them", () => {
+		const many = [...all, appointment("X LTD", "1", "Ιδιοκτήτης"), appointment("Y LTD", "2", "Εκκαθαριστής")];
+
+		expect(roleStats(many, Infinity).map((stat) => stat.position)).toEqual([
+			null,
+			"Διευθυντής",
+			"Μέτοχος",
+			"Γραμματέας",
+			"Ιδιοκτήτης",
+			"Εκκαθαριστής",
+		]);
 	});
 
 	it("takes positions that differ only in spacing as one, and leaves out a missing one", () => {
@@ -77,5 +90,33 @@ describe("filterAppointments", () => {
 
 	it("applies the position and the text together", () => {
 		expect(names(filterAppointments(all, "Διευθυντής", "bulk"))).toEqual(["AEGEAN BULK CARRIERS LTD"]);
+	});
+});
+
+describe("secretaryLast", () => {
+	const official = (personOrOrganisationName: string, officialPosition: string | null) => ({ personOrOrganisationName, officialPosition });
+	const names = (list: { personOrOrganisationName: string }[]) => list.map((o) => o.personOrOrganisationName);
+
+	it("moves the secretaries after everyone else, keeping the registry's order otherwise", () => {
+		const officials = [
+			official("LIMASSOL CORPORATE SECRETARIES LTD", "Γραμματέας"),
+			official("ELENA CHARALAMBOUS", "Διευθυντής"),
+			official("NOMINEE SECRETARIES LTD", "Βοηθός Γραμματέας"),
+			official("ANDREAS GEORGIOU", "Διευθυντής"),
+		];
+
+		expect(names(secretaryLast(officials))).toEqual([
+			"ELENA CHARALAMBOUS",
+			"ANDREAS GEORGIOU",
+			"LIMASSOL CORPORATE SECRETARIES LTD",
+			"NOMINEE SECRETARIES LTD",
+		]);
+	});
+
+	it("knows the position in English too, and leaves one with no position where it is", () => {
+		const officials = [official("A", "Secretary"), official("B", null), official("C", "Director")];
+
+		expect(names(secretaryLast(officials))).toEqual(["B", "C", "A"]);
+		expect(names(officials)).toEqual(["A", "B", "C"]);
 	});
 });

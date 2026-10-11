@@ -17,6 +17,7 @@ import {
 	statusLabel,
 	statusLine,
 } from "@/organisation/organisation";
+import { positionLabel } from "@/organisation/position";
 import { Rise } from "@/site/motion";
 import { SitePage } from "@/site/SitePage";
 import { StatusBadge } from "@/site/StatusBadge";
@@ -272,7 +273,7 @@ const OrganisationDetails: React.FC = observer(() => {
 												>
 													{person.personOrOrganisationName}
 												</Link>
-												<div className="mt-[3px] text-[13.5px] text-muted-foreground">{person.officialPosition}</div>
+												<div className="mt-[3px] text-[13.5px] text-muted-foreground">{positionLabel(person.officialPosition)}</div>
 											</div>
 											<div className="flex flex-wrap items-center gap-1.5">
 												{LOCKED_FIELDS.map((field) => (
@@ -323,7 +324,7 @@ const OrganisationDetails: React.FC = observer(() => {
 												<div className="min-w-0 flex-1">
 													<div className="text-[15.5px] font-semibold">{appointment.organisationName}</div>
 													<div className="mt-[3px] text-[13.5px] text-muted-foreground">
-														Official position: {appointment.officialPosition}
+														Official position: {positionLabel(appointment.officialPosition)}
 													</div>
 												</div>
 												{path && <span className="text-[18px] text-faint">→</span>}

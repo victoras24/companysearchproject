@@ -42,6 +42,8 @@ export type SearchView =
 			status: "results";
 			entityType: "organisation";
 			items: ICompany[];
+			/** How many organisations match, over all pages. */
+			total: number;
 			pager: Pager | null;
 	  }
 	| {
@@ -169,6 +171,7 @@ export class SearchSession {
 			status: "results",
 			entityType: "organisation",
 			items: outcome.items as ICompany[],
+			total: outcome.total,
 			pager: this.pagerFor(outcome.total),
 		};
 	}

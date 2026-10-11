@@ -16,7 +16,7 @@ const NAV: Array<{ id: NavId; label: string }> = [
 ];
 
 /** Where the web app starts for a signed-in user. */
-export const APP_HOME = "/favorites";
+export const APP_HOME = "/app";
 
 type Props = {
 	/** The section of the home page this page belongs to, or the one in view on the home page. */

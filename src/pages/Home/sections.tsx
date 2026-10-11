@@ -153,7 +153,7 @@ export const PlansSection = observer(() => {
 								<div className={`my-5 h-px ${popular ? "bg-[#3A8A6E]" : "bg-border"}`} />
 								<div className="flex-1 text-[14.5px] leading-normal">{swapsLine(offer)}</div>
 								<Link
-									to={signedIn ? "/plans" : "/signup"}
+									to={signedIn ? "/app/plans" : "/signup"}
 									className={`mt-6 rounded-[14px] border p-[13px] text-center text-[15px] font-semibold ${
 										popular ? "border-white bg-white text-[#0A3B2C]" : "border-[#CFE0D7] bg-white text-[#0E6B4F]"
 									}`}
@@ -250,7 +250,7 @@ export const AppBand = observer(() => {
 				</p>
 				<div className="mt-8 flex flex-wrap justify-center gap-2.5">
 					{signedIn ? (
-						<Link to="/tracking" className={`${primaryPill} px-[26px] py-3.5 text-[15.5px]`}>
+						<Link to="/app/tracking" className={`${primaryPill} px-[26px] py-3.5 text-[15.5px]`}>
 							Open web app
 						</Link>
 					) : (

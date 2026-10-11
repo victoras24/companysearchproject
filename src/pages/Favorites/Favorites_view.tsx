@@ -1,45 +1,8 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { observer } from "mobx-react";
 import { toast } from "sonner";
-import { OptionalLink } from "@/components/OptionalLink";
-import { detailsPath } from "@/organisation/organisation";
-import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
-import { RegistryNote } from "@/library/RegistryNote";
-import { useLocalOrder } from "@/library/useLocalOrder";
-
-// Shadcn Components
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Icons
-import { Plus, X, GripVertical, FolderPlus, Trash2, RotateCw } from "lucide-react";
-
-// Drag and Drop Library
+import * as Menu from "@radix-ui/react-dropdown-menu";
 import {
 	DndContext,
 	closestCenter,
@@ -49,226 +12,207 @@ import {
 	useSensors,
 	type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-	SortableContext,
-	sortableKeyboardCoordinates,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { MoreHorizontal, Radio, Search } from "lucide-react";
+import { flash, removeSaved, toggleTrack } from "@/app/actions";
+import { APP } from "@/app/routes";
+import { box, CompanyLink, EmptyCard, Failed, Loading, menu, menuDangerItem, menuItem, menuLabel, Page, PageHeader, pill, Status } from "@/app/ui";
+import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
+import { useLocalOrder } from "@/library/useLocalOrder";
+import { tracking } from "@/tracking";
 
-interface SortableTableRowProps {
-	company: LibraryCompany;
-	groups: LibraryGroup[];
-	id: string;
+const inGroup = (group: LibraryGroup, company: LibraryCompany) =>
+	group.companies.some((c) => companyId(c) === companyId(company));
+
+/** Puts a company in a group, or takes it out when it is there. */
+async function toggleInGroup(group: LibraryGroup, company: LibraryCompany) {
+	const has = inGroup(group, company);
+	const result = has ? await library.removeFromGroup(group.id, company) : await library.addToGroup(group.id, company);
+
+	if (!result.ok) toast.error(`"${group.name}" could not be changed. Please try again.`);
+	else flash(has ? `Removed from ${group.name}.` : `Added to ${group.name}.`);
 }
 
-const addToGroup = async (company: LibraryCompany, group: LibraryGroup) => {
-	const result = await library.addToGroup(group.id, company);
-	if (!result.ok) {
-		toast.error("Failed to add company to group");
-	} else if (result.added) {
-		toast.success(`${company.organisationName} added to group "${group.name}"`);
-	} else {
-		toast.error(`${company.organisationName} is already in group "${group.name}"`);
-	}
+type RowProps = {
+	company: LibraryCompany;
+	menuOpen: boolean;
+	onMenuOpenChange: (open: boolean) => void;
 };
 
-const removeFavourite = async (company: LibraryCompany) => {
-	const result = await library.removeFavourite(company);
-	if (!result.ok) toast.error("Failed to update saved companies");
-};
-
-const SortableTableRow: React.FC<SortableTableRowProps> = ({ company, groups, id }) => {
-	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id });
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
-
+/** A saved company: a row that can be dragged by its handle. */
+const SavedRow = observer(({ company, menuOpen, onMenuOpenChange }: RowProps) => {
 	const navigate = useNavigate();
+	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: companyId(company) });
+
+	const tracked = tracking.isTracked(company);
+	const groups = library.groups.filter((group) => inGroup(group, company));
 
 	return (
-		<TableRow ref={setNodeRef} style={style} className="hover:bg-accent">
-			<TableCell className="w-10">
-				<div {...attributes} {...listeners} className="cursor-grab">
-					<GripVertical className="h-4 w-4 text-muted-foreground" />
+		<div
+			ref={setNodeRef}
+			style={{ transform: CSS.Translate.toString(transform), transition }}
+			className={`app-row flex items-center gap-2 py-[9px] pr-2 pl-1 transition-[background-color,box-shadow] duration-200 ${
+				isDragging ? "z-10 bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)]" : "hover:bg-hover"
+			}`}
+		>
+			<button
+				type="button"
+				aria-label={`Move ${company.organisationName ?? "company"}`}
+				{...attributes}
+				{...listeners}
+				className="grid w-[22px] flex-none cursor-grab touch-none place-items-center self-stretch text-faint"
+			>
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+					<rect x="4" y="6" width="16" height="2" rx="1" />
+					<rect x="4" y="11" width="16" height="2" rx="1" />
+					<rect x="4" y="16" width="16" height="2" rx="1" />
+				</svg>
+			</button>
+			<div className="min-w-0 flex-1">
+				<CompanyLink company={company} from="Saved" linked={company.inRegistry} className="text-[14.5px] font-medium" />
+				<div className="mt-[3px] flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted-foreground">
+					<span className="app-mono text-[12px]">{company.registrationNo}</span>
+					{company.inRegistry ? <Status organisation={company} /> : <span>No longer in registry</span>}
+					{groups.map((group) => (
+						<span key={group.id} className="text-text2">
+							· {group.name}
+						</span>
+					))}
 				</div>
-			</TableCell>
-			<TableCell className="font-medium">
-				<OptionalLink to={company.inRegistry ? detailsPath(company) : null}>
-					{company.organisationName}
-					<RegistryNote company={company} />
-				</OptionalLink>
-			</TableCell>
-			<TableCell>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm">
-							<Plus className="h-4 w-4 mr-1" />
-							Add to Group
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-48">
-						<DropdownMenuLabel>Select Group</DropdownMenuLabel>
-						<DropdownMenuSeparator />
-						{groups.length > 0 ? (
-							groups.map((group) => (
-								<DropdownMenuItem
-									key={group.id}
-									onClick={() => addToGroup(company, group)}
-								>
-									{group.name}
-								</DropdownMenuItem>
-							))
-						) : (
-							<DropdownMenuItem disabled>No groups created</DropdownMenuItem>
-						)}
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => navigate("/organiser")}>
-							<FolderPlus className="h-4 w-4 mr-2" />
-							Create New Group
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</TableCell>
-			<TableCell className="text-right">
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={() => removeFavourite(company)}
-					className="text-red-500 hover:text-red-700 hover:bg-red-50"
+			</div>
+			{company.inRegistry && (
+				<button
+					type="button"
+					title={tracked ? "Tracking" : "Track"}
+					aria-label={tracked ? "Tracking" : "Track"}
+					aria-pressed={tracked}
+					disabled={tracking.isBusy(company) || tracking.status !== "loaded"}
+					onClick={() => toggleTrack(company)}
+					className={pill({ size: "row", tone: tracked ? "on" : "grey" })}
 				>
-					<Trash2 className="h-4 w-4" />
-				</Button>
-			</TableCell>
-		</TableRow>
+					<Radio className="size-[13px]" strokeWidth={2} />
+					<span className="hidden min-[860px]:inline">{tracked ? "Tracking" : "Track"}</span>
+				</button>
+			)}
+			<Menu.Root open={menuOpen} onOpenChange={onMenuOpenChange}>
+				<Menu.Trigger
+					aria-label="Add to group"
+					title="Add to group"
+					className="grid size-10 flex-none cursor-pointer place-items-center rounded-full bg-field text-foreground min-[860px]:size-7"
+				>
+					<MoreHorizontal className="size-3.5" strokeWidth={2.6} />
+				</Menu.Trigger>
+				<Menu.Portal>
+					<Menu.Content align="end" sideOffset={4} className={`${menu} w-[230px]`}>
+						<Menu.Label className={menuLabel}>Add to group</Menu.Label>
+						{library.groups.map((group) => (
+							<Menu.Item key={group.id} className={menuItem} onSelect={() => toggleInGroup(group, company)}>
+								<span className="w-3 font-semibold">{inGroup(group, company) ? "✓" : ""}</span>
+								<span className="min-w-0 flex-1 truncate">{group.name}</span>
+							</Menu.Item>
+						))}
+						{library.groups.length > 0 && <Menu.Separator className="mx-[9px] my-1 h-px bg-divider" />}
+						<Menu.Item className={menuItem} onSelect={() => navigate(APP.groups, { state: { newGroup: true } })}>
+							<span className="w-3" />
+							New group…
+						</Menu.Item>
+						<Menu.Item className={menuDangerItem} onSelect={() => removeSaved(company)}>
+							<span className="w-3" />
+							Remove from saved
+						</Menu.Item>
+					</Menu.Content>
+				</Menu.Portal>
+			</Menu.Root>
+		</div>
 	);
-};
+});
 
+/** The companies a user has saved, in the order they drag them into. */
 const Favorites = observer(() => {
-	const navigate = useNavigate();
+	const [search, setSearch] = useSearchParams();
+	const [filter, setFilter] = useState("");
+	// The row whose menu is open: the one a "Saved" toast asked for, to begin with.
+	const [menuFor, setMenuFor] = useState<string | null>(() => search.get("group"));
 	// Dragging reorders the list for this visit only.
-	const [items, moveItem] = useLocalOrder(library.favourites, companyId);
+	const [ordered, move] = useLocalOrder(library.favourites, companyId);
 
 	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: {
-				distance: 5,
-			},
-		}),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
 	);
 
-	const handleDragEnd = ({ active, over }: DragEndEvent) => {
-		if (over) moveItem(String(active.id), String(over.id));
+	const onDragEnd = ({ active, over }: DragEndEvent) => {
+		if (over) move(String(active.id), String(over.id));
 	};
 
-	if (library.status === "idle" || library.status === "loading") {
-		return (
-			<Card className="w-full max-w-4xl mx-auto mt-8">
-				<CardHeader>
-					<CardTitle>Favorites</CardTitle>
-					<CardDescription>Loading your favorite companies...</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="space-y-2">
-						<Skeleton className="h-12 w-full" />
-						<Skeleton className="h-12 w-full" />
-						<Skeleton className="h-12 w-full" />
-					</div>
-				</CardContent>
-			</Card>
-		);
-	}
+	const openMenu = (id: string, open: boolean) => {
+		setMenuFor(open ? id : null);
+		if (!open && search.has("group")) setSearch({}, { replace: true });
+	};
 
-	if (library.status === "error") {
-		return (
-			<Card className="w-full max-w-4xl mx-auto mt-8">
-				<CardHeader>
-					<CardTitle>Favorites</CardTitle>
-					<CardDescription>
-						Something went wrong while loading your favorite companies.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<Button variant="outline" onClick={library.reload}>
-						<RotateCw className="mr-2 h-4 w-4" />
-						Retry
-					</Button>
-				</CardContent>
-			</Card>
-		);
-	}
+	const count = library.favouriteCount;
+	const text = filter.trim().toLowerCase();
+	const rows = text ? ordered.filter((company) => (company.organisationName ?? "").toLowerCase().includes(text)) : ordered;
 
 	return (
-		<Card className="w-full max-w-4xl mx-auto mt-8">
-			<CardHeader>
-				<CardTitle className="text-2xl font-bold">Favorites</CardTitle>
-				<CardDescription>
-					View and manage all your marked favorite companies in one place.
-					Easily add, remove, or explore details about your top choices.
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				{items.length > 0 ? (
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
-						modifiers={[restrictToVerticalAxis]}
-					>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="w-10"></TableHead>
-									<TableHead>Company Name</TableHead>
-									<TableHead>Groups</TableHead>
-									<TableHead className="text-right">Actions</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								<SortableContext
-									items={items.map(companyId)}
-									strategy={verticalListSortingStrategy}
-								>
-									{items.map((company) => (
-										<SortableTableRow
-											key={companyId(company)}
-											id={companyId(company)}
-											company={company}
-											groups={library.groups}
-										/>
-									))}
-								</SortableContext>
-							</TableBody>
-						</Table>
-					</DndContext>
-				) : (
-					<Alert variant="default" className="bg-muted">
-						<AlertDescription className="flex flex-col items-center justify-center py-6 text-center">
-							<div className="mb-4 rounded-full bg-muted-foreground/20 p-3">
-								<X className="h-6 w-6 text-muted-foreground" />
-							</div>
-							<h3 className="mb-1 text-lg font-semibold">No favorites saved</h3>
-							<p className="text-sm text-muted-foreground mb-4">
-								You haven't added any companies to your favorites yet.
-							</p>
-							<Button
-								onClick={() => navigate("/cyprus-company-search")}
-								className="mt-2"
-							>
-								Browse Companies
-							</Button>
-						</AlertDescription>
-					</Alert>
+		<Page>
+			<PageHeader
+				title="Saved"
+				subtitle={library.status === "loaded" ? `${count} ${count === 1 ? "company" : "companies"} · drag to reorder` : undefined}
+			>
+				{count > 0 && (
+					<label className="flex h-11 min-w-[180px] flex-[0_1_240px] items-center gap-[7px] rounded-lg bg-field px-2.5 text-muted-foreground min-[860px]:h-8">
+						<Search className="size-[13px] flex-none" strokeWidth={2.2} />
+						<input
+							value={filter}
+							onChange={(event) => setFilter(event.target.value)}
+							placeholder="Filter"
+							aria-label="Filter saved companies"
+							className="min-w-0 flex-1 border-0 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
+						/>
+					</label>
 				)}
-			</CardContent>
-		</Card>
+			</PageHeader>
+
+			{(library.status === "idle" || library.status === "loading") && <Loading className="mt-[22px] h-48" />}
+
+			{library.status === "error" && (
+				<Failed onRetry={library.reload} className="mt-[22px]">
+					Something went wrong while loading your saved companies.
+				</Failed>
+			)}
+
+			{library.status === "loaded" && count > 0 && (
+				<div className={`${box} app-rows mt-[22px] py-[5px] [--row-line-left:32px]`}>
+					<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
+						<SortableContext items={rows.map(companyId)} strategy={verticalListSortingStrategy}>
+							{rows.map((company) => (
+								<SavedRow
+									key={companyId(company)}
+									company={company}
+									menuOpen={menuFor === companyId(company)}
+									onMenuOpenChange={(open) => openMenu(companyId(company), open)}
+								/>
+							))}
+						</SortableContext>
+					</DndContext>
+					{rows.length === 0 && (
+						<div className="px-4 py-5 text-[14px] text-muted-foreground">No saved company matches "{filter.trim()}".</div>
+					)}
+				</div>
+			)}
+
+			{library.status === "loaded" && count === 0 && (
+				<EmptyCard title="No saved companies" className="mt-[22px]">
+					<p className="mt-1.5 mb-0 text-[14px] text-muted-foreground">Press Save on any search result to keep it here.</p>
+					<Link to={APP.search} className={`${pill({ tone: "accent" })} mt-4`}>
+						Search companies
+					</Link>
+				</EmptyCard>
+			)}
+		</Page>
 	);
 });
 

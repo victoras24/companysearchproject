@@ -115,6 +115,24 @@ export class Plans {
 export const planLabel = (plan: PlanName): string =>
 	({ free: "Free", basic: "Basic", starter: "Starter", pro: "Pro" })[plan];
 
+/** The plans, smallest first. */
+const ORDER: readonly PlanName[] = ["free", "basic", "starter", "pro"];
+
+/**
+ * What going from the plan a user is on (null while it is not known) to another takes: nothing
+ * for the one they are on when it is Free, the portal to manage a paid one, the payment page to
+ * start one from Free, the portal to move between paid plans, or cancelling to go back to Free.
+ */
+export type PlanStep = "current" | "manage" | "start" | "upgrade" | "downgrade" | "cancel";
+
+export function planStep(current: PlanName | null, to: PlanName): PlanStep {
+	const from = current ?? "free";
+	if (to === from) return to === "free" ? "current" : "manage";
+	if (from === "free") return "start";
+	if (to === "free") return "cancel";
+	return ORDER.indexOf(to) > ORDER.indexOf(from) ? "upgrade" : "downgrade";
+}
+
 /** Null for a user who did not just come back from the payment provider. */
 export function arrivalOf(search: URLSearchParams): Arrival | null {
 	const changed = search.get("changed");
@@ -154,12 +172,15 @@ export function arrivalNote(arrival: Arrival | null, current: PlanName | null): 
 
 /** "Free", or the month's price: "€9 a month". */
 export function priceText(offer: PlanOffer): string {
-	if (!offer.price) return "Free";
+	return offer.price ? `${amountText(offer)} a month` : "Free";
+}
 
-	const amount = new Intl.NumberFormat("en-IE", {
+/** The month's price alone, "€9"; "€0" for Free. */
+export function amountText(offer: PlanOffer): string {
+	const { amount, currency } = offer.price ?? { amount: 0, currency: "eur" };
+	return new Intl.NumberFormat("en-IE", {
 		style: "currency",
-		currency: offer.price.currency.toUpperCase(),
-		minimumFractionDigits: Number.isInteger(offer.price.amount) ? 0 : 2,
-	}).format(offer.price.amount);
-	return `${amount} a month`;
+		currency: currency.toUpperCase(),
+		minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+	}).format(amount);
 }

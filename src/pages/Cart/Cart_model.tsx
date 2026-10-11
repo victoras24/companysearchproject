@@ -60,29 +60,34 @@ export class CartModel {
 		}
 	};
 
+	/** `announce: false` is for a page that says what happened itself. */
 	@action
-	addItem = (item: ICartItem) => {
+	addItem = (item: ICartItem, { announce = true }: { announce?: boolean } = {}) => {
 		const id = idOf(item);
 		const existingItem = this.cartItems.find((cartItem) => idOf(cartItem) === id);
 		if (existingItem) {
-			toast.warning(
-				`The report for ${item.organisationName} is already in the cart`
-			);
+			if (announce) {
+				toast.warning(
+					`The report for ${item.organisationName} is already in the cart`
+				);
+			}
 		} else {
 			this.cartItems.push(item);
 			this.saveCartToStorage(); // Save to localStorage after adding
-			toast.success("Full Company Report added to cart", { description: item.organisationName });
+			if (announce) {
+				toast.success("Full Company Report added to cart", { description: item.organisationName });
+			}
 		}
 	};
 
 	@action
-	removeItem = (key: CartKey) => {
+	removeItem = (key: CartKey, { announce = true }: { announce?: boolean } = {}) => {
 		const id = idOf(key);
 		const itemToRemove = this.cartItems.find((item) => idOf(item) === id);
 		this.cartItems = this.cartItems.filter((item) => idOf(item) !== id);
 		this.saveCartToStorage(); // Save to localStorage after removing
 
-		if (itemToRemove) {
+		if (itemToRemove && announce) {
 			toast.success(`Removed ${itemToRemove.organisationName} from your cart`);
 		}
 	};

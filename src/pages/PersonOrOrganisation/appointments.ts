@@ -5,8 +5,8 @@ export type RoleStat = { position: string | null; count: number };
 
 const MOST_HELD = 3;
 
-/** The total first, then the positions held most. The registry's own word names each position. */
-export function roleStats(appointments: IRelatedCompany[]): RoleStat[] {
+/** The total first, then the positions held most, up to a limit. The registry's own word names each position. */
+export function roleStats(appointments: IRelatedCompany[], limit: number = MOST_HELD): RoleStat[] {
 	const counts = new Map<string, number>();
 	for (const appointment of appointments) {
 		const position = appointment.officialPosition?.trim();
@@ -16,7 +16,7 @@ export function roleStats(appointments: IRelatedCompany[]): RoleStat[] {
 	const positions = [...counts]
 		.map(([position, count]) => ({ position, count }))
 		.sort((a, b) => b.count - a.count)
-		.slice(0, MOST_HELD);
+		.slice(0, limit);
 	return [{ position: null, count: appointments.length }, ...positions];
 }
 
@@ -34,4 +34,13 @@ export function filterAppointments(
 				appointment.organisationName?.toLowerCase().includes(wanted) ||
 				appointment.registrationNo?.toLowerCase().includes(wanted))
 	);
+}
+
+// The registry's word for a secretary, and the English one.
+const SECRETARY = /γραμματ|secretar/i;
+
+/** A company's officials with its secretaries after everyone else, otherwise in the registry's order. */
+export function secretaryLast<T extends { officialPosition?: string | null }>(officials: T[]): T[] {
+	const isSecretary = (official: T) => SECRETARY.test(official.officialPosition ?? "");
+	return [...officials.filter((official) => !isSecretary(official)), ...officials.filter(isSecretary)];
 }

@@ -51,9 +51,9 @@ export function HomeFooter() {
 					<div className={column}>
 						<div className={heading}>Web app</div>
 						<Link to="/login" className={link}>Log in</Link>
-						<Link to="/favorites" className={link}>Favourites</Link>
-						<Link to="/organiser" className={link}>Organiser</Link>
-						<Link to="/tracking" className={link}>Tracking</Link>
+						<Link to="/app/saved" className={link}>Favourites</Link>
+						<Link to="/app/groups" className={link}>Organiser</Link>
+						<Link to="/app/tracking" className={link}>Tracking</Link>
 					</div>
 					<div className={column}>
 						<div className={heading}>Legal</div>

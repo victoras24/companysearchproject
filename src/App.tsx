@@ -1,6 +1,5 @@
-import Layout from "./layout";
 import "../global.css";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import { RequireUser } from "./auth/RequireUser";
 import OrganisationDetails from "./pages/OrganisationDetails/OrganisationDetails_view";
 import Favorites from "./pages/Favorites/Favorites_view";
@@ -24,6 +23,12 @@ import BlogPost from "./pages/Blog/BlogPosts_view";
 import { ScrollToTop } from "./site/ScrollToTop";
 import { NotFound } from "./site/NotFound";
 import { setNavigator } from "./lib/navigation";
+import AppShell from "./app/AppShell";
+import Overview from "./pages/Overview/Overview_view";
+import AppSearch from "./pages/AppSearch/AppSearch_view";
+import AppCompany from "./pages/AppCompany/AppCompany_view";
+import AppOfficial from "./pages/AppOfficial/AppOfficial_view";
+import AppCart from "./pages/AppCart/AppCart_view";
 
 const Home = lazy(() => import("./pages/Home/Home"));
 
@@ -52,6 +57,12 @@ function NavigationBridge() {
 		return () => setNavigator(null);
 	}, [navigate]);
 	return null;
+}
+
+/** An old address of one of the app's screens: goes to the new one, keeping what followed the "?". */
+function MovedTo({ to }: { to: string }) {
+	const { search } = useLocation();
+	return <Navigate to={to + search} replace />;
 }
 
 function AppRoutes() {
@@ -85,43 +96,34 @@ function AppRoutes() {
 					<Route path="reset-password" element={<AuthPage form="reset" />} />
 					<Route path="auth/callback" element={<AuthCallback />} />
 
-					{/* The web app: a signed-in user's pages, beside the sidebar. */}
-					<Route element={<Layout />}>
-						<Route
-							path="favorites"
-							element={
-								<RequireUser>
-									<Favorites />
-								</RequireUser>
-							}
-						/>
-						<Route
-							path="organiser"
-							element={
-								<RequireUser>
-									<Organiser />
-								</RequireUser>
-							}
-						/>
-						<Route
-							path="tracking"
-							element={
-								<RequireUser>
-									<Tracking />
-								</RequireUser>
-							}
-						/>
-						<Route
-							path="account"
-							element={
-								<RequireUser>
-									<AccountDetails />
-								</RequireUser>
-							}
-						/>
+					{/* The web app: a signed-in user's screens, inside its own shell. */}
+					<Route
+						path="app"
+						element={
+							<RequireUser>
+								<AppShell />
+							</RequireUser>
+						}
+					>
+						<Route index element={<Overview />} />
+						<Route path="search" element={<AppSearch />} />
+						<Route path="company/:typeCode/:registrationNo" element={<AppCompany />} />
+						<Route path="official/:name" element={<AppOfficial />} />
+						<Route path="saved" element={<Favorites />} />
+						<Route path="groups" element={<Organiser />} />
+						<Route path="tracking" element={<Tracking />} />
 						<Route path="plans" element={<Plans />} />
-						<Route path="alerts/unsubscribe" element={<Unsubscribe />} />
+						<Route path="account" element={<AccountDetails />} />
+						<Route path="cart" element={<AppCart />} />
 					</Route>
+
+					{/* Where the app's screens used to live: emails and the payment provider still send users there. */}
+					<Route path="favorites" element={<MovedTo to="/app/saved" />} />
+					<Route path="organiser" element={<MovedTo to="/app/groups" />} />
+					<Route path="tracking" element={<MovedTo to="/app/tracking" />} />
+					<Route path="plans" element={<MovedTo to="/app/plans" />} />
+					<Route path="account" element={<MovedTo to="/app/account" />} />
+					<Route path="alerts/unsubscribe" element={<Unsubscribe />} />
 
 					<Route path="*" element={<NotFound />} />
 				</Routes>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { NavLink, useSearchParams } from "react-router-dom";
 import { BellOff, Info, Loader2, RotateCw } from "lucide-react";
 import { auth } from "@/auth";
+import { SitePage } from "@/site/SitePage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { turnAlertEmailsOff } from "@/tracking/alertsApi";
@@ -30,7 +31,8 @@ const Unsubscribe: React.FC = () => {
 	}, [unsubscribe]);
 
 	return (
-		<div className="container mx-auto max-w-2xl p-6 space-y-6">
+		<SitePage header={{ only: { to: "/", label: "Continue searching" } }}>
+		<div className="mx-auto max-w-2xl space-y-6">
 			<h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
 				<BellOff className="h-7 w-7" /> Alert emails
 			</h1>
@@ -46,9 +48,9 @@ const Unsubscribe: React.FC = () => {
 					<p className="text-lg">Your alert emails are now off.</p>
 					<p className="text-muted-foreground">
 						We will not email you about changes in your tracked organisations any more. The
-						changes still show on your <NavLink to="/tracking" className="underline">Tracking</NavLink> page,
+						changes still show on your <NavLink to="/app/tracking" className="underline">Tracking</NavLink> page,
 						and you can turn the emails back on in your{" "}
-						<NavLink to="/account" className="underline">account settings</NavLink>.
+						<NavLink to="/app/account" className="underline">account settings</NavLink>.
 					</p>
 				</div>
 			)}
@@ -59,7 +61,7 @@ const Unsubscribe: React.FC = () => {
 					<AlertDescription>
 						<span>
 							This unsubscribe link is not valid, so nothing was changed. You can turn alert
-							emails off in your <NavLink to="/account" className="underline">account settings</NavLink>.
+							emails off in your <NavLink to="/app/account" className="underline">account settings</NavLink>.
 						</span>
 					</AlertDescription>
 				</Alert>
@@ -80,6 +82,7 @@ const Unsubscribe: React.FC = () => {
 				</div>
 			)}
 		</div>
+		</SitePage>
 	);
 };
 

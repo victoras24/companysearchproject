@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+	changeTitle,
+	checkedText,
 	checkLine,
 	dayText,
+	shortDay,
 	Tracking,
 	type TrackedDetails,
 	type TrackedOrganisation,
@@ -817,6 +820,71 @@ describe("Tracking", () => {
 			expect(
 				checkLine({ firstCheckInProgress: false, checksFailing: false, lastCheckedAt: "2026-10-09T01:30:00+00:00" })
 			).toBeNull();
+		});
+	});
+
+	describe("what a check says on the tracking page", () => {
+		const now = new Date(2026, 9, 11, 9, 0);
+		const at = (...time: [number, number, number, number, number]) => new Date(...time).toISOString();
+
+		it("says a first check is running", () => {
+			expect(checkedText({ firstCheckInProgress: true, checksFailing: false, lastCheckedAt: null }, now)).toBe(
+				"First check running against the registry…"
+			);
+		});
+
+		it("says when it was last checked: today, or the day", () => {
+			expect(
+				checkedText({ firstCheckInProgress: false, checksFailing: false, lastCheckedAt: at(2026, 9, 11, 2, 14) }, now)
+			).toBe("Checked today at 02:14");
+			expect(
+				checkedText({ firstCheckInProgress: false, checksFailing: false, lastCheckedAt: at(2026, 9, 9, 1, 30) }, now)
+			).toBe("Checked 9 Oct at 01:30");
+		});
+
+		it("says what failing checks say", () => {
+			const failing = { firstCheckInProgress: false, checksFailing: true, lastCheckedAt: "2026-10-06T12:00:00+00:00" };
+
+			expect(checkedText(failing, now)).toBe(checkLine(failing));
+		});
+
+		it("says so when it was never checked", () => {
+			expect(checkedText({ firstCheckInProgress: false, checksFailing: false, lastCheckedAt: null }, now)).toBe(
+				"Not checked yet"
+			);
+		});
+	});
+
+	describe("short dates", () => {
+		const now = new Date(2026, 9, 11, 9, 0);
+
+		it("leaves the year out of a day in this year", () => {
+			expect(shortDay("2026-10-09T12:00:00+00:00", now)).toBe("9 Oct");
+			expect(shortDay("2026-03-02", now)).toBe("2 Mar");
+		});
+
+		it("gives the year of a day in another", () => {
+			expect(shortDay("2025-12-16", now)).toBe("16 Dec 2025");
+		});
+
+		it("gives nothing for what is not a date", () => {
+			expect(shortDay(null, now)).toBeNull();
+			expect(shortDay("not a date", now)).toBeNull();
+		});
+	});
+
+	describe("what a change is called", () => {
+		it("names each kind", () => {
+			expect(
+				(["filing", "pending_service", "status", "official", "address", "name"] as const).map(changeTitle)
+			).toEqual([
+				"New filing",
+				"Pending service",
+				"Status changed",
+				"Officials changed",
+				"Registered address changed",
+				"Name changed",
+			]);
 		});
 	});
 

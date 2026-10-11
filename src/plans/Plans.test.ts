@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { arrivalNote, arrivalOf, planLabel, Plans, priceText, type PlanOffer, type PlansPort } from "./Plans";
+import {
+	amountText,
+	arrivalNote,
+	arrivalOf,
+	planLabel,
+	Plans,
+	planStep,
+	priceText,
+	type PlanOffer,
+	type PlansPort,
+} from "./Plans";
 
 const flush = async () => {
 	for (let i = 0; i < 20; i++) await Promise.resolve();
@@ -251,6 +261,34 @@ describe("Plans", () => {
 			expect(priceText(OFFERS[1])).toBe("€3.99 a month");
 			expect(priceText(OFFERS[2])).toBe("€9 a month");
 			expect(priceText({ ...OFFERS[3], price: { amount: 29.5, currency: "eur" } })).toBe("€29.50 a month");
+		});
+		it("gives the amount alone for a plan's card", () => {
+			expect(OFFERS.map(amountText)).toEqual(["€0", "€3.99", "€9", "€29"]);
+		});
+	});
+
+	describe("the step from one plan to another", () => {
+		it("is none to the plan a user is on when it is Free, and managing it when it is paid", () => {
+			expect(planStep("free", "free")).toBe("current");
+			expect(planStep("starter", "starter")).toBe("manage");
+		});
+
+		it("is starting a plan from Free, and for a user whose plan is not known yet", () => {
+			expect(planStep("free", "basic")).toBe("start");
+			expect(planStep(null, "pro")).toBe("start");
+		});
+
+		it("is an upgrade to a larger paid plan and a downgrade to a smaller one", () => {
+			expect(planStep("basic", "pro")).toBe("upgrade");
+			expect(planStep("pro", "starter")).toBe("downgrade");
+		});
+
+		it("is cancelling from a paid plan to Free", () => {
+			expect(planStep("starter", "free")).toBe("cancel");
+		});
+
+		it("is none to Free while the plan is not known", () => {
+			expect(planStep(null, "free")).toBe("current");
 		});
 	});
 });

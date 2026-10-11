@@ -3,6 +3,7 @@ import {
 	detailsPath,
 	registeredAddressText,
 	registrationDateText,
+	shortName,
 	statusGroupOf,
 	statusLabel,
 	statusLine,
@@ -151,5 +152,22 @@ describe("registeredAddressText", () => {
 		[undefined],
 	])("gives Address not available for %o", (a) => {
 		expect(registeredAddressText(a)).toBe("Address not available");
+	});
+});
+
+describe("shortName", () => {
+	it.each([
+		["AEGEAN SHIPPING HOLDINGS LTD", "AEGEAN SHIPPING HOLDINGS"],
+		["Troodos Renewables Limited", "Troodos Renewables"],
+		["KYRENIA MARINE LTD.", "KYRENIA MARINE"],
+		["PAPHOS BAY DEVELOPMENTS PUBLIC COMPANY", "PAPHOS BAY DEVELOPMENTS PUBLIC COMPANY"],
+		["LTD HOLDINGS LTD", "LTD HOLDINGS"],
+		["  UNLIMITED  ", "UNLIMITED"],
+	])("gives %s as %s", (name, short) => {
+		expect(shortName(name)).toBe(short);
+	});
+
+	it("gives nothing for no name", () => {
+		expect(shortName(null)).toBe("");
 	});
 });

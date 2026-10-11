@@ -237,6 +237,7 @@ describe("status", () => {
 			status: "results",
 			entityType: "organisation",
 			items: companies(3),
+			total: 3,
 			pager: null,
 		});
 	});
