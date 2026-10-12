@@ -11,7 +11,7 @@ const Blog: React.FC = observer(() => {
 	const signedIn = auth.state.status === "signed-in";
 
 	return (
-		<SitePage className="w-full">
+		<SitePage header={{ current: "blog" }} className="w-full">
 			<section className="mx-auto max-w-[1200px] px-[clamp(16px,4vw,28px)] pt-[clamp(56px,9vw,96px)] pb-10">
 				<Rise>
 					<div className={`${eyebrow} text-[13.5px]`}>Blog</div>

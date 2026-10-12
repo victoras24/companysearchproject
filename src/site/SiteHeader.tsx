@@ -8,11 +8,15 @@ import { ThemeToggle } from "./ThemeToggle";
 
 export type NavId = "search" | "app" | "reports" | "plans";
 
-const NAV: Array<{ id: NavId; label: string }> = [
+/** A page of its own in the navigation, beside the sections of the home page. */
+type PageId = "blog";
+
+const NAV: Array<{ id: NavId; label: string } | { id: PageId; label: string; to: string }> = [
 	{ id: "search", label: "Search" },
 	{ id: "app", label: "Web app" },
 	{ id: "reports", label: "Reports" },
 	{ id: "plans", label: "Plans" },
+	{ id: "blog", label: "Blog", to: "/blog" },
 ];
 
 /** Where the web app starts for a signed-in user. */
@@ -20,7 +24,7 @@ export const APP_HOME = "/app";
 
 type Props = {
 	/** The section of the home page this page belongs to, or the one in view on the home page. */
-	current?: NavId | null;
+	current?: NavId | PageId | null;
 	/** On the home page: scrolls to the section instead of following the link. */
 	onNavigate?: (id: NavId) => void;
 	/** In place of the navigation and account links, one way back: the cart, legal pages. */
@@ -33,9 +37,9 @@ const SPRING = "cubic-bezier(.34,1.56,.64,1)";
 export const SiteHeader = observer(({ current = null, onNavigate, only }: Props) => {
 	const cart = useCartStore();
 	const [menuOpen, setMenuOpen] = useState(false);
-	const [hovered, setHovered] = useState<NavId | null>(null);
+	const [hovered, setHovered] = useState<NavId | PageId | null>(null);
 	const [pressed, setPressed] = useState<NavId | null>(null);
-	const [spots, setSpots] = useState<Partial<Record<NavId, { left: number; width: number }>>>({});
+	const [spots, setSpots] = useState<Partial<Record<NavId | PageId, { left: number; width: number }>>>({});
 	const navRef = useRef<HTMLElement>(null);
 
 	const signedIn = auth.state.status === "signed-in";
@@ -46,7 +50,7 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 		const measure = () => {
 			const next: typeof spots = {};
 			navRef.current?.querySelectorAll<HTMLElement>("[data-nav]").forEach((link) => {
-				next[link.dataset.nav as NavId] = { left: link.offsetLeft, width: link.offsetWidth };
+				next[link.dataset.nav as NavId | PageId] = { left: link.offsetLeft, width: link.offsetWidth };
 			});
 			setSpots(next);
 		};
@@ -66,9 +70,9 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 	const active = pressed ?? current;
 	const spot = spots[hovered ?? active ?? ("" as NavId)];
 
-	const follow = (id: NavId) => (event: React.MouseEvent) => {
+	const follow = (id: NavId | PageId) => (event: React.MouseEvent) => {
 		setMenuOpen(false);
-		if (!onNavigate) return;
+		if (!onNavigate || id === "blog") return;
 		event.preventDefault();
 		setPressed(id);
 		onNavigate(id);
@@ -113,10 +117,10 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 									transition: `left .5s ${SPRING}, width .5s ${SPRING}, opacity .3s ease`,
 								}}
 							/>
-							{NAV.map(({ id, label }) => (
+							{NAV.map(({ id, label, ...page }) => (
 								<Link
 									key={id}
-									to={`/#${id}`}
+									to={"to" in page ? page.to : `/#${id}`}
 									data-nav={id}
 									onClick={follow(id)}
 									onMouseEnter={() => setHovered(id)}
@@ -193,8 +197,8 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 							className="flex flex-col px-5 pt-1 pb-5 font-display text-[18px] font-medium transition-[opacity,transform] duration-[400ms] ease-[cubic-bezier(.2,.8,.2,1)]"
 							style={{ opacity: menuOpen ? 1 : 0, transform: menuOpen ? "none" : "translateY(-8px)" }}
 						>
-							{NAV.map(({ id, label }) => (
-								<Link key={id} to={`/#${id}`} onClick={follow(id)} className="border-b border-border py-3.5 text-ink">
+							{NAV.map(({ id, label, ...page }) => (
+								<Link key={id} to={"to" in page ? page.to : `/#${id}`} onClick={follow(id)} className="border-b border-border py-3.5 text-ink">
 									{label}
 								</Link>
 							))}

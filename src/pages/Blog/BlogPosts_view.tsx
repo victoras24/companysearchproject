@@ -33,7 +33,7 @@ const BlogPost: React.FC = observer(() => {
 
 	if (!post) {
 		return (
-			<SitePage>
+			<SitePage header={{ current: "blog" }}>
 				<div className="mx-auto mt-[clamp(40px,10vw,100px)] max-w-[520px] text-center">
 					<h1 className="m-0 font-display text-[clamp(28px,4vw,38px)] font-semibold tracking-[-0.03em]">Article not found</h1>
 					<p className="mt-2.5 mb-0 text-[15.5px] leading-[1.55] text-muted-foreground">
@@ -48,7 +48,7 @@ const BlogPost: React.FC = observer(() => {
 	}
 
 	return (
-		<SitePage className="w-full">
+		<SitePage header={{ current: "blog" }} className="w-full">
 			<article className="mx-auto max-w-[760px] px-[clamp(16px,4vw,28px)] pt-[clamp(40px,7vw,72px)] pb-[100px]">
 				<Rise>
 					<Link to="/blog" className="text-[14.5px] text-muted-foreground hover:text-ink">
