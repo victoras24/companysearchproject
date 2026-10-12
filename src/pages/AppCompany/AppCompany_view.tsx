@@ -89,7 +89,8 @@ function Tracked({ details }: { details: TrackedDetails }) {
 							<div className="min-w-0 flex-1">
 								<div className="text-[14px]">{filing.form}</div>
 								<div className="mt-0.5 text-[12.5px] text-muted-foreground">
-									{filing.service} · <span className="app-mono text-[12px]">{filing.applicationNumber}</span>
+									{filing.service && `${filing.service} · `}
+									<span className="app-mono text-[12px]">{filing.applicationNumber}</span>
 								</div>
 							</div>
 							{filing.date && (
