@@ -155,7 +155,9 @@ const FiltersPanel = observer(
 	({ draft, Title, sheet }: { draft: FiltersDraft; Title: ElementType; sheet: boolean }) => (
 		<>
 			<div className="flex flex-none items-center justify-between px-4 pt-3.5 pb-1">
-				<Title id="filters-title" className="m-0 text-[15px] font-semibold text-foreground">
+				{/* The sheet's title keeps the id Radix gives it, which names the sheet (even id={undefined} would
+				    replace it); the pop-up names itself by this one. */}
+				<Title {...(sheet ? {} : { id: "filters-title" })} className="m-0 text-[15px] font-semibold text-foreground">
 					Filters
 				</Title>
 				<button
