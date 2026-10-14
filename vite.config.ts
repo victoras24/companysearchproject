@@ -33,6 +33,17 @@ export default defineConfig({
 		cssCodeSplit: true,
 		assetsInlineLimit: 4096,
 		chunkSizeWarningLimit: 500,
+		rollupOptions: {
+			output: {
+				// Libraries in files of their own, which change less often than the app and stay cached.
+				manualChunks(id) {
+					if (!id.includes("node_modules")) return;
+					if (/node_modules\/(react|react-dom|scheduler|react-router)\//.test(id)) return "react";
+					if (id.includes("node_modules/@supabase/")) return "supabase";
+					if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return "motion";
+				},
+			},
+		},
 	},
 	esbuild: {
 		drop: ["console", "debugger"],

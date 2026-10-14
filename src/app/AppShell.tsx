@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType, type ReactNode } from "react";
+import { Suspense, useEffect, type ComponentType, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { observer } from "mobx-react";
 import { Bookmark, CircleUserRound, Folder, Layers, LayoutGrid, Radio, Search, ShoppingBag } from "lucide-react";
@@ -12,7 +12,7 @@ import { tracking } from "@/tracking";
 import { newChangeCount } from "./changes";
 import { DialogHost } from "./dialog";
 import { APP } from "./routes";
-import { Bar } from "./ui";
+import { Bar, Loading } from "./ui";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -183,7 +183,10 @@ const AppShell = observer(() => {
 				</header>
 
 				<main className="mx-auto w-full max-w-[980px] px-[clamp(16px,4vw,40px)] pt-[clamp(22px,4vw,44px)] pb-[110px] min-[860px]:pb-[72px]">
-					<Outlet />
+					{/* The shell stays while a screen opened for the first time is loaded. */}
+					<Suspense fallback={<Loading />}>
+						<Outlet />
+					</Suspense>
 				</main>
 			</div>
 

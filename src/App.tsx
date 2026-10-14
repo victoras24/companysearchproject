@@ -1,36 +1,37 @@
 import "../global.css";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import { RequireUser } from "./auth/RequireUser";
-import OrganisationDetails from "./pages/OrganisationDetails/OrganisationDetails_view";
-import Favorites from "./pages/Favorites/Favorites_view";
-import Organiser from "./pages/Organiser/Organiser_view";
-import Tracking from "./pages/Tracking/Tracking_view";
-import Plans from "./pages/Plans/Plans_view";
-import Unsubscribe from "./pages/Alerts/Unsubscribe_view";
-import AuthCallback from "./pages/Account/AuthCallback";
-import AuthPage from "./pages/Auth/Auth_view";
 import SonnerToastProvider from "./context/SonnerToastProvider";
-import AccountDetails from "./pages/AccountDeatails/AccountDetails_view";
 import { ThemeProvider } from "./components/theme-provider";
-import Cart from "./pages/Cart/Cart_view";
 import { CartStoreProvider } from "./context/CartStore";
-import ReturnForm from "./pages/ReturnForm/ReturnForm_view";
 import { lazy, Suspense, useEffect } from "react";
-import PersonOrOrganisation from "./pages/PersonOrOrganisation/PersonOrOrganisation_view";
-import LegalPage from "./pages/Legal/Legal_view";
-import Blog from "./pages/Blog/Blog_view";
-import BlogPost from "./pages/Blog/BlogPosts_view";
 import { ScrollToTop } from "./site/ScrollToTop";
 import { NotFound } from "./site/NotFound";
 import { setNavigator } from "./lib/navigation";
-import AppShell from "./app/AppShell";
-import Overview from "./pages/Overview/Overview_view";
-import AppSearch from "./pages/AppSearch/AppSearch_view";
-import AppCompany from "./pages/AppCompany/AppCompany_view";
-import AppOfficial from "./pages/AppOfficial/AppOfficial_view";
-import AppCart from "./pages/AppCart/AppCart_view";
 
+// Each page is loaded when it is first opened, so the home page does not download the rest.
 const Home = lazy(() => import("./pages/Home/Home"));
+const OrganisationDetails = lazy(() => import("./pages/OrganisationDetails/OrganisationDetails_view"));
+const Favorites = lazy(() => import("./pages/Favorites/Favorites_view"));
+const Organiser = lazy(() => import("./pages/Organiser/Organiser_view"));
+const Tracking = lazy(() => import("./pages/Tracking/Tracking_view"));
+const Plans = lazy(() => import("./pages/Plans/Plans_view"));
+const Unsubscribe = lazy(() => import("./pages/Alerts/Unsubscribe_view"));
+const AuthCallback = lazy(() => import("./pages/Account/AuthCallback"));
+const AuthPage = lazy(() => import("./pages/Auth/Auth_view"));
+const AccountDetails = lazy(() => import("./pages/AccountDeatails/AccountDetails_view"));
+const Cart = lazy(() => import("./pages/Cart/Cart_view"));
+const ReturnForm = lazy(() => import("./pages/ReturnForm/ReturnForm_view"));
+const PersonOrOrganisation = lazy(() => import("./pages/PersonOrOrganisation/PersonOrOrganisation_view"));
+const LegalPage = lazy(() => import("./pages/Legal/Legal_view"));
+const Blog = lazy(() => import("./pages/Blog/Blog_view"));
+const BlogPost = lazy(() => import("./pages/Blog/BlogPosts_view"));
+const AppShell = lazy(() => import("./app/AppShell"));
+const Overview = lazy(() => import("./pages/Overview/Overview_view"));
+const AppSearch = lazy(() => import("./pages/AppSearch/AppSearch_view"));
+const AppCompany = lazy(() => import("./pages/AppCompany/AppCompany_view"));
+const AppOfficial = lazy(() => import("./pages/AppOfficial/AppOfficial_view"));
+const AppCart = lazy(() => import("./pages/AppCart/AppCart_view"));
 
 const PageLoader = () => (
 	<div className="flex items-center justify-center min-h-[200px]">
