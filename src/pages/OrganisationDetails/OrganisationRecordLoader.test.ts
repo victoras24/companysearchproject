@@ -23,6 +23,7 @@ const record = (typeCode: string, registrationNo: string): OrganisationRecord =>
 	},
 	address: { street: "Main 1", building: null, territory: "Nicosia" },
 	officials: [],
+	activity: null,
 });
 
 const flush = async () => {

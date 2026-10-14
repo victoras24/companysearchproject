@@ -33,6 +33,13 @@ export type RegisteredAddress = {
 	territory: string | null;
 };
 
+// What a company does, as CYSTAT classifies it (NACE Rev. 2.1). CYSTAT lists only the companies it
+// counts as economically active, so most organisations have none.
+export type OrganisationActivity = {
+	code: string;
+	description: string | null;
+};
+
 const STATUS_LABELS: Record<StatusGroup, string> = {
 	registered: "Registered",
 	"at-risk": "At risk",
@@ -92,4 +99,10 @@ export function registeredAddressText(
 ): string {
 	const parts = [a?.street, a?.building, a?.territory].filter(Boolean);
 	return parts.length > 0 ? parts.join(" ") : "Address not available";
+}
+
+// "Other monetary intermediation · NACE 64.19", or null when CYSTAT lists no activity.
+export function activityText(a: OrganisationActivity | null | undefined): string | null {
+	if (!a) return null;
+	return a.description ? `${a.description} · NACE ${a.code}` : `NACE ${a.code}`;
 }

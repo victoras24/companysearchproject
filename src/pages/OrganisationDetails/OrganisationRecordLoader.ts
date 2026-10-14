@@ -1,11 +1,12 @@
 import { action, makeObservable, observable } from "mobx";
 import type { IOfficials } from "@/gEntities";
-import type { OrganisationSummary, RegisteredAddress } from "@/organisation/organisation";
+import type { OrganisationActivity, OrganisationSummary, RegisteredAddress } from "@/organisation/organisation";
 
 export type OrganisationRecord = {
 	organisation: OrganisationSummary;
 	address: RegisteredAddress | null;
 	officials: IOfficials[];
+	activity: OrganisationActivity | null;
 };
 
 /** Resolves null when no organisation has that type and number; rejects on any other failure. */

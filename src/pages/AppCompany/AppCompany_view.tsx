@@ -10,7 +10,7 @@ import { reportPrice } from "@/checkout";
 import { useCartStore } from "@/context/CartStore";
 import { cn } from "@/lib/utils";
 import { library } from "@/library";
-import { registeredAddressText, registrationDateText, shortName, statusLine } from "@/organisation/organisation";
+import { activityText, registeredAddressText, registrationDateText, shortName, statusLine } from "@/organisation/organisation";
 import { positionLabel } from "@/organisation/position";
 import { OrganisationRecordLoader } from "@/pages/OrganisationDetails/OrganisationRecordLoader";
 import { secretaryLast } from "@/pages/PersonOrOrganisation/appointments";
@@ -179,6 +179,7 @@ const AppCompany = observer(() => {
 	}
 
 	const { organisation, address, officials } = view.record;
+	const activity = activityText(view.record.activity);
 	const saved = library.isSaved(organisation);
 	const availability = tracking.availability(organisation);
 	const tracked = availability === "tracked";
@@ -264,6 +265,12 @@ const AppCompany = observer(() => {
 							<div className={fact}>
 								<span className="text-muted-foreground">Type</span>
 								<span>{organisation.organisationType}</span>
+							</div>
+						)}
+						{activity && (
+							<div className={fact}>
+								<span className="flex-none text-muted-foreground">Activity</span>
+								<span className="text-right">{activity}</span>
 							</div>
 						)}
 						{status && (

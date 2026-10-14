@@ -11,6 +11,7 @@ import { useCartStore } from "@/context/CartStore";
 import { SaveButton } from "@/library/SaveButton";
 import {
 	detailsPath,
+	activityText,
 	registeredAddressText,
 	registrationDateText,
 	statusGroupOf,
@@ -134,6 +135,7 @@ const OrganisationDetails: React.FC = observer(() => {
 
 	const registrationDate = registrationDateText(organisation.registrationDate);
 	const status = statusLine(organisation);
+	const activity = activityText(view.record.activity);
 	const inCart = cartStore.has({ organisationTypeCode: organisation.organisationTypeCode ?? typeCode, registrationNo: organisation.registrationNo });
 	const signedOut = auth.state.status === "signed-out";
 	const related = appointments && !appointments.isLoading ? appointments.relatedCompanies : null;
@@ -245,6 +247,13 @@ const OrganisationDetails: React.FC = observer(() => {
 										</div>
 									</div>
 								</div>
+								{activity && (
+									<>
+										<div className="my-[26px] h-px bg-divider" />
+										<div className={fieldLabel}>Activity</div>
+										<div className="mt-1.5 text-[15.5px] leading-normal">{activity}</div>
+									</>
+								)}
 								<div className="my-[26px] h-px bg-divider" />
 								<div className={fieldLabel}>Registered address</div>
 								<div className="mt-1.5 text-[15.5px] leading-normal">{registeredAddressText(address)}</div>

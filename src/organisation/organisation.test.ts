@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	activityText,
 	detailsPath,
 	registeredAddressText,
 	registrationDateText,
@@ -169,5 +170,22 @@ describe("shortName", () => {
 
 	it("gives nothing for no name", () => {
 		expect(shortName(null)).toBe("");
+	});
+});
+
+describe("activityText", () => {
+	it("gives the activity with its NACE code", () => {
+		expect(activityText({ code: "64.19", description: "Other monetary intermediation" })).toBe(
+			"Other monetary intermediation · NACE 64.19"
+		);
+	});
+
+	it("gives the code alone when there is no description", () => {
+		expect(activityText({ code: "64.19", description: null })).toBe("NACE 64.19");
+	});
+
+	it("is null when CYSTAT lists no activity", () => {
+		expect(activityText(null)).toBeNull();
+		expect(activityText(undefined)).toBeNull();
 	});
 });
