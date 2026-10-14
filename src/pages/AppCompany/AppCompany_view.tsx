@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 import { observer } from "mobx-react";
-import { Bookmark, Radio } from "lucide-react";
+import { Bookmark, ExternalLink, FileText, Radio } from "lucide-react";
 import { activityCertificateUrl, lookup } from "@/api/organisationApi";
 import { orderReport, toggleSave, toggleTrack } from "@/app/actions";
 import { officialPath, type Origin } from "@/app/routes";
@@ -271,15 +271,16 @@ const AppCompany = observer(() => {
 						{activity && (
 							<div className={fact}>
 								<span className="flex-none text-muted-foreground">Activity</span>
-								<span className="text-right">{activity}</span>
-							</div>
-						)}
-						{certificateUrl && (
-							<div className={fact}>
-								<span className="flex-none text-muted-foreground">Activity certificate</span>
-								<a href={certificateUrl} target="_blank" rel="noopener" className={cn(textLink, "text-[14px]")}>
-									Open CYSTAT certificate ↗
-								</a>
+								<span className="flex flex-col items-end gap-2.5 text-right">
+									{activity}
+									{certificateUrl && (
+										<a href={certificateUrl} target="_blank" rel="noopener" className={pill({ size: "page" })}>
+											<FileText className="size-[13px]" strokeWidth={2} />
+											Certificate of Economic Activity
+											<ExternalLink className="size-[12px]" strokeWidth={2} />
+										</a>
+									)}
+								</span>
 							</div>
 						)}
 						{status && (
