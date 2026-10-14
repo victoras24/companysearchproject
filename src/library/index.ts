@@ -5,7 +5,8 @@ import { Library, type LibraryCompany } from "./Library";
 import { libraryApi } from "./libraryApi";
 
 export { companyId } from "./Library";
-export type { LibraryCompany, LibraryGroup } from "./Library";
+export type { LibraryCompany, LibraryGroup, SectorGroupsResult } from "./Library";
+export { appliedMessage, confirmLabel, proposeSectorGroups, sectorOfGroup, type SectorProposal } from "./sectorGroups";
 
 /** The app's one library. Components read it inside an observer. */
 export const library = new Library(libraryApi);
@@ -26,6 +27,7 @@ export type SavableOrganisation = {
 	statusGroup?: string | null;
 	statusText?: string | null;
 	statusDate?: string | null;
+	sector?: string | null;
 };
 
 /** The organisation as the library holds a saved one. */
@@ -39,5 +41,6 @@ export function toLibraryCompany(organisation: SavableOrganisation): LibraryComp
 		statusText: organisation.statusText ?? null,
 		statusDate: organisation.statusDate ?? null,
 		inRegistry: true,
+		sector: organisation.sector ?? null,
 	};
 }

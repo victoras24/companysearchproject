@@ -1,5 +1,6 @@
 import { action, makeObservable, observable } from "mobx";
 import type { StatusGroup } from "@/organisation/organisation";
+import type { SectorProposal } from "./sectorGroups";
 
 /** A saved organisation with the registry's current facts, as the backend returns it. */
 export type LibraryCompany = {
@@ -12,6 +13,8 @@ export type LibraryCompany = {
 	statusDate: string | null;
 	/** False when the registry no longer has it; then the name is the one it was saved under. */
 	inRegistry: boolean;
+	/** The NACE section letter CYSTAT lists it in, or null for none. Missing from a backend that does not send it yet. */
+	sector: string | null;
 };
 
 export type LibraryGroup = { id: string; name: string; companies: LibraryCompany[] };
@@ -39,6 +42,16 @@ export interface LibraryPort {
 export type LibraryStatus = "idle" | "loading" | "loaded" | "error";
 export type Failure = { ok: false; message: string };
 export type Done = { ok: true } | Failure;
+
+/** What sorting the saved companies into sector groups did, enough to undo it. */
+export type SectorGroupsResult = {
+	/** The groups made, in the order they show. */
+	created: { id: string; name: string }[];
+	/** The groups that were there, with the companies put in them. */
+	updated: { id: string; name: string; added: LibraryCompany[] }[];
+	/** The writes that failed. */
+	failed: number;
+};
 
 const NOT_SIGNED_IN = "Please log in to save and organise companies.";
 
@@ -131,16 +144,72 @@ export class Library {
 			this.favourites = this.favourites.filter((f) => idOf(f) !== id);
 		});
 
-	createGroup = async (name: string): Promise<Done> => {
+	/** The new group comes first. */
+	createGroup = async (name: string): Promise<{ ok: true; group: LibraryGroup } | Failure> => {
 		const trimmed = name.trim();
 		if (!trimmed) return { ok: false, message: "The group needs a name." };
 
-		return this.attempt(
+		let created: LibraryGroup | null = null;
+		const result = await this.attempt(
 			() => this.port.createGroup(trimmed),
 			(group) => {
+				created = group;
 				this.groups = [group, ...this.groups];
 			}
 		);
+		if (!result.ok) return result;
+		return created ? { ok: true, group: created } : { ok: false, message: NOT_SIGNED_IN };
+	};
+
+	/**
+	 * Makes the proposed sector groups and fills the existing ones, one write after another. The
+	 * new groups are made last first, so they come first in the order proposed. A write that fails
+	 * is counted and the rest go on; a group that could not be made gets none of its companies.
+	 */
+	applySectorGroups = async (proposals: SectorProposal[]): Promise<SectorGroupsResult> => {
+		const result: SectorGroupsResult = { created: [], updated: [], failed: 0 };
+
+		for (const proposal of proposals.filter((p) => p.existingGroupId === null).reverse()) {
+			const made = await this.createGroup(proposal.name);
+			if (!made.ok) {
+				result.failed++;
+				continue;
+			}
+			result.created.unshift({ id: made.group.id, name: made.group.name });
+			for (const company of proposal.toAdd) {
+				if (!(await this.addToGroup(made.group.id, company)).ok) result.failed++;
+			}
+		}
+
+		for (const proposal of proposals) {
+			const groupId = proposal.existingGroupId;
+			if (groupId === null) continue;
+
+			const added: LibraryCompany[] = [];
+			for (const company of proposal.toAdd) {
+				const put = await this.addToGroup(groupId, company);
+				if (!put.ok) result.failed++;
+				else if (put.added) added.push(company);
+			}
+			const name = this.groups.find((g) => g.id === groupId)?.name ?? proposal.name;
+			if (added.length > 0) result.updated.push({ id: groupId, name, added });
+		}
+
+		return result;
+	};
+
+	/** Takes back what applying the sector groups did: deletes the groups it made and takes out what it added. */
+	undoSectorGroups = async (done: SectorGroupsResult): Promise<{ failed: number }> => {
+		let failed = 0;
+		for (const group of done.created) {
+			if (!(await this.deleteGroup(group.id)).ok) failed++;
+		}
+		for (const group of done.updated) {
+			for (const company of group.added) {
+				if (!(await this.removeFromGroup(group.id, company)).ok) failed++;
+			}
+		}
+		return { failed };
 	};
 
 	deleteGroup = (groupId: string): Promise<Done> =>

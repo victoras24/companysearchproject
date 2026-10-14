@@ -3,15 +3,31 @@ import { useLocation } from "react-router";
 import { observer } from "mobx-react";
 import { toast } from "sonner";
 import * as Menu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Minus, Trash2 } from "lucide-react";
+import { ChevronDown, ListTree, Minus, Trash2 } from "lucide-react";
 import { flash } from "@/app/actions";
 import { ask } from "@/app/dialog";
 import { box, CompanyLink, Disclosure, EASE, EmptyCard, Failed, Loading, menu, menuItem, Page, PageHeader, pill, roundButton, Status } from "@/app/ui";
-import { companyId, library, type LibraryCompany, type LibraryGroup } from "@/library";
+import {
+	appliedMessage,
+	companyId,
+	library,
+	proposeSectorGroups,
+	sectorOfGroup,
+	type LibraryCompany,
+	type LibraryGroup,
+	type SectorGroupsResult,
+	type SectorProposal,
+} from "@/library";
+import { SectorGroupsDialog } from "./SectorGroupsDialog";
+
+/** How a group was just changed by sorting into sectors: made new, or given so many companies. For this visit only. */
+type Mark = "New" | `+${number}`;
 
 /** A group: its name and count, and under them its companies. */
-const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; open: boolean; onToggle: () => void }) => {
+const GroupCard = observer(
+	({ group, open, onToggle, mark }: { group: LibraryGroup; open: boolean; onToggle: () => void; mark?: Mark }) => {
 	const count = group.companies.length;
+	const sector = sectorOfGroup(group.name);
 	const inGroup = new Set(group.companies.map(companyId));
 	const addable = library.favourites.filter((company) => !inGroup.has(companyId(company)));
 
@@ -41,7 +57,10 @@ const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; op
 		);
 
 	return (
-		<div id={`group-${group.id}`} className={`${box} scroll-mt-24`}>
+		<div
+			id={`group-${group.id}`}
+			className={`${box} scroll-mt-24 ${mark ? "shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_35%,transparent)]" : ""}`}
+		>
 			<div className="flex items-center gap-1 py-1 pr-1.5">
 				<button
 					type="button"
@@ -53,7 +72,15 @@ const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; op
 						className={`size-3 flex-none text-faint transition-transform duration-300 ${EASE} ${open ? "rotate-180" : ""}`}
 						strokeWidth={2.6}
 					/>
-					<span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{group.name}</span>
+					<span className="flex min-w-0 flex-1 items-center gap-2">
+						<span className="min-w-0 truncate text-[15px] font-semibold">{group.name}</span>
+						{sector && (
+							<span className="flex-none rounded-md bg-field px-1.5 text-[11.5px] text-text2">
+								Sector <span className="app-mono">{sector}</span>
+							</span>
+						)}
+						{mark && <span className="flex-none rounded-full bg-tint px-[7px] text-[11.5px] font-semibold text-primary-text">{mark}</span>}
+					</span>
 					<span className="text-[13px] whitespace-nowrap text-muted-foreground">
 						{count === 1 ? "1 company" : `${count} companies`}
 					</span>
@@ -115,7 +142,8 @@ const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; op
 			</Disclosure>
 		</div>
 	);
-});
+	}
+);
 
 /** The groups a user sorts companies into. */
 const Organiser = observer(() => {
@@ -138,6 +166,44 @@ const Organiser = observer(() => {
 	useEffect(() => {
 		if (openAsked && loaded) document.getElementById(`group-${openAsked}`)?.scrollIntoView({ block: "start" });
 	}, [openAsked, loaded]);
+
+	const [sorting, setSorting] = useState(false);
+	const [marks, setMarks] = useState<ReadonlyMap<string, Mark>>(new Map());
+	const { proposals, unsectored } = proposeSectorGroups(library.favourites, library.groups);
+	// A backend that does not send sectors yet leaves the field out altogether.
+	const sectorsListed = library.favourites.some((company) => "sector" in company);
+	const sortTitle = !sectorsListed
+		? "Sectors aren't available yet"
+		: unsectored.length === library.favouriteCount
+			? "None of your saved companies has a sector listed"
+			: proposals.length === 0
+				? "Every saved company is already in its sector's group"
+				: undefined;
+
+	const undo = async (result: SectorGroupsResult) => {
+		const { failed } = await library.undoSectorGroups(result);
+		setMarks(new Map());
+		if (failed > 0) toast.error(`${failed} changes couldn't be undone. Please try again.`);
+	};
+
+	const sortBySector = async (chosen: SectorProposal[]) => {
+		const result = await library.applySectorGroups(chosen);
+		setSorting(false);
+
+		// The groups it made or filled open, marked for this visit, and the first one scrolls into view.
+		const changed = [
+			...result.created.map((g) => [g.id, "New"] as const),
+			...result.updated.map((g) => [g.id, `+${g.added.length}`] as const),
+		];
+		setMarks(new Map(changed));
+		setOpen((before) => new Set([...before, ...changed.map(([id]) => id)]));
+		const first = changed[0]?.[0];
+		if (first) requestAnimationFrame(() => document.getElementById(`group-${first}`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+
+		const message = appliedMessage(result);
+		if (message) flash(message, { label: "Undo", onClick: () => void undo(result) });
+		if (result.failed > 0) toast.error(`${result.failed} changes couldn't be saved. Please try again.`);
+	};
 
 	const toggle = (id: string) =>
 		setOpen((before) => {
@@ -182,6 +248,25 @@ const Organiser = observer(() => {
 				<button type="button" disabled={!name.trim() || creating} onClick={create} className={pill({ tone: "accent" })}>
 					Create
 				</button>
+				{loaded && library.favouriteCount > 0 && (
+					<>
+						<span className="h-5 w-px flex-none bg-divider" />
+						<SectorGroupsDialog
+							open={sorting}
+							onOpenChange={setSorting}
+							proposals={proposals}
+							unsectored={unsectored.length}
+							groups={library.groups}
+							onApply={sortBySector}
+							trigger={
+								<button type="button" disabled={sortTitle !== undefined} title={sortTitle} aria-label="Group by sector" className={pill()}>
+									<ListTree size={13} strokeWidth={2} />
+									<span className="hidden min-[860px]:inline">Group by sector</span>
+								</button>
+							}
+						/>
+					</>
+				)}
 			</div>
 
 			{(library.status === "idle" || library.status === "loading") && <Loading className="mt-5 h-40" />}
@@ -191,7 +276,7 @@ const Organiser = observer(() => {
 			{library.status === "loaded" && library.groups.length > 0 && (
 				<div className="mt-5 flex flex-col gap-3">
 					{library.groups.map((group) => (
-						<GroupCard key={group.id} group={group} open={open.has(group.id)} onToggle={() => toggle(group.id)} />
+						<GroupCard key={group.id} group={group} open={open.has(group.id)} onToggle={() => toggle(group.id)} mark={marks.get(group.id)} />
 					))}
 				</div>
 			)}

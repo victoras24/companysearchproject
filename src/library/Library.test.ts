@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { SectorProposal } from "./sectorGroups";
 import { Library, type LibraryCompany, type LibraryContents, type LibraryGroup, type LibraryPort } from "./Library";
 
 const flush = async () => {
@@ -14,6 +15,7 @@ const company = (typeCode: string, registrationNo: string, name: string): Librar
 	statusText: "Registered",
 	statusDate: null,
 	inRegistry: true,
+	sector: null,
 });
 
 const adminico = company("C", "60580", "ADMINICO MANAGEMENT SERVICES LIMITED");
@@ -26,13 +28,15 @@ function fakeBackend(initial: Record<string, LibraryContents> = {}) {
 		user: null as string | null,
 		calls: [] as string[],
 		failing: false,
+		/** Fails only the calls it says yes to. */
+		fails: (() => false) as (call: string) => boolean,
 		libraries: structuredClone(initial) as Record<string, LibraryContents>,
 		groups: 0,
 	};
 	const mine = () => (backend.libraries[backend.user!] ??= { favourites: [], groups: [] });
 	const call = (name: string) => {
 		backend.calls.push(name);
-		if (backend.failing) throw new Error("backend down");
+		if (backend.failing || backend.fails(name)) throw new Error("backend down");
 	};
 	const port: LibraryPort = {
 		load: async () => {
@@ -223,7 +227,7 @@ describe("Library", () => {
 
 			const result = await library.createGroup(" Clients ");
 
-			expect(result).toEqual({ ok: true });
+			expect(result).toEqual({ ok: true, group: { id: "group-1", name: "Clients", companies: [] } });
 			expect(library.groups.map((g) => g.name)).toEqual(["Clients", "Old"]);
 			expect(backend.calls).toEqual(["createGroup Clients"]);
 		});
@@ -304,6 +308,99 @@ describe("Library", () => {
 
 			expect((await library.addToGroup("nope", beta)).ok).toBe(false);
 			expect(backend.calls).toEqual([]);
+		});
+	});
+
+	describe("sector groups", () => {
+		const proposal = (
+			letter: SectorProposal["letter"],
+			name: string,
+			existingGroupId: string | null,
+			toAdd: LibraryCompany[]
+		): SectorProposal => ({
+			letter,
+			name,
+			companies: toAdd,
+			existingGroupId,
+			toAdd,
+		});
+
+		it("creates the new groups, newest first in the order proposed, and adds to the existing ones", async () => {
+			const old = { id: "g0", name: "Construction", companies: [beta] };
+			const { library, backend } = await setup({
+				favourites: [adminico, sweets, beta],
+				groups: [old],
+			});
+
+			const result = await library.applySectorGroups([
+				proposal("N", "Professional and technical services", null, [adminico, sweets]),
+				proposal("F", "Construction", "g0", [sweets]),
+				proposal("L", "Finance and insurance", null, [beta]),
+			]);
+
+			expect(library.groups.map((g) => [g.name, names(g.companies)])).toEqual([
+				["Professional and technical services", ["2 ALPHA SWEETS", "ADMINICO MANAGEMENT SERVICES LIMITED"]],
+				["Finance and insurance", ["BETA HOLDINGS LTD"]],
+				["Construction", ["2 ALPHA SWEETS", "BETA HOLDINGS LTD"]],
+			]);
+			expect(result).toEqual({
+				created: [
+					{ id: "group-2", name: "Professional and technical services" },
+					{ id: "group-1", name: "Finance and insurance" },
+				],
+				updated: [{ id: "g0", name: "Construction", added: [sweets] }],
+				failed: 0,
+			});
+			expect(backend.calls).toEqual([
+				"createGroup Finance and insurance",
+				"addToGroup group-1 C/11",
+				"createGroup Professional and technical services",
+				"addToGroup group-2 C/60580",
+				"addToGroup group-2 B/60580",
+				"addToGroup g0 B/60580",
+			]);
+		});
+
+		it("keeps going after a write fails and counts it", async () => {
+			const old = { id: "g0", name: "Construction", companies: [] };
+			const { library, backend } = await setup({
+				favourites: [adminico, sweets, beta],
+				groups: [old],
+			});
+			backend.fails = (call) => call === "createGroup Finance and insurance" || call === "addToGroup g0 B/60580";
+
+			const result = await library.applySectorGroups([
+				proposal("N", "Professional and technical services", null, [adminico]),
+				proposal("F", "Construction", "g0", [sweets, beta]),
+				proposal("L", "Finance and insurance", null, [beta]),
+			]);
+
+			expect(result).toEqual({
+				created: [{ id: "group-1", name: "Professional and technical services" }],
+				updated: [{ id: "g0", name: "Construction", added: [beta] }],
+				failed: 2,
+			});
+			expect(library.groups.map((g) => g.name)).toEqual(["Professional and technical services", "Construction"]);
+		});
+
+		it("undo puts the groups back as they were", async () => {
+			const old = { id: "g0", name: "Construction", companies: [beta] };
+			const { library, backend } = await setup({
+				favourites: [adminico, sweets, beta],
+				groups: [old],
+			});
+			const before = library.groups;
+
+			const result = await library.applySectorGroups([
+				proposal("N", "Professional and technical services", null, [adminico]),
+				proposal("F", "Construction", "g0", [sweets]),
+			]);
+			backend.calls.length = 0;
+
+			expect(await library.undoSectorGroups(result)).toEqual({ failed: 0 });
+
+			expect(library.groups).toEqual(before);
+			expect(backend.calls).toEqual(["deleteGroup group-1", "removeFromGroup g0 B/60580"]);
 		});
 	});
 
