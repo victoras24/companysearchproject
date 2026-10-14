@@ -30,3 +30,10 @@ export type Sector = (typeof SECTORS)[number]["letter"];
 /** The short name of the sector a company is in, or null when it has none the app names. */
 export const sectorName = (letter: string | null | undefined): string | null =>
 	SECTORS.find((s) => s.letter === letter)?.name ?? null;
+
+/** The sectors whose name contains the text, in any case, or whose letter is exactly it; every sector for no text. */
+export const findSectors = (text: string): ReadonlyArray<(typeof SECTORS)[number]> => {
+	const wanted = text.trim().toLowerCase();
+	if (wanted === "") return SECTORS;
+	return SECTORS.filter((s) => s.letter.toLowerCase() === wanted || s.name.toLowerCase().includes(wanted));
+};

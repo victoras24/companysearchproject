@@ -523,6 +523,25 @@ describe("reset rules", () => {
 		expect(navigations).toEqual([{ search: "?q=alpha", replace: false }]);
 	});
 
+	it("applies a status and a sector together in one navigation, from the first page", () => {
+		// Without a router the URL does not come back between two separate changes.
+		const { session, navigations } = setup({ router: false });
+		session.urlChanged("?q=alpha&page=3");
+		session.selectFilters("dissolved", "F");
+
+		expect(navigations).toEqual([
+			{ search: "?q=alpha&status=dissolved&sector=F", replace: false },
+		]);
+	});
+
+	it("clears both filters together", () => {
+		const { session, navigations } = setup();
+		session.urlChanged("?q=alpha&status=registered&sector=F");
+		session.selectFilters("all", "all");
+
+		expect(navigations).toEqual([{ search: "?q=alpha", replace: false }]);
+	});
+
 	it("resets the sector when the entity type changes", () => {
 		const { session, navigations } = setup();
 		session.urlChanged("?q=alpha&sector=F");

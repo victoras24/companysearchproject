@@ -2,7 +2,8 @@
 
 import type { IOfficials } from "@/gEntities";
 import { statusLabel } from "@/organisation/organisation";
-import type { EntityType, StatusFilter } from "@/pages/Search/SearchSession";
+import { sectorName } from "@/organisation/sector";
+import type { EntityType, SectorFilter, StatusFilter } from "@/pages/Search/SearchSession";
 
 const statusWords = (statusFilter: Exclude<StatusFilter, "all">) => statusLabel({ statusGroup: statusFilter }).toLowerCase();
 
@@ -23,6 +24,12 @@ export function countLine({
 	const status = statusFilter === "all" ? "" : `${statusWords(statusFilter)} `;
 	const found = `${total} ${status}${total === 1 ? "company" : "companies"}`;
 	return paged ? `${found} · page ${page} of ${Math.ceil(total / pageSize)}` : found;
+}
+
+/** What follows the count line when a sector is applied: whose list the companies come from. */
+export function sectorNote(sectorFilter: SectorFilter): string | null {
+	const name = sectorFilter === "all" ? null : sectorName(sectorFilter);
+	return name ? `· CYSTAT lists them as active in ${name}` : null;
 }
 
 export function noResultsText({

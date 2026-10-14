@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IOfficials } from "@/gEntities";
-import { countLine, noResultsText, officialsFound } from "./searchText";
+import { countLine, noResultsText, officialsFound, sectorNote } from "./searchText";
 
 const appointment = (name: string, company: string, position = "Director"): IOfficials => ({
 	organisationName: company,
@@ -79,5 +79,15 @@ describe("officialsFound", () => {
 
 	it("leaves out rows without a name", () => {
 		expect(officialsFound([appointment("  ", "Aegean Ltd")])).toEqual([]);
+	});
+});
+
+describe("sectorNote", () => {
+	it("says where the companies of a sector come from", () => {
+		expect(sectorNote("L")).toBe("· CYSTAT lists them as active in Finance and insurance");
+	});
+
+	it("is null without a sector", () => {
+		expect(sectorNote("all")).toBeNull();
 	});
 });

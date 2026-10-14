@@ -255,6 +255,16 @@ export class SearchSession {
 		);
 	};
 
+	/** Both filters at once, in one navigation: the Filters panel applies them together. */
+	@action
+	selectFilters = (statusFilter: StatusFilter, sectorFilter: SectorFilter) => {
+		this.cancelDebounce();
+		this.go(
+			{ ...this.criteria, query: this.draftText.trim(), statusFilter, sectorFilter, page: 1 },
+			false
+		);
+	};
+
 	@action
 	retry = () => {
 		this.run();

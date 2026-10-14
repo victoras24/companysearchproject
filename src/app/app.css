@@ -141,6 +141,45 @@ html.app-theme.dark {
 	animation: app-pop 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Search's Filters panel: a pop-up that drops from its button, or a sheet that rises on a phone. */
+@keyframes app-popover-in {
+	from {
+		opacity: 0;
+		transform: translateY(-6px) scale(0.98);
+	}
+}
+@keyframes app-popover-out {
+	to {
+		opacity: 0;
+		transform: translateY(-6px) scale(0.98);
+	}
+}
+@keyframes app-sheet-in {
+	from {
+		transform: translateY(100%);
+	}
+}
+@keyframes app-sheet-out {
+	to {
+		transform: translateY(100%);
+	}
+}
+.app-popover {
+	transform-origin: var(--radix-popover-content-transform-origin);
+}
+.app-popover[data-state="open"] {
+	animation: app-popover-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.app-popover[data-state="closed"] {
+	animation: app-popover-out 0.15s ease-in forwards;
+}
+.app-sheet[data-state="open"] {
+	animation: app-sheet-in 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.app-sheet[data-state="closed"] {
+	animation: app-sheet-out 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 /* A page's blocks fade and rise in, one after the other. */
 @media (prefers-reduced-motion: no-preference) {
 	.app-page > * {
@@ -166,7 +205,9 @@ html.app-theme.dark {
 @media (prefers-reduced-motion: reduce) {
 	.app-dialog-overlay,
 	.app-dialog,
-	.app-pop {
+	.app-pop,
+	.app-popover,
+	.app-sheet {
 		animation: none !important;
 	}
 }
@@ -206,23 +247,5 @@ html.app-theme.dark {
 		.app-theme [data-sonner-toaster] {
 			bottom: calc(86px + env(safe-area-inset-bottom)) !important;
 		}
-	}
-}
-
-/* Search's status chips: they fade and spring aside when officials are searched, and fold away on a phone. */
-.app-search-chips {
-	scrollbar-width: none;
-	transition:
-		opacity 0.3s ease,
-		transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-		max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-		margin-top 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-}
-.app-search-chips::-webkit-scrollbar {
-	display: none;
-}
-@media (prefers-reduced-motion: reduce) {
-	.app-search-chips {
-		transition: none;
 	}
 }
