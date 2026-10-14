@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 import { observer } from "mobx-react";
 import { Bookmark, Radio } from "lucide-react";
-import { lookup } from "@/api/organisationApi";
+import { activityCertificateUrl, lookup } from "@/api/organisationApi";
 import { orderReport, toggleSave, toggleTrack } from "@/app/actions";
 import { officialPath, type Origin } from "@/app/routes";
 import { BackLink, box, CompanyLink, Failed, Loading, Page, pill, sectionLabel, Spinner, Status, textLink, useOrigin } from "@/app/ui";
@@ -180,6 +180,7 @@ const AppCompany = observer(() => {
 
 	const { organisation, address, officials } = view.record;
 	const activity = activityText(view.record.activity);
+	const certificateUrl = activityCertificateUrl(organisation, view.record.activity);
 	const saved = library.isSaved(organisation);
 	const availability = tracking.availability(organisation);
 	const tracked = availability === "tracked";
@@ -271,6 +272,14 @@ const AppCompany = observer(() => {
 							<div className={fact}>
 								<span className="flex-none text-muted-foreground">Activity</span>
 								<span className="text-right">{activity}</span>
+							</div>
+						)}
+						{certificateUrl && (
+							<div className={fact}>
+								<span className="flex-none text-muted-foreground">Activity certificate</span>
+								<a href={certificateUrl} target="_blank" rel="noopener" className={cn(textLink, "text-[14px]")}>
+									Open CYSTAT certificate ↗
+								</a>
 							</div>
 						)}
 						{status && (

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { observer } from "mobx-react";
-import { Lock } from "lucide-react";
+import { ExternalLink, Lock } from "lucide-react";
 import { auth } from "@/auth";
-import { lookup } from "@/api/organisationApi";
+import { activityCertificateUrl, lookup } from "@/api/organisationApi";
 import { checkout, reportPrice } from "@/checkout";
 import { BackToSearchLink } from "@/components/BackToSearchLink";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +22,7 @@ import { positionLabel } from "@/organisation/position";
 import { Rise } from "@/site/motion";
 import { SitePage } from "@/site/SitePage";
 import { StatusBadge } from "@/site/StatusBadge";
-import { primaryPill, statusDotClass } from "@/site/ui";
+import { actionPill, primaryPill, statusDotClass } from "@/site/ui";
 import { tracking } from "@/tracking";
 import { TrackButton } from "@/tracking/TrackButton";
 import { TrackedPanel } from "@/tracking/TrackedPanel";
@@ -136,6 +136,7 @@ const OrganisationDetails: React.FC = observer(() => {
 	const registrationDate = registrationDateText(organisation.registrationDate);
 	const status = statusLine(organisation);
 	const activity = activityText(view.record.activity);
+	const certificateUrl = activityCertificateUrl(organisation, view.record.activity);
 	const inCart = cartStore.has({ organisationTypeCode: organisation.organisationTypeCode ?? typeCode, registrationNo: organisation.registrationNo });
 	const signedOut = auth.state.status === "signed-out";
 	const related = appointments && !appointments.isLoading ? appointments.relatedCompanies : null;
@@ -252,6 +253,12 @@ const OrganisationDetails: React.FC = observer(() => {
 										<div className="my-[26px] h-px bg-divider" />
 										<div className={fieldLabel}>Activity</div>
 										<div className="mt-1.5 text-[15.5px] leading-normal">{activity}</div>
+										{certificateUrl && (
+											<a href={certificateUrl} target="_blank" rel="noopener" className={`${actionPill({ compact: true })} mt-3 inline-flex`}>
+												Certificate of Economic Activity
+												<ExternalLink className="size-3.5" aria-hidden />
+											</a>
+										)}
 									</>
 								)}
 								<div className="my-[26px] h-px bg-divider" />
