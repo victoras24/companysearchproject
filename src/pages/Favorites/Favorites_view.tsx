@@ -15,7 +15,7 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { MoreHorizontal, Radio, Search } from "lucide-react";
+import { Folder, MoreHorizontal, Radio, Search } from "lucide-react";
 import { flash, removeSaved, toggleTrack } from "@/app/actions";
 import { APP } from "@/app/routes";
 import { box, CompanyLink, EmptyCard, Failed, Loading, menu, menuDangerItem, menuItem, menuLabel, Page, PageHeader, pill, Status } from "@/app/ui";
@@ -75,10 +75,18 @@ const SavedRow = observer(({ company, menuOpen, onMenuOpenChange }: RowProps) =>
 				<div className="mt-[3px] flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted-foreground">
 					<span className="app-mono text-[12px]">{company.registrationNo}</span>
 					{company.inRegistry ? <Status organisation={company} /> : <span>No longer in registry</span>}
+					{/* A chip, with the Groups icon, so a group is not read as part of the status. It opens the group. */}
 					{groups.map((group) => (
-						<span key={group.id} className="text-text2">
-							· {group.name}
-						</span>
+						<Link
+							key={group.id}
+							to={APP.groups}
+							state={{ openGroup: group.id }}
+							title={`Open ${group.name}`}
+							className="inline-flex max-w-[160px] items-center gap-1 rounded-md bg-field px-1.5 py-px text-[11.5px] text-text2 transition-colors hover:bg-hover hover:text-foreground"
+						>
+							<Folder className="size-[11px] flex-none" strokeWidth={2} aria-hidden />
+							<span className="truncate">{group.name}</span>
+						</Link>
 					))}
 				</div>
 			</div>

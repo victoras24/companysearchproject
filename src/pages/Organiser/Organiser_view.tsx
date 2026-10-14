@@ -41,7 +41,7 @@ const GroupCard = observer(({ group, open, onToggle }: { group: LibraryGroup; op
 		);
 
 	return (
-		<div className={box}>
+		<div id={`group-${group.id}`} className={`${box} scroll-mt-24`}>
 			<div className="flex items-center gap-1 py-1 pr-1.5">
 				<button
 					type="button"
@@ -123,13 +123,21 @@ const Organiser = observer(() => {
 	const input = useRef<HTMLInputElement>(null);
 	const [name, setName] = useState("");
 	const [creating, setCreating] = useState(false);
-	const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+	const asked = location.state as { newGroup?: boolean; openGroup?: string } | null;
+	// A group's chip on a saved company lands here with that group open.
+	const openAsked = asked?.openGroup;
+	const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(openAsked ? [openAsked] : []));
 
 	// "New group…" on a saved company's menu lands here, ready to type the name.
-	const newGroupAsked = (location.state as { newGroup?: boolean } | null)?.newGroup === true;
+	const newGroupAsked = asked?.newGroup === true;
 	useEffect(() => {
 		if (newGroupAsked) input.current?.focus();
 	}, [newGroupAsked]);
+
+	const loaded = library.status === "loaded";
+	useEffect(() => {
+		if (openAsked && loaded) document.getElementById(`group-${openAsked}`)?.scrollIntoView({ block: "start" });
+	}, [openAsked, loaded]);
 
 	const toggle = (id: string) =>
 		setOpen((before) => {
