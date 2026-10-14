@@ -67,7 +67,8 @@ export class AuthSession {
 		profiles: ProfilePort;
 		reportError: (message: string) => void;
 	};
-	private userId: string | null = null;
+	@observable.ref private accessor userId: string | null = null;
+	@observable.ref private accessor answered = false;
 	private loading: Promise<boolean> | null = null;
 	private awaitedByOperation = 0;
 	private unsubscribe: (() => void) | null = null;
@@ -79,6 +80,14 @@ export class AuthSession {
 
 	get state(): AuthState {
 		return this.current;
+	}
+
+	/**
+	 * Whether the provider has a session, known before the profile has arrived: null until the
+	 * provider has answered. For what can be shown without the profile, as a link into the app.
+	 */
+	get hasSession(): boolean | null {
+		return this.answered ? this.userId !== null : null;
 	}
 
 	start = () => {
@@ -174,7 +183,7 @@ export class AuthSession {
 	 */
 	private follow(session: ProviderSession | null): Promise<boolean> {
 		if (!session) {
-			this.userId = null;
+			this.setUser(null);
 			this.loading = null;
 			this.set({ status: "signed-out" });
 			return Promise.resolve(true);
@@ -183,7 +192,7 @@ export class AuthSession {
 		// The same user again: a token refresh, or the event that follows a sign-in.
 		if (this.userId === session.userId) return this.loading ?? Promise.resolve(true);
 
-		this.userId = session.userId;
+		this.setUser(session.userId);
 		const loading: Promise<boolean> = this.ports.profiles.load().then(
 			(profile) => {
 				// Only the latest session's profile counts.
@@ -195,7 +204,7 @@ export class AuthSession {
 			() => {
 				if (this.loading !== loading) return true;
 				this.loading = null;
-				this.userId = null;
+				this.setUser(null);
 				this.set({ status: "signed-out" });
 				return false;
 			}
@@ -216,6 +225,12 @@ export class AuthSession {
 	@action
 	private set(state: AuthState) {
 		this.current = state;
+	}
+
+	@action
+	private setUser(userId: string | null) {
+		this.userId = userId;
+		this.answered = true;
 	}
 }
 

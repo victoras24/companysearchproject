@@ -42,8 +42,10 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 	const [spots, setSpots] = useState<Partial<Record<NavId | PageId, { left: number; width: number }>>>({});
 	const navRef = useRef<HTMLElement>(null);
 
-	const signedIn = auth.state.status === "signed-in";
-	const signedOut = auth.state.status === "signed-out";
+	// The session is enough for these links; the profile can arrive after them.
+	const signedIn = auth.hasSession === true;
+	const signedOut = auth.hasSession === false;
+	const checking = auth.hasSession === null;
 
 	// Where each link sits, for the pill that slides behind them.
 	useLayoutEffect(() => {
@@ -156,6 +158,9 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 									Open web app
 								</Link>
 							)}
+							{checking && (
+								<Placeholder className="inline-flex items-center rounded-full px-[18px] py-2.5 text-[14.5px] leading-none font-semibold whitespace-nowrap" />
+							)}
 						</div>
 
 						<div className="ml-auto flex items-center md:hidden">
@@ -231,6 +236,9 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 										Open web app
 									</Link>
 								)}
+								{checking && (
+									<Placeholder className="flex min-h-11 flex-1 items-center justify-center rounded-full px-3.5 py-[11px] text-center leading-[1.2]" />
+								)}
 							</div>
 						</div>
 					</div>
@@ -239,3 +247,12 @@ export const SiteHeader = observer(({ current = null, onNavigate, only }: Props)
 		</header>
 	);
 });
+
+/** Holds the place of the account links while it is not known yet whether someone is signed in. */
+function Placeholder({ className }: { className: string }) {
+	return (
+		<span aria-hidden className={`bg-tint text-transparent select-none motion-safe:animate-pulse ${className}`}>
+			Open web app
+		</span>
+	);
+}

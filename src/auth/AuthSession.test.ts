@@ -93,6 +93,78 @@ describe("AuthSession", () => {
 		});
 	});
 
+	describe("whether there is a session", () => {
+		/** Holds the profile until the test lets it arrive. */
+		function holdProfile(profiles: ReturnType<typeof fakeProfiles>) {
+			const load = profiles.load;
+			let release = () => {};
+			let fail = () => {};
+			profiles.load = () =>
+				new Promise<Profile>((resolve, reject) => {
+					release = () => void load().then(resolve);
+					fail = () => reject(new Error("backend down"));
+				});
+			return { release: () => release(), fail: () => fail() };
+		}
+
+		it("is not known until the provider has answered", () => {
+			const { auth } = setup({ signedInAs: "user-maria" });
+
+			expect(auth.hasSession).toBeNull();
+			auth.start();
+			expect(auth.hasSession).toBeNull();
+		});
+
+		it("is known before the profile has arrived", async () => {
+			const { auth, profiles } = setup({ signedInAs: "user-maria" });
+			const profile = holdProfile(profiles);
+
+			auth.start();
+			await flush();
+
+			expect(auth.hasSession).toBe(true);
+			expect(auth.state).toEqual({ status: "checking" });
+
+			profile.release();
+			await flush();
+			expect(auth.hasSession).toBe(true);
+			expect(auth.state).toEqual({ status: "signed-in", profile: maria });
+		});
+
+		it("is false with no session", async () => {
+			const { auth } = setup();
+
+			auth.start();
+			await flush();
+
+			expect(auth.hasSession).toBe(false);
+		});
+
+		it("is false once the profile could not be loaded", async () => {
+			const { auth, profiles } = setup({ signedInAs: "user-maria" });
+			const profile = holdProfile(profiles);
+			auth.start();
+			await flush();
+
+			profile.fail();
+			await flush();
+
+			expect(auth.hasSession).toBe(false);
+			expect(auth.state).toEqual({ status: "signed-out" });
+		});
+
+		it("is false after signing out", async () => {
+			const { auth } = setup({ signedInAs: "user-maria" });
+			auth.start();
+			await flush();
+
+			await auth.signOut();
+			await flush();
+
+			expect(auth.hasSession).toBe(false);
+		});
+	});
+
 	describe("signing in with a password", () => {
 		it("becomes signed in and loads the profile once", async () => {
 			const { auth, profiles } = setup();
