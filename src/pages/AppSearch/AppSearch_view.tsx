@@ -13,6 +13,7 @@ import type { ICompany } from "@/gEntities";
 import { library } from "@/library";
 import { statusLabel } from "@/organisation/organisation";
 import { positionLabel } from "@/organisation/position";
+import { SECTORS } from "@/organisation/sector";
 import {
 	MIN_QUERY_LENGTH,
 	OFFICIAL_RESULT_CAP,
@@ -21,6 +22,7 @@ import {
 	STATUS_FILTERS,
 	type EntityType,
 	type Pager,
+	type SectorFilter,
 	type StatusFilter,
 } from "@/pages/Search/SearchSession";
 import { statusDotClass } from "@/site/ui";
@@ -183,6 +185,36 @@ function StatusChips({
 	);
 }
 
+/** The sector a company search is restricted to, or every sector. */
+function SectorSelect({
+	value,
+	onChange,
+	hidden,
+}: {
+	value: SectorFilter;
+	onChange: (value: SectorFilter) => void;
+	hidden: boolean;
+}) {
+	if (hidden) return null;
+	return (
+		<select
+			aria-label="Sector"
+			value={value}
+			onChange={(event) => onChange(event.target.value as SectorFilter)}
+			className={`flex-none cursor-pointer rounded-full border-0 px-3 text-[13px] font-medium outline-none ${tall} ${
+				value === "all" ? "bg-field text-foreground" : "bg-primary text-surface"
+			}`}
+		>
+			<option value="all">All sectors</option>
+			{SECTORS.map((sector) => (
+				<option key={sector.letter} value={sector.letter}>
+					{sector.name}
+				</option>
+			))}
+		</select>
+	);
+}
+
 /** The pages of the results: back, each page's number, forward. */
 function Pages({ pager }: { pager: Pager }) {
 	const toTop = () =>
@@ -321,7 +353,13 @@ const AppSearch = observer(() => {
 			<div className="mt-3 flex flex-wrap items-center gap-2.5">
 				<EntitySwitch value={session.entityType} onChange={session.selectEntityType} />
 				<StatusChips value={session.statusFilter} onChange={session.selectStatusFilter} hidden={officials} />
+				<SectorSelect value={session.sectorFilter} onChange={session.selectSectorFilter} hidden={officials} />
 			</div>
+			{!officials && session.sectorFilter !== "all" && (
+				<div className="mx-1 mt-2 text-[12.5px] text-muted-foreground">
+					Only companies the Statistical Service (CYSTAT) lists as active in this sector.
+				</div>
+			)}
 
 			{view.status === "idle" && recentSearches.list.length > 0 && (
 				<div>
@@ -380,6 +418,15 @@ const AppSearch = observer(() => {
 							className={`mx-1 -mt-3.5 block cursor-pointer rounded-full bg-field px-3.5 text-[13px] font-medium text-primary-text ${tall}`}
 						>
 							Show all statuses
+						</button>
+					)}
+					{!officials && session.sectorFilter !== "all" && (
+						<button
+							type="button"
+							onClick={() => session.selectSectorFilter("all")}
+							className={`mx-1 mt-2 block cursor-pointer rounded-full bg-field px-3.5 text-[13px] font-medium text-primary-text ${tall}`}
+						>
+							Show all sectors
 						</button>
 					)}
 				</div>

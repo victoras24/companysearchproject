@@ -9,6 +9,7 @@ export const search: SearchFn = async ({
 	entityType,
 	query,
 	statusFilter,
+	sectorFilter,
 	page,
 	pageSize,
 	signal,
@@ -28,6 +29,7 @@ export const search: SearchFn = async ({
 			page,
 			pageSize,
 			...(statusFilter !== "all" && { status: statusFilter }),
+			...(sectorFilter !== "all" && { sector: sectorFilter }),
 		},
 		signal,
 	});

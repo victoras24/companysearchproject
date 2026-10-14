@@ -41,6 +41,7 @@ const Cart = observer(() => {
 						entityType: "organisation",
 						query,
 						statusFilter: "all",
+						sectorFilter: "all",
 						page: 1,
 						pageSize: 10,
 						signal,

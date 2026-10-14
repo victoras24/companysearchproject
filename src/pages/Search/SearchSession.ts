@@ -1,6 +1,7 @@
 import { action, computed, makeObservable, observable } from "mobx";
 import type { ICompany, IOfficials } from "@/gEntities";
 import { STATUS_GROUPS, type StatusGroup } from "@/organisation/organisation";
+import { SECTORS, type Sector } from "@/organisation/sector";
 
 export type EntityType = "organisation" | "official";
 // Every status group but unknown, whose organisations appear only under "all".
@@ -8,6 +9,8 @@ export const STATUS_FILTERS = STATUS_GROUPS.filter(
 	(group): group is Exclude<StatusGroup, "unknown"> => group !== "unknown"
 );
 export type StatusFilter = "all" | (typeof STATUS_FILTERS)[number];
+// A sector keeps only the companies CYSTAT lists in that NACE section.
+export type SectorFilter = "all" | Sector;
 
 export const PAGE_SIZE = 10;
 export const DEBOUNCE_MS = 233;
@@ -19,6 +22,7 @@ export type SearchFn = (request: {
 	entityType: EntityType;
 	query: string;
 	statusFilter: StatusFilter;
+	sectorFilter: SectorFilter;
 	page: number;
 	pageSize: number;
 	signal: AbortSignal;
@@ -59,6 +63,7 @@ type Criteria = {
 	query: string;
 	entityType: EntityType;
 	statusFilter: StatusFilter;
+	sectorFilter: SectorFilter;
 	page: number;
 };
 
@@ -72,6 +77,7 @@ const DEFAULTS: Criteria = {
 	query: "",
 	entityType: "organisation",
 	statusFilter: "all",
+	sectorFilter: "all",
 	page: 1,
 };
 
@@ -80,7 +86,7 @@ const parse = (search: string): Criteria => {
 	const entityType: EntityType =
 		params.get("type") === "official" ? "official" : "organisation";
 	if (entityType === "official") {
-		// Officials have no status and their results are not paged.
+		// Officials have no status or sector and their results are not paged.
 		return { ...DEFAULTS, query: (params.get("q") ?? "").trim(), entityType };
 	}
 
@@ -90,6 +96,7 @@ const parse = (search: string): Criteria => {
 		query: (params.get("q") ?? "").trim(),
 		entityType,
 		statusFilter: statusFilterOf(status),
+		sectorFilter: SECTORS.find((s) => s.letter === params.get("sector"))?.letter ?? "all",
 		page: Number.isInteger(page) && page >= 1 ? page : 1,
 	};
 };
@@ -107,6 +114,8 @@ const serialize = (criteria: Criteria): string => {
 		params.set("type", criteria.entityType);
 	if (criteria.statusFilter !== DEFAULTS.statusFilter)
 		params.set("status", criteria.statusFilter);
+	if (criteria.sectorFilter !== DEFAULTS.sectorFilter)
+		params.set("sector", criteria.sectorFilter);
 	if (criteria.page !== DEFAULTS.page)
 		params.set("page", String(criteria.page));
 
@@ -142,6 +151,10 @@ export class SearchSession {
 
 	get statusFilter(): StatusFilter {
 		return this.criteria.statusFilter;
+	}
+
+	get sectorFilter(): SectorFilter {
+		return this.criteria.sectorFilter;
 	}
 
 	@computed
@@ -234,6 +247,15 @@ export class SearchSession {
 	};
 
 	@action
+	selectSectorFilter = (sectorFilter: SectorFilter) => {
+		this.cancelDebounce();
+		this.go(
+			{ ...this.criteria, query: this.draftText.trim(), sectorFilter, page: 1 },
+			false
+		);
+	};
+
+	@action
 	retry = () => {
 		this.run();
 	};
@@ -273,6 +295,7 @@ export class SearchSession {
 				entityType: criteria.entityType,
 				query: criteria.query,
 				statusFilter: criteria.statusFilter,
+				sectorFilter: criteria.sectorFilter,
 				page: criteria.page,
 				pageSize: PAGE_SIZE,
 				signal: controller.signal,

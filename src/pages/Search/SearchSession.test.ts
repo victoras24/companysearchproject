@@ -218,6 +218,35 @@ describe("URL to state", () => {
 		expect(requests).toHaveLength(0);
 	});
 
+	it("reads the sector and passes it to the search", () => {
+		const { session, requests, navigations } = setup();
+		session.urlChanged("?q=alpha&status=registered&sector=L");
+
+		expect(session.sectorFilter).toBe("L");
+		expect(requests[0].request).toMatchObject({
+			query: "alpha",
+			statusFilter: "registered",
+			sectorFilter: "L",
+		});
+		expect(navigations).toHaveLength(0);
+	});
+
+	it.each(["Z", "foo", "", "U"])("ignores the unknown sector %j", (sector) => {
+		const { session, requests } = setup();
+		session.urlChanged(`?q=alpha&sector=${sector}`);
+
+		expect(session.sectorFilter).toBe("all");
+		expect(requests[0].request.sectorFilter).toBe("all");
+	});
+
+	it("ignores the sector for officials", () => {
+		const { session, requests } = setup();
+		session.urlChanged("?q=alpha&type=official&sector=L");
+
+		expect(session.sectorFilter).toBe("all");
+		expect(requests[0].request.sectorFilter).toBe("all");
+	});
+
 	it("does not search again when the same URL arrives twice", () => {
 		const { session, requests } = setup();
 		session.urlChanged("?q=alpha");
@@ -472,6 +501,37 @@ describe("reset rules", () => {
 		session.selectStatusFilter("all");
 
 		expect(navigations).toEqual([{ search: "?q=alpha", replace: false }]);
+	});
+
+	it("resets the page when the sector changes and keeps the status filter", () => {
+		const { session, navigations, requests } = setup();
+		session.urlChanged("?q=alpha&status=registered&page=3");
+		session.selectSectorFilter("F");
+
+		expect(navigations).toEqual([
+			{ search: "?q=alpha&status=registered&sector=F", replace: false },
+		]);
+		expect(session.sectorFilter).toBe("F");
+		expect(requests.at(-1)?.request).toMatchObject({ sectorFilter: "F", page: 1 });
+	});
+
+	it("omits the sector when it returns to all", () => {
+		const { session, navigations } = setup();
+		session.urlChanged("?q=alpha&sector=F&page=2");
+		session.selectSectorFilter("all");
+
+		expect(navigations).toEqual([{ search: "?q=alpha", replace: false }]);
+	});
+
+	it("resets the sector when the entity type changes", () => {
+		const { session, navigations } = setup();
+		session.urlChanged("?q=alpha&sector=F");
+		session.selectEntityType("official");
+
+		expect(navigations).toEqual([
+			{ search: "?q=alpha&type=official", replace: false },
+		]);
+		expect(session.sectorFilter).toBe("all");
 	});
 
 	it("resets page and status filter when the entity type changes", () => {

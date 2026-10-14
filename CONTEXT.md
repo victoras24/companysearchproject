@@ -40,7 +40,7 @@ _Avoid_: Related company, related organisation
 ### Search
 
 **Search session**:
-One visit's search state together with the lifecycle of the requests it causes. It is made of a query, an entity type, a status filter and a page.
+One visit's search state together with the lifecycle of the requests it causes. It is made of a query, an entity type, a status filter, a sector filter and a page.
 _Avoid_: Search model, search state
 
 **Query**:
@@ -54,6 +54,10 @@ _Avoid_: Filter, option, selected option
 **Status filter**:
 A restriction of an organisation search to all organisations or to one status group other than Unknown. It applies to the whole result set, not to one page of it.
 _Avoid_: Filter (on its own)
+
+**Sector filter**:
+A restriction of an organisation search to all organisations or to the companies CYSTAT lists in one sector, a NACE Rev. 2.1 section. Organisations CYSTAT does not list (business names, partnerships, companies it does not count as active) appear only under all sectors.
+_Avoid_: Industry, category
 
 **Page**:
 One fixed-size slice of a search session's results, numbered from 1.
