@@ -26,3 +26,7 @@ export const SECTORS = [
 ] as const;
 
 export type Sector = (typeof SECTORS)[number]["letter"];
+
+/** The short name of the sector a company is in, or null when it has none the app names. */
+export const sectorName = (letter: string | null | undefined): string | null =>
+	SECTORS.find((s) => s.letter === letter)?.name ?? null;

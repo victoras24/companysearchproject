@@ -10,6 +10,8 @@ export interface ICompany {
 	statusGroup?: string | null;
 	statusText?: string | null;
 	statusDate?: string | null;
+	/** The NACE section letter CYSTAT lists the company in, or null when it lists it nowhere. */
+	sector?: string | null;
 }
 
 export interface IRelatedCompany {

@@ -13,7 +13,7 @@ import type { ICompany } from "@/gEntities";
 import { library } from "@/library";
 import { statusLabel } from "@/organisation/organisation";
 import { positionLabel } from "@/organisation/position";
-import { SECTORS } from "@/organisation/sector";
+import { SECTORS, sectorName } from "@/organisation/sector";
 import {
 	MIN_QUERY_LENGTH,
 	OFFICIAL_RESULT_CAP,
@@ -42,6 +42,7 @@ const Result = observer(({ company }: { company: ICompany }) => {
 	const saved = library.isSaved(company);
 	const tracked = tracking.isTracked(company);
 	const inCart = cart.has(company);
+	const sector = sectorName(company.sector);
 
 	const label = "hidden min-[860px]:inline";
 
@@ -52,6 +53,7 @@ const Result = observer(({ company }: { company: ICompany }) => {
 				<div className="mt-[3px] flex items-center gap-2 text-[12.5px] text-muted-foreground">
 					<span className="app-mono text-[12px]">{company.registrationNo}</span>
 					<Status organisation={company} />
+					{sector && <span className="min-w-0 truncate">· {sector}</span>}
 				</div>
 			</div>
 			{known && (
