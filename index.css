@@ -86,6 +86,8 @@
 	--card: #ffffff;
 	--card-foreground: #0f1f19;
 	--popover: #ffffff;
+	/* A pop-up's frosted background. */
+	--alert: rgba(255, 255, 255, 0.96);
 	--popover-foreground: #0f1f19;
 	--primary: #0e6b4f;
 	--primary-foreground: #ffffff;
@@ -146,6 +148,7 @@
 	--card: #121c18;
 	--card-foreground: #e8efec;
 	--popover: #121c18;
+	--alert: rgba(18, 28, 24, 0.96);
 	--popover-foreground: #e8efec;
 	--primary: #0e6b4f;
 	--primary-foreground: #ffffff;

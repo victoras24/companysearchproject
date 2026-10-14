@@ -8,11 +8,13 @@ import { useCartStore } from "@/context/CartStore";
 import { SearchPager } from "@/components/SearchPager";
 import { SaveButton } from "@/library/SaveButton";
 import { TrackButton } from "@/tracking/TrackButton";
-import { detailsPath, statusLabel, statusLine } from "@/organisation/organisation";
-import { STATUS_FILTERS, type SearchSession, type StatusFilter } from "@/pages/Search/SearchSession";
+import { detailsPath, statusLine } from "@/organisation/organisation";
+import { AppliedFilters, Filters } from "@/pages/Search/SearchFilters";
+import type { SearchSession } from "@/pages/Search/SearchSession";
+import { sectorName } from "@/organisation/sector";
 import { StatusBadge } from "@/site/StatusBadge";
 import { useMediaQuery } from "@/site/useMediaQuery";
-import { cartPill, statusDotClass } from "@/site/ui";
+import { cartPill } from "@/site/ui";
 import { nextTypeStep, type TypeStep } from "./typewriter";
 
 // Searches that find something: the registry is searched by name.
@@ -120,6 +122,7 @@ export const HeroSearch = observer(({ session, scrolled, onCue }: Props) => {
 		const path = detailsPath(company);
 		const line = statusLine(company);
 		const inCart = cart.has(company);
+		const sector = sectorName(company.sector);
 		return (
 			<div
 				key={company.id}
@@ -137,7 +140,10 @@ export const HeroSearch = observer(({ session, scrolled, onCue }: Props) => {
 						)}
 						<StatusBadge organisation={company} />
 					</div>
-					<div className="mt-1 font-mono text-[12.5px] text-muted-foreground">Reg No {company.registrationNo}</div>
+					<div className="mt-1 text-[12.5px] text-muted-foreground">
+						<span className="font-mono">Reg No {company.registrationNo}</span>
+						{sector && <span> · {sector}</span>}
+					</div>
 					{line && <div className="mt-0.5 text-[13px] text-muted-foreground">{line}</div>}
 				</div>
 				<div className="ml-auto flex items-center gap-1.5">
@@ -217,24 +223,6 @@ export const HeroSearch = observer(({ session, scrolled, onCue }: Props) => {
 		`cursor-pointer rounded-full px-3.5 py-[7px] text-[13.5px] font-semibold ${
 			on ? "bg-surface text-ink shadow-[0_1px_3px_rgba(15,31,25,0.12)]" : "bg-transparent text-muted-foreground"
 		}`;
-
-	const chip = (filter: StatusFilter) => {
-		const on = session.statusFilter === filter;
-		return (
-			<button
-				key={filter}
-				type="button"
-				tabIndex={isOfficial ? -1 : 0}
-				onClick={() => session.selectStatusFilter(filter)}
-				className={`flex flex-none cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] whitespace-nowrap ${
-					on ? "border-primary-border bg-primary text-white" : "border-border bg-surface text-muted-foreground"
-				}`}
-			>
-				{filter !== "all" && <span aria-hidden className={`size-[7px] rounded-full ${statusDotClass[filter]}`} />}
-				{filter === "all" ? "All" : statusLabel({ statusGroup: filter })}
-			</button>
-		);
-	};
 
 	return (
 		<section
@@ -346,11 +334,12 @@ export const HeroSearch = observer(({ session, scrolled, onCue }: Props) => {
 									Officials
 								</button>
 							</div>
-							{/* Officials have no status, so the chips slide away for them. */}
+							{/* Officials have no status or sector, so the filters slide away for them. */}
 							<div
 								aria-hidden={isOfficial}
-								className={`csc-no-scrollbar flex min-w-0 flex-[1_1_100%] gap-1.5 overflow-x-auto max-md:pr-6 max-md:[mask-image:linear-gradient(90deg,#000_85%,transparent)] md:flex-[1_1_0%] ${
-									isOfficial ? "pointer-events-none max-md:-mt-2.5 max-md:max-h-0" : "max-h-12"
+								inert={isOfficial}
+								className={`flex min-w-0 flex-[1_1_100%] flex-wrap items-center gap-1.5 md:flex-[1_1_0%] ${
+									isOfficial ? "pointer-events-none max-md:-mt-2.5 max-md:max-h-0" : "max-md:max-h-24"
 								}`}
 								style={{
 									opacity: isOfficial ? 0 : 1,
@@ -358,8 +347,8 @@ export const HeroSearch = observer(({ session, scrolled, onCue }: Props) => {
 									transition: `opacity .3s ease, transform .5s ${SPRING}, max-height .35s cubic-bezier(.2,.8,.2,1), margin-top .35s cubic-bezier(.2,.8,.2,1)`,
 								}}
 							>
-								{chip("all")}
-								{STATUS_FILTERS.map(chip)}
+								<Filters session={session} />
+								<AppliedFilters session={session} />
 							</div>
 						</div>
 						<div ref={panelRef} className="max-h-[min(460px,60vh)] overflow-y-auto p-1.5">
