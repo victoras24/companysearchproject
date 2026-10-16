@@ -304,8 +304,8 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
 								<div className="text-[16px] font-semibold">Questions?</div>
 								<div className="mt-0.5 text-[14.5px] text-muted-foreground">We usually reply within one business day.</div>
 							</div>
-							<a href="mailto:companysearchcy@gmail.com" className={`${primaryPill} px-5 py-3 text-[15px]`}>
-								companysearchcy@gmail.com
+							<a href="mailto:support@companysearchcyprus.com" className={`${primaryPill} px-5 py-3 text-[15px]`}>
+								support@companysearchcyprus.com
 							</a>
 						</div>
 					</article>

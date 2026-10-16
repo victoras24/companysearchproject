@@ -37,8 +37,8 @@ export function HomeFooter() {
 						<p className="m-0 max-w-[300px] text-[14px] leading-[1.55] text-muted-foreground">
 							Cyprus company intelligence and business research.
 						</p>
-						<a href="mailto:companysearchcy@gmail.com" className="text-[14px] text-primary-text hover:text-deep">
-							companysearchcy@gmail.com
+						<a href="mailto:support@companysearchcyprus.com" className="text-[14px] text-primary-text hover:text-deep">
+							support@companysearchcyprus.com
 						</a>
 					</div>
 					<div className={column}>

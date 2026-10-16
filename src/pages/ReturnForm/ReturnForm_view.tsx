@@ -151,8 +151,8 @@ const GuestReturn = observer(() => {
 			<h1 className={title}>Something went wrong</h1>
 			<p className={body}>
 				We couldn't determine your payment status. Please contact{" "}
-				<a href="mailto:companysearchcy@gmail.com" className="font-semibold text-primary-text">
-					companysearchcy@gmail.com
+				<a href="mailto:support@companysearchcyprus.com" className="font-semibold text-primary-text">
+					support@companysearchcyprus.com
 				</a>{" "}
 				if you need assistance.
 			</p>
